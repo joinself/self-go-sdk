@@ -17,6 +17,7 @@ var (
 
 // Identity represents all information about a self identity
 type Identity struct {
+	Name    string            `json:"name,omitempty"`
 	SelfID  string            `json:"self_id"`
 	Type    string            `json:"type"`
 	History []json.RawMessage `json:"history"`

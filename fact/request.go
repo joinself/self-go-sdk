@@ -66,7 +66,8 @@ type FactRequestAsync struct {
 
 // FactResponse contains the details of the requested facts
 type FactResponse struct {
-	Facts []Fact
+	Status string
+	Facts  []Fact
 }
 
 // QRFactRequest contains the details of the requested facts
