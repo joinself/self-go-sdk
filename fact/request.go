@@ -188,7 +188,9 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	return &FactResponse{Facts: facts}, nil
+	return &FactResponse{
+		Status: "",
+		Facts: facts }, nil
 }
 
 // RequestAsync requests a fact from a given identity and does not
