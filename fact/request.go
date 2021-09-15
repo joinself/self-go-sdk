@@ -53,6 +53,7 @@ type FactRequest struct {
 	Description string
 	Facts       []Fact
 	Expiry      time.Duration
+	Data        json.RawMessage
 }
 
 // FactRequestAsync specifies the parameters of an information requestAsync
