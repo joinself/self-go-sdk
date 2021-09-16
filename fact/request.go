@@ -63,6 +63,7 @@ type FactRequestAsync struct {
 	Facts       []Fact
 	Expiry      time.Duration
 	CID         string
+	Data        json.RawMessage
 }
 
 // FactResponse contains the details of the requested facts
