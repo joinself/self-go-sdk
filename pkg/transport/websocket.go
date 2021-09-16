@@ -304,8 +304,6 @@ func (c *Websocket) connect() error {
 		return errors.New("could not connect")
 	}
 
-	log.Println("[websocket] connecting to messaging")
-
 	var ws *websocket.Conn
 	var connected bool
 
@@ -391,7 +389,6 @@ func (c *Websocket) reader() {
 		}
 
 		if c.isClosed() {
-			log.Println("[websocket] closing reader routine")
 			return
 		}
 
@@ -400,7 +397,6 @@ func (c *Websocket) reader() {
 			if c.isShutdown() {
 				close(c.inbox)
 			} else {
-				log.Println("[websocket] try reconnect from reader routine:", err.Error())
 				c.reconnect(err)
 			}
 			return
@@ -493,7 +489,6 @@ func (c *Websocket) writer() {
 
 		switch p {
 		case priorityClose:
-			log.Println("[websocket] closing writer routine")
 			return
 		case priorityPong:
 			deadline := time.Now().Add(c.config.TCPDeadline)
@@ -514,7 +509,6 @@ func (c *Websocket) writer() {
 		}
 
 		if err != nil {
-			log.Println("[websocket] writer attempting close")
 			c.close(err)
 		}
 	}
@@ -522,7 +516,6 @@ func (c *Websocket) writer() {
 
 func (c *Websocket) reconnect(err error) {
 	if !c.close(err) {
-		log.Println("[websocket] skipping reconnect:", err.Error())
 		return
 	}
 
