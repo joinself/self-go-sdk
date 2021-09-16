@@ -21,9 +21,9 @@ import (
 
 var (
 	defaultAPIURL               = "https://api.joinself.com"
-	defaultMessagingURL         = "wss://messaging.joinself.com/v1/messaging"
+	defaultMessagingURL         = "wss://messaging.joinself.com/v2/messaging"
 	defaultReconnectionAttempts = 10
-	defaultTCPDeadline          = time.Second * 5
+	defaultTCPDeadline          = time.Second * 90
 	defaultRequestTimeout       = time.Second * 5
 	defaultInboxSize            = 256
 
@@ -112,7 +112,7 @@ func (c *Config) load() error {
 		}
 
 		if c.MessagingURL == "" {
-			c.MessagingURL = "wss://messaging." + c.Environment + ".joinself.com/v1/messaging"
+			c.MessagingURL = "wss://messaging." + c.Environment + ".joinself.com/v2/messaging"
 		}
 	}
 
