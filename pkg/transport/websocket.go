@@ -161,7 +161,7 @@ func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 
 	c := Websocket{
 		config:    config,
-		queue:     pqueue.New(5),
+		queue:     pqueue.New(5, config.InboxSize),
 		inbox:     make(chan Message, config.InboxSize),
 		responses: sync.Map{},
 		offset:    offset,
@@ -475,6 +475,9 @@ func (c *Websocket) writer() {
 
 		switch p {
 		case priorityClose:
+			for i := priorityClose; i <= priorityMessage; i++ {
+				c.queue.Flush(i)
+			}
 			return
 		case priorityPong:
 			deadline := time.Now().Add(c.config.TCPDeadline)

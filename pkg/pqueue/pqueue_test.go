@@ -13,7 +13,7 @@ import (
 )
 
 func TestQueue(t *testing.T) {
-	q := New(8)
+	q := New(8, 100)
 
 	q.Push(0, "p0")
 	q.Push(2, "p2")
@@ -49,7 +49,7 @@ func TestQueue(t *testing.T) {
 	assert.Equal(t, "p7", q.Pop())
 	assert.Equal(t, "p7", q.Pop())
 
-	q = New(8)
+	q = New(8, 100)
 
 	for i := 0; i < 100; i++ {
 		q.Push(rand.Intn(8), i)
@@ -63,7 +63,7 @@ func TestQueue(t *testing.T) {
 func TestQueuePopWait(t *testing.T) {
 	done := make(chan interface{})
 
-	q := New(8)
+	q := New(8, 100)
 
 	go func() {
 		done <- q.Pop()
@@ -77,7 +77,7 @@ func TestQueuePopWait(t *testing.T) {
 }
 
 func TestQueueConcurrentPush(t *testing.T) {
-	q := New(8)
+	q := New(8, 16000)
 
 	var wg sync.WaitGroup
 	wg.Add(16)
@@ -103,7 +103,7 @@ func TestQueueConcurrentPush(t *testing.T) {
 }
 
 func TestQueueConcurrentPop(t *testing.T) {
-	q := New(8)
+	q := New(8, 16000)
 
 	for i := 0; i < 16000; i++ {
 		q.Push(rand.Intn(8), i)
@@ -130,7 +130,25 @@ func TestQueueConcurrentPop(t *testing.T) {
 	assert.Equal(t, int64(16000), count)
 }
 
-func TestQueueConcurrentMixed(t *testing.T) {
+func TestQueueLimits(t *testing.T) {
+	q := New(8, 1000)
+
+	go func() {
+		for i := 0; i < 16000; i++ {
+			q.Push(rand.Intn(8), i)
+		}
+	}()
+
+	var count int
+
+	for q.Pop() != nil {
+		count++
+		if count == 16000 {
+			break
+		}
+	}
+
+	assert.Equal(t, 16000, count)
 }
 
 func timeout(c chan interface{}) bool {
