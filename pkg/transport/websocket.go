@@ -545,6 +545,8 @@ func (c *Websocket) close(err error) bool {
 	time.Sleep(time.Millisecond * 10)
 	c.ws.Close()
 
+	c.responses = sync.Map{}
+
 	return true
 }
 
