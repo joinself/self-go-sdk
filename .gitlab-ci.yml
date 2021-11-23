@@ -1,5 +1,5 @@
 stages:
-  - prebuild
+  - prerelease
   - release
 
 .license-check: &license-check |
@@ -21,7 +21,7 @@ before_script:
   - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
 license-check:
-  stage: prebuild
+  stage: prerelease
   image: licensefinder/license_finder
   script:
     - ${SCRIPTS_DIR}/git-setup
@@ -30,8 +30,8 @@ license-check:
   only:
     - branches
 
-git-leak:
-  stage: prebuild
+secrets-check:
+  stage: prerelease
   image: docker:stable-git
   services:
     - docker:19.03.2-dind
@@ -39,12 +39,12 @@ git-leak:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
+    - ${SCRIPTS_DIR}/git-secrets
   only:
     - branches
 
 unit-test:
-  stage: prebuild
+  stage: prerelease
   image: golang:1.14.4-buster
   script:
     - *setup
