@@ -1,7 +1,7 @@
 # Self Go SDK
 
 ![Build Status](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml/badge.svg?branch=master)
-[![GoDoc](https://godoc.org/github.com/joinself/self-go-sdk?status.svg)](https://godoc.org/github.com/joinself/self-go-sdk)
+[![Go Reference](https://pkg.go.dev/badge/github.com/joinself/self-go-sdk.svg)](https://pkg.go.dev/github.com/joinself/self-go-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joinself/self-go-sdk)](https://goreportcard.com/report/github.com/joinself/self-go-sdk)
 
 The official self sdk for golang.
@@ -25,16 +25,16 @@ This sdk provides access to the following self services:
 
 #### Debian/Ubuntu
 ```sh
-$ curl -O http://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-$ curl -O http://download.joinself.com/omemo/libself-omemo_0.1.2_amd64.deb
+$ curl -O https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
+$ curl -O https://download.joinself.com/omemo/libself-omemo_0.1.2_amd64.deb
 $ apt install libsodium-dev
 $ apt install ./libself-olm_0.1.17_amd64.deb ./libself-omemo_0.1.2_amd64.deb
 ```
 
 #### Redhat/Centos
 ```sh
-$ rpm -Uvh http://download.joinself.com/olm/libself-olm-0.1.14-1.x86_64.rpm
-$ rpm -Uvh http://download.joinself.com/omemo/libself-omemo-0.1.2-1.x86_64.rpm
+$ rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.14-1.x86_64.rpm
+$ rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.2-1.x86_64.rpm
 ```
 
 #### Mac
@@ -58,11 +58,11 @@ import "github.com/joinself/self-go-sdk"
 
 func main() {
     cfg := selfsdk.Config{
-		SelfAppID:           os.Getenv("SELF_APP_ID"),
-		SelfAppDeviceSecret: os.Getenv("SELF_APP_DEVICE_SECRET"),
-		StorageDir:          "/opt/self/crypto",
-		StorageKey:          "my-secret-crypto-storage-key",
-	}
+        SelfAppID:           os.Getenv("SELF_APP_ID"),
+        SelfAppDeviceSecret: os.Getenv("SELF_APP_DEVICE_SECRET"),
+        StorageDir:          "/opt/self/crypto",
+        StorageKey:          "my-secret-crypto-storage-key",
+    }
 
     client, err := selfsdk.New(cfg)
 }

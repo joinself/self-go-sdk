@@ -372,6 +372,7 @@ func (c *Websocket) reader() {
 	for {
 		if c.isShutdown() {
 			close(c.inbox)
+			return
 		}
 
 		if c.isClosed() {
