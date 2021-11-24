@@ -150,4 +150,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/joinse
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](LICENSE).
+The sdk is available as open source under the terms of the [MIT License](LICENSE).
