@@ -1,6 +1,6 @@
 # Self Go SDK
 
-![Build Status](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml/badge.svg?branch=master)
+![Build Status](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml/badge.svg?branch=main)
 [![Go Reference](https://pkg.go.dev/badge/github.com/joinself/self-go-sdk.svg)](https://pkg.go.dev/github.com/joinself/self-go-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joinself/self-go-sdk)](https://goreportcard.com/report/github.com/joinself/self-go-sdk)
 
