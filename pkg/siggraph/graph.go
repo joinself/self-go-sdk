@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/ed25519"
 )
@@ -63,7 +64,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 		}
 
 		// check the timestamp is greater than the previous operations
-		if s.ops[len(s.ops)-1].Timestamp >= op.Timestamp {
+		if s.ops[len(s.ops)-1].timestamp() >= op.timestamp() {
 			return ErrInvalidTimestamp
 		}
 
@@ -74,7 +75,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 		}
 
 		// check the signign key hasn't been revoked before the operation
-		if sk.ra > 0 && op.Timestamp > sk.ra {
+		if sk.revokedAt() > 0 && op.timestamp() > sk.revokedAt() {
 			return ErrSignatureKeyRevoked
 		}
 
@@ -116,7 +117,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 	}
 
 	// check that the operation was signed before the signing key was revoked
-	if op.Timestamp < sk.ca || sk.ra > 0 && op.Timestamp > sk.ra {
+	if op.timestamp() < sk.createdAt() || sk.revokedAt() > 0 && op.timestamp() > sk.revokedAt() {
 		return ErrSignatureKeyRevoked
 	}
 
@@ -163,7 +164,9 @@ func (s *SignatureGraph) IsKeyValid(kid string, at int64) bool {
 		return false
 	}
 
-	if k.ca <= at && k.ra == 0 || k.ca <= at && k.ra > at {
+	pat := time.Unix(at, 0).Unix()
+
+	if k.createdAt() <= pat && k.revokedAt() == 0 || k.createdAt() <= pat && k.revokedAt() > pat {
 		return true
 	}
 
@@ -283,7 +286,7 @@ func (s *SignatureGraph) CreatedAt(kid string) (int64, error) {
 		return 0, ErrKeyNotFound
 	}
 
-	return k.ca, nil
+	return k.createdAt(), nil
 }
 
 // RevokedAt returns the time a key was revoked. If the key has not been revoked, the returned timestamp will be 0
@@ -293,12 +296,12 @@ func (s *SignatureGraph) RevokedAt(kid string) (int64, error) {
 		return 0, ErrKeyNotFound
 	}
 
-	return k.ra, nil
+	return k.revokedAt(), nil
 }
 
 func (s *SignatureGraph) add(op *Operation, a *Action) error {
 	// lookup the key the action refers to
-	n, ok := s.keys[a.KID]
+	_, ok := s.keys[a.KID]
 
 	// if the key already exists, fail
 	if ok {
@@ -310,7 +313,7 @@ func (s *SignatureGraph) add(op *Operation, a *Action) error {
 		return ErrInvalidKeyEncoding
 	}
 
-	n = &Node{
+	n := &Node{
 		kid: a.KID,
 		did: a.DID,
 		typ: a.Type,
@@ -400,7 +403,7 @@ func (s *SignatureGraph) revoke(op *Operation, a *Action) error {
 	} else {
 		// revoke all child keys created after the revocation takes effect
 		for _, cn := range n.collect() {
-			if cn.ca < a.EffectiveFrom {
+			if cn.createdAt() < a.effectiveFrom() {
 				n.ra = a.EffectiveFrom
 			}
 		}
