@@ -2,7 +2,10 @@
 
 package siggraph
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+	"time"
+)
 
 var (
 	// TypeDeviceKey the type of key the action relates to
@@ -64,4 +67,8 @@ func (a *Action) Validate() error {
 	}
 
 	return nil
+}
+
+func (a *Action) effectiveFrom() int64 {
+	return time.Unix(a.EffectiveFrom, 0).Unix()
 }

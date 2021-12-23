@@ -3,6 +3,8 @@
 package siggraph
 
 import (
+	"time"
+
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -32,4 +34,12 @@ func (n *Node) collect() []*Node {
 	}
 
 	return nodes
+}
+
+func (n *Node) createdAt() int64 {
+	return time.Unix(n.ca, 0).Unix()
+}
+
+func (n *Node) revokedAt() int64 {
+	return time.Unix(n.ra, 0).Unix()
 }

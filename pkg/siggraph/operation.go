@@ -5,6 +5,7 @@ package siggraph
 import (
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"golang.org/x/crypto/ed25519"
 
@@ -103,4 +104,8 @@ func (o *Operation) ActionByKID(kid string) *Action {
 	}
 
 	return nil
+}
+
+func (o *Operation) timestamp() int64 {
+	return time.Unix(o.Timestamp, 0).Unix()
 }
