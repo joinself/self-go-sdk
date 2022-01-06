@@ -37,10 +37,32 @@ $ rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.14-1.x86_64.rpm
 $ rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.2-1.x86_64.rpm
 ```
 
-#### Mac
+#### Mac (x86_64)
 ```sh
 $ brew tap joinself/crypto
-$ brew install libself_olm libself_omemo
+$ brew install libself-olm libself-omemo
+```
+
+#### Mac (m1/arm64)
+Brew on M1 macs currently lacks environment variables needed for the sdk to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
+
+In your `~/.zshrc`, add:
+```sh
+export C_INCLUDE_PATH=/opt/homebrew/include/
+export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/lib
+```
+
+You should then be able to run:
+
+```sh
+$ source ~/.zshrc
+$ brew tap joinself/crypto
+$ brew install --build-from-source libself-olm libself-omemo
+```
+
+Note, you may also need to create `/usr/local/lib` if it does not exist:
+```sh
+$ sudo mkdir /usr/local/lib
 ```
 
 ## Quick Start
