@@ -2,6 +2,11 @@ stages:
   - prerelease
   - release
 
+.rules:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE =~ /external_pull_request_event|web/
+
 .license-check: &license-check |
   git clone https://${GITHUB_TOKEN}:@github.com/aldgate-ventures/license-finder.git
   source ~/.profile
@@ -26,8 +31,8 @@ license-check:
   script:
     - ${SCRIPTS_DIR}/git-setup
     - *license-check
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 secrets-check:
   stage: prerelease
@@ -39,8 +44,8 @@ secrets-check:
     DOCKER_TLS_CERTDIR: ""
   script:
     - ${SCRIPTS_DIR}/git-secrets
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 unit-test:
   stage: prerelease
@@ -48,8 +53,8 @@ unit-test:
   script:
     - *setup
     - go test -v ./...
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 release:
   stage: release
@@ -59,5 +64,5 @@ release:
     - version=$(${SCRIPTS_DIR}/git-new-version -n joinself)
     - ${SCRIPTS_DIR}/git-release -n joinself -v ${version}
     - ${SCRIPTS_DIR}/slack-release-notification -n joinself -v ${version}
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
