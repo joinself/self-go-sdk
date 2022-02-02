@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/joinself/self-go-sdk/authentication"
+	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
@@ -146,6 +147,20 @@ func (c *Client) MessagingService() *messaging.Service {
 	}
 
 	return messaging.NewService(cfg)
+}
+
+// ChatService returns a client for interacting with chat
+func (c *Client) ChatService() *chat.Service {
+	cfg := chat.Config{
+		SelfID:           c.config.SelfAppID,
+		PrivateKey:       c.config.sk,
+		KeyID:            c.config.kid,
+		Rest:             c.connectors.Rest,
+		MessagingService: c.MessagingService(),
+		MessagingClient:  c.connectors.Messaging,
+	}
+
+	return chat.NewService(cfg)
 }
 
 // Close gracefully closes the self client
