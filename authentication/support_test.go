@@ -111,6 +111,10 @@ func (c *testResponder) GetHistory(selfID string) ([]json.RawMessage, error) {
 	return history, nil
 }
 
+func (c *testResponder) BuildURL(path string) string {
+	return "http://test.joinself.com/" + path
+}
+
 func (c *testResponder) addpk(selfID string, sk ed25519.PrivateKey, pk ed25519.PublicKey) {
 	now := ntp.TimeFunc().Add(-(time.Hour * 356 * 24)).Unix()
 
