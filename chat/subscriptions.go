@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
@@ -39,7 +38,6 @@ func (s *Service) OnInvite(callback func(m *Group)) {
 			log.Println(err)
 			return
 		}
-		spew.Dump(payload)
 
 		callback(NewGroup(s, payload))
 	})

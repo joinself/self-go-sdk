@@ -20,6 +20,7 @@ type RestTransport interface {
 	Post(path string, ctype string, data []byte) ([]byte, error)
 	Put(path string, ctype string, data []byte) ([]byte, error)
 	Delete(path string) ([]byte, error)
+	BuildURL(path string) string
 }
 
 // WebsocketTransport defines the interface required for the sdk to perform

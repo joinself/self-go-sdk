@@ -20,6 +20,8 @@ type messagingClient interface {
 
 type restTransport interface {
 	Get(path string) ([]byte, error)
+	Post(path string, ctype string, data []byte) ([]byte, error)
+	BuildURL(path string) string
 }
 
 type Service struct {
@@ -31,6 +33,7 @@ type Service struct {
 	keyID            string
 	expiry           time.Duration
 	sk               ed25519.PrivateKey
+	FileInteractor   *RemoteFileInteractor
 }
 
 type Config struct {
@@ -53,5 +56,6 @@ func NewService(config Config) *Service {
 		api:              config.Rest,
 		expiry:           time.Minute,
 		sk:               config.PrivateKey,
+		FileInteractor:   NewRemoteFileInteractor(config.Rest),
 	}
 }

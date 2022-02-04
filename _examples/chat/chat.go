@@ -3,6 +3,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -39,9 +40,25 @@ func main() {
 
 	cs := client.ChatService()
 
-	opts := make(map[string]interface{}, 0)
-	go cs.OnMessage(func(cm *chat.Message) {
+	cs.OnMessage(func(cm *chat.Message) {
+		opts := map[string]interface{}{}
+		cm.Message("howdy", opts)
 		println("chat.message received with " + cm.Body)
+		if len(cm.Objects) > 0 {
+			for _, o := range cm.Objects {
+				c, err := o.GetContent()
+				if err != nil {
+					println(err.Error())
+					continue
+				}
+				err = ioutil.WriteFile("/tmp/obj", c, 0644)
+				if err != nil {
+					println(err.Error())
+					continue
+				}
+				println(" - file on /tmp/obj")
+			}
+		}
 		time.Sleep(5 * time.Second)
 		println("sending a direct response")
 		cm.Respond("tupu")
@@ -73,6 +90,29 @@ func main() {
 	cs.OnLeave(func(iss, gid string) {
 		delete(groups, gid)
 	})
+
+	var opts map[string]interface{}
+	/*
+		// Public object
+		obj = map[string]interface{}{
+			"name": "Hello",
+			"link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
+			"mime": "image/gif",
+		}
+	*/
+	dat, err := os.ReadFile("/tmp/obj.png")
+	if err == nil {
+		println("attaching local object")
+		// Private object
+		obj := map[string]interface{}{
+			"name": "Test",
+			"data": dat,
+			"mime": "image/png",
+		}
+		opts = map[string]interface{}{
+			"objects": []map[string]interface{}{obj},
+		}
+	}
 
 	cs.Message([]string{os.Args[1]}, "oyoyo!", opts)
 

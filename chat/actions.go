@@ -4,9 +4,9 @@ package chat
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/square/go-jose"
@@ -35,7 +35,26 @@ func (s *Service) Message(recipients []string, body string, opts map[string]inte
 		payload["rid"] = rid
 	}
 
-	// TODO: object management here...
+	if _, ok := opts["objects"]; ok {
+		// fi := NewRemoteFileInteractor(s.api)
+		objects := make([]interface{}, 0)
+		for _, o := range opts["objects"].([]map[string]interface{}) {
+			if _, ok := o["link"]; ok {
+				// Is a public image, just append it
+				objects = append(objects, o)
+			} else {
+				fo := NewObject(s.FileInteractor)
+				err := fo.BuildFromData(o["data"].([]byte), o["name"].(string), o["mime"].(string))
+				if err == nil {
+					objects = append(objects, fo.ToPayload())
+				} else {
+					log.Println(err.Error())
+				}
+			}
+		}
+		payload["objects"] = objects
+	}
+
 	s.send(recipients, payload)
 
 	return NewMessage(s, recipients, payload)
@@ -93,7 +112,14 @@ func (s *Service) Invite(gid string, name string, members []string, opts map[str
 	}
 
 	if _, ok := opts["data"]; ok {
-		// TODO: manage attached objects...
+		fo := NewObject(s.FileInteractor)
+		err := fo.BuildFromData(opts["data"].([]byte), "", opts["mime"].(string))
+		if err == nil {
+			objPayload := fo.ToPayload()
+			opts["link"] = objPayload["link"]
+			opts["key"] = objPayload["key"]
+			opts["expires"] = objPayload["expires"]
+		}
 	}
 
 	s.send(members, p)
@@ -153,12 +179,12 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	for _, recipient := range recipients {
 		req["aud"] = recipient
 		req["sub"] = recipient
-		spew.Dump(req)
 
 		payload, err := json.Marshal(req)
 		if err != nil {
 			return err
 		}
+		println(string(payload))
 
 		opts := &jose.SignerOptions{
 			ExtraHeaders: map[jose.HeaderKey]interface{}{
@@ -177,7 +203,6 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 		}
 
 		body := []byte(signature.FullSerialize())
-		spew.Dump(recs)
 
 		err = s.messagingClient.Send(recs, body)
 		if err != nil {
@@ -221,7 +246,6 @@ func (s *Service) createMissingSessions(members []string) error {
 	}
 
 	println("creating missing sessions")
-	spew.Dump(posteriorMembers)
 	return s.send(posteriorMembers, map[string]interface{}{"typ": "sessions.create"})
 }
 
