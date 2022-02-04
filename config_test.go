@@ -54,6 +54,10 @@ func (t *testRestTransport) Delete(path string) ([]byte, error) {
 	return nil, nil
 }
 
+func (c *testRestTransport) BuildURL(path string) string {
+	return "http://test.joinself.com/" + path
+}
+
 func TestConfigValidate(t *testing.T) {
 	cfg := Config{}
 
