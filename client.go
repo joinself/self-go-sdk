@@ -93,6 +93,9 @@ func New(cfg Config) (*Client, error) {
 		connectors: cfg.Connectors,
 	}
 
+	var utcZone = time.FixedZone("UTC", 0)
+	time.Local = utcZone
+
 	return client, nil
 }
 

@@ -162,9 +162,6 @@ func (s *Service) confirm(action string, recipients []string, cids []string, gid
 }
 
 func (s *Service) send(recipients []string, req map[string]interface{}) error {
-	var utcZone = time.FixedZone("UTC", 0)
-	time.Local = utcZone
-
 	recs, err := s.recipients(recipients)
 	if err != nil {
 		return err
