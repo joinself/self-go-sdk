@@ -41,8 +41,7 @@ func main() {
 	cs := client.ChatService()
 
 	cs.OnMessage(func(cm *chat.Message) {
-		opts := map[string]interface{}{}
-		cm.Message("howdy", opts)
+		cm.Message("howdy")
 		println("chat.message received with " + cm.Body)
 		if len(cm.Objects) > 0 {
 			for _, o := range cm.Objects {
@@ -64,7 +63,7 @@ func main() {
 		cm.Respond("tupu")
 		time.Sleep(5 * time.Second)
 		println("sending a new message to that conversation")
-		nm := cm.Message("supu", map[string]interface{}{})
+		nm := cm.Message("supu")
 		time.Sleep(5 * time.Second)
 		println("editing new message")
 		nm.Edit("about to be removed")
@@ -78,7 +77,7 @@ func main() {
 		g.Join()
 		groups[g.GID] = g
 		time.Sleep(5 * time.Second)
-		g.Message("hey!", map[string]interface{}{})
+		g.Message("hey!")
 	})
 
 	cs.OnJoin(func(iss, gid string) {
@@ -91,31 +90,16 @@ func main() {
 		delete(groups, gid)
 	})
 
-	var opts map[string]interface{}
 	// Public object
-	obj = map[string]interface{}{
+	obj = chat.MessageOp{
 		"name": "Hello",
 		"link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
 		"mime": "image/gif",
 	}
-	/*
-		// Add a private object
-		dat, err := os.ReadFile("/tmp/obj.png")
-		if err == nil {
-			println("attaching local object")
-			// Private object
-			obj := map[string]interface{}{
-				"name": "Test",
-				"data": dat,
-				"mime": "image/png",
-			}
-			opts = map[string]interface{}{
-				"objects": []map[string]interface{}{obj},
-			}
-		}
-	*/
 
-	cs.Message([]string{os.Args[1]}, "oyoyo!", opts)
+	cs.Message([]string{os.Args[1]}, "oyoyo!", chat.MessageOptions{
+		Objects: []map[string][]chat.MessageObject{obj},
+	})
 
 	if err != nil {
 		log.Fatal("error sending message: ", err)

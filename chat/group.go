@@ -45,7 +45,7 @@ func (m *Group) Invite(user string) {
 	}
 
 	m.Members = append(m.Members, user)
-	m.service.Invite(m.GID, m.Name, m.Members, map[string]interface{}{})
+	m.service.Invite(m.GID, m.Name, m.Members)
 }
 
 func (m *Group) Leave() {
@@ -56,7 +56,10 @@ func (m *Group) Join() {
 	m.service.Join(m.GID, m.Members)
 }
 
-func (m *Group) Message(body string, opts map[string]interface{}) *Message {
-	opts["gid"] = m.GID
-	return m.service.Message(m.Members, body, opts)
+func (m *Group) Message(body string, opts ...MessageOptions) *Message {
+	if len(opts) == 0 {
+		opts = append(opts, MessageOptions{})
+	}
+	opts[0].GID = m.GID
+	return m.service.Message(m.Members, body, opts[0])
 }

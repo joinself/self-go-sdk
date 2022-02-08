@@ -17,35 +17,52 @@ func (s *Service) SelfID() string {
 	return s.selfID
 }
 
+type MessageObject struct {
+	Link string
+	Name string
+	Data []byte
+	Mime string
+}
+type MessageOptions struct {
+	GID     string
+	AUD     string
+	JTI     string
+	RID     string
+	Objects []MessageObject
+}
+
 // Message sends a message to a list of recipients.
-func (s *Service) Message(recipients []string, body string, opts map[string]interface{}) *Message {
+func (s *Service) Message(recipients []string, body string, opts ...MessageOptions) *Message {
 	payload := map[string]interface{}{
 		"typ": "chat.message",
 		"msg": body,
 	}
 
 	payload["aud"] = recipients[0]
-	if _, ok := opts["gid"]; ok {
-		payload["gid"] = opts["gid"]
-		payload["aud"] = opts["gid"]
-	}
-	if jti, ok := opts["jti"]; ok {
-		payload["jti"] = jti
-	}
-	if rid, ok := opts["rid"]; ok {
-		payload["rid"] = rid
-	}
+	if len(opts) > 0 {
+		if len(opts[0].GID) > 0 {
+			payload["gid"] = opts[0].GID
+			payload["aud"] = opts[0].GID
+		}
+		if len(opts[0].JTI) > 0 {
+			payload["jti"] = opts[0].JTI
+		}
+		if len(opts[0].RID) > 0 {
+			payload["rid"] = opts[0].RID
+		}
 
-	if _, ok := opts["objects"]; ok {
 		// fi := NewRemoteFileInteractor(s.api)
 		objects := make([]interface{}, 0)
-		for _, o := range opts["objects"].([]map[string]interface{}) {
-			if _, ok := o["link"]; ok {
+		for _, o := range opts[0].Objects {
+			if len(o.Link) > 0 {
 				// Is a public image, just append it
-				objects = append(objects, o)
+				objects = append(objects, map[string]interface{}{
+					"link": o.Link,
+					"name": o.Name,
+				})
 			} else {
 				fo := NewObject(s.FileInteractor)
-				err := fo.BuildFromData(o["data"].([]byte), o["name"].(string), o["mime"].(string))
+				err := fo.BuildFromData(o.Data, o.Name, o.Mime)
 				if err == nil {
 					objects = append(objects, fo.ToPayload())
 				} else {
@@ -102,8 +119,13 @@ func (s *Service) Delete(recipients []string, cids []string, gid string) {
 	s.send(recipients, p)
 }
 
+type InviteOptions struct {
+	Data []byte
+	Mime string
+}
+
 // Invite sends a group invitation to a list of members.
-func (s *Service) Invite(gid string, name string, members []string, opts map[string]interface{}) {
+func (s *Service) Invite(gid string, name string, members []string, opts ...InviteOptions) {
 	p := map[string]interface{}{
 		"typ":     "chat.invite",
 		"gid":     gid,
@@ -112,14 +134,14 @@ func (s *Service) Invite(gid string, name string, members []string, opts map[str
 		"aud":     gid,
 	}
 
-	if _, ok := opts["data"]; ok {
+	if len(opts) > 0 {
 		fo := NewObject(s.FileInteractor)
-		err := fo.BuildFromData(opts["data"].([]byte), "", opts["mime"].(string))
+		err := fo.BuildFromData(opts[0].Data, "", opts[0].Mime)
 		if err == nil {
 			objPayload := fo.ToPayload()
-			opts["link"] = objPayload["link"]
-			opts["key"] = objPayload["key"]
-			opts["expires"] = objPayload["expires"]
+			p["link"] = objPayload["link"]
+			p["key"] = objPayload["key"]
+			p["expires"] = objPayload["expires"]
 		}
 	}
 

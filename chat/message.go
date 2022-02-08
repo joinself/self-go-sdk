@@ -86,13 +86,17 @@ func (m *Message) MarkAsRead() {
 }
 
 func (m *Message) Respond(body string) *Message {
-	return m.Message(body, map[string]interface{}{"rid": m.JTI})
+	return m.Message(body, MessageOptions{RID: m.JTI})
 }
 
-func (m *Message) Message(body string, opts map[string]interface{}) *Message {
+func (m *Message) Message(body string, opts ...MessageOptions) *Message {
+	if len(opts) == 0 {
+		opts = append(opts, MessageOptions{})
+	}
+
 	if len(m.GID) > 0 {
-		opts["aud"] = m.GID
-		opts["gid"] = m.GID
+		opts[0].AUD = m.GID
+		opts[0].GID = m.GID
 	}
 
 	to := m.Recipients
@@ -100,7 +104,7 @@ func (m *Message) Message(body string, opts map[string]interface{}) *Message {
 		to = []string{m.ISS}
 	}
 
-	return m.service.Message(to, body, opts)
+	return m.service.Message(to, body, opts[0])
 }
 
 func (m *Message) amITheRecipient() bool {

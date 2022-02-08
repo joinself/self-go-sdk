@@ -225,7 +225,7 @@ func TestInviite(t *testing.T) {
 	s.api = &restMock
 
 	// Call public method
-	s.Invite(gid, name, recipients, map[string]interface{}{})
+	s.Invite(gid, name, recipients)
 }
 
 func TestJoin(t *testing.T) {
@@ -372,7 +372,7 @@ func TestMessage(t *testing.T) {
 	s.api = &restMock
 
 	// Call public method
-	s.Message(recipients, body, map[string]interface{}{})
+	s.Message(recipients, body)
 }
 
 func TestMessageWithOpts(t *testing.T) {
@@ -416,8 +416,8 @@ func TestMessageWithOpts(t *testing.T) {
 	s.api = &restMock
 
 	// Call public method
-	s.Message(recipients, body, map[string]interface{}{
-		"gid": "gid",
-		"rid": "rid",
+	s.Message(recipients, body, MessageOptions{
+		GID: "gid",
+		RID: "rid",
 	})
 }
