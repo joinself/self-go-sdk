@@ -5,6 +5,7 @@ package chat
 import (
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -129,7 +130,9 @@ func (s *Service) Invite(gid string, name string, members []string, opts map[str
 func (s *Service) Join(gid string, members []string) {
 	// Allow incoming connections from the given members.
 	for _, m := range members {
-		s.messagingService.PermitConnection(m)
+		if m != s.selfID {
+			s.messagingService.PermitConnection(m)
+		}
 	}
 
 	// Create missing sessions with group members.
@@ -173,15 +176,15 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	req["exp"] = ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339)
 	req["device_id"] = s.deviceID
 
-	for _, recipient := range recipients {
-		req["aud"] = recipient
-		req["sub"] = recipient
+	for _, recipient := range recs {
+		r := strings.Split(recipient, ":")[0]
+		req["aud"] = r
+		req["sub"] = r
 
 		payload, err := json.Marshal(req)
 		if err != nil {
 			return err
 		}
-		println(string(payload))
 
 		opts := &jose.SignerOptions{
 			ExtraHeaders: map[jose.HeaderKey]interface{}{
