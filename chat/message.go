@@ -85,11 +85,11 @@ func (m *Message) MarkAsRead() {
 	m.service.Read([]string{m.ISS}, []string{m.JTI}, m.GID)
 }
 
-func (m *Message) Respond(body string) *Message {
+func (m *Message) Respond(body string) (*Message, error) {
 	return m.Message(body, MessageOptions{RID: m.JTI})
 }
 
-func (m *Message) Message(body string, opts ...MessageOptions) *Message {
+func (m *Message) Message(body string, opts ...MessageOptions) (*Message, error) {
 	if len(opts) == 0 {
 		opts = append(opts, MessageOptions{})
 	}

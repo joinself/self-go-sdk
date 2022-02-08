@@ -4,7 +4,6 @@ package chat
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 	"time"
 
@@ -32,7 +31,7 @@ type MessageOptions struct {
 }
 
 // Message sends a message to a list of recipients.
-func (s *Service) Message(recipients []string, body string, opts ...MessageOptions) *Message {
+func (s *Service) Message(recipients []string, body string, opts ...MessageOptions) (*Message, error) {
 	payload := map[string]interface{}{
 		"typ": "chat.message",
 		"msg": body,
@@ -63,19 +62,21 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 			} else {
 				fo := NewObject(s.FileInteractor)
 				err := fo.BuildFromData(o.Data, o.Name, o.Mime)
-				if err == nil {
-					objects = append(objects, fo.ToPayload())
-				} else {
-					log.Println(err.Error())
+				if err != nil {
+					return nil, err
 				}
+				objects = append(objects, fo.ToPayload())
 			}
 		}
 		payload["objects"] = objects
 	}
 
-	s.send(recipients, payload)
+	err := s.send(recipients, payload)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewMessage(s, recipients, payload)
+	return NewMessage(s, recipients, payload), nil
 }
 
 // Delivered sends a message to confirm a list of messages (identified by it's cids)

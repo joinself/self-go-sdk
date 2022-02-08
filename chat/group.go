@@ -56,7 +56,7 @@ func (m *Group) Join() {
 	m.service.Join(m.GID, m.Members)
 }
 
-func (m *Group) Message(body string, opts ...MessageOptions) *Message {
+func (m *Group) Message(body string, opts ...MessageOptions) (*Message, error) {
 	if len(opts) == 0 {
 		opts = append(opts, MessageOptions{})
 	}
