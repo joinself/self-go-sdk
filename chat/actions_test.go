@@ -18,7 +18,6 @@ func TestDelivered(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -31,8 +30,7 @@ func TestDelivered(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message.delivered")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], "gid")
 		assert.Equal(t, payload["iss"], config.SelfID)
 
 		return true
@@ -60,7 +58,6 @@ func TestRead(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -73,8 +70,7 @@ func TestRead(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message.read")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], gid)
 		assert.Equal(t, payload["iss"], config.SelfID)
 
 		return true
@@ -103,7 +99,6 @@ func TestEdit(t *testing.T) {
 	newBody := "hello!"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -116,8 +111,7 @@ func TestEdit(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message.edit")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], gid)
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, payload["msg"], newBody)
 		assert.Equal(t, payload["cid"], "cid")
@@ -148,7 +142,6 @@ func TestDelete(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -161,8 +154,7 @@ func TestDelete(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message.delete")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], gid)
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, 2, len(payload["cids"].([]interface{})))
 		assert.Equal(t, payload["gid"], "gid")
@@ -192,7 +184,6 @@ func TestInviite(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -205,8 +196,7 @@ func TestInviite(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.invite")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], gid)
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, 3, len(payload["members"].([]interface{})))
 		assert.Equal(t, payload["gid"], "gid")
@@ -259,8 +249,7 @@ func TestJoin(t *testing.T) {
 			firstMessage = false
 		} else {
 			assert.Equal(t, payload["typ"], "chat.join")
-			assert.Equal(t, payload["aud"], expectedRecipients[0])
-			expectedRecipients = expectedRecipients[1:]
+			assert.Equal(t, payload["aud"], "gid")
 			assert.Equal(t, payload["iss"], config.SelfID)
 			assert.Equal(t, payload["gid"], "gid")
 		}
@@ -298,7 +287,6 @@ func TestLeave(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -311,8 +299,7 @@ func TestLeave(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.remove")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], gid)
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, payload["gid"], "gid")
 
@@ -340,10 +327,11 @@ func TestMessage(t *testing.T) {
 	body := "hi"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
-	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
+	msgMock.On("Send", mock.MatchedBy(func(input []string) bool {
+		return (input[0] == "a:device1")
+	}), mock.MatchedBy(func(input []byte) bool {
 		var envelope map[string]string
 		assert.Nil(t, json.Unmarshal(input, &envelope))
 		decoder := base64.RawStdEncoding
@@ -353,13 +341,48 @@ func TestMessage(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, payload["msg"], body)
 
 		return true
 	})).Return(nil)
+
+	msgMock.On("Send", mock.MatchedBy(func(input []string) bool {
+		return (input[0] == "b:device1")
+	}), mock.MatchedBy(func(input []byte) bool {
+		var envelope map[string]string
+		assert.Nil(t, json.Unmarshal(input, &envelope))
+		decoder := base64.RawStdEncoding
+		payloadStr, err := decoder.DecodeString(envelope["payload"])
+		assert.Nil(t, err)
+		var payload map[string]interface{}
+		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
+
+		assert.Equal(t, payload["typ"], "chat.message")
+		assert.Equal(t, payload["iss"], config.SelfID)
+		assert.Equal(t, payload["msg"], body)
+
+		return true
+	})).Return(nil)
+
+	msgMock.On("Send", mock.MatchedBy(func(input []string) bool {
+		return (input[0] == "c:device1")
+	}), mock.MatchedBy(func(input []byte) bool {
+		var envelope map[string]string
+		assert.Nil(t, json.Unmarshal(input, &envelope))
+		decoder := base64.RawStdEncoding
+		payloadStr, err := decoder.DecodeString(envelope["payload"])
+		assert.Nil(t, err)
+		var payload map[string]interface{}
+		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
+
+		assert.Equal(t, payload["typ"], "chat.message")
+		assert.Equal(t, payload["iss"], config.SelfID)
+		assert.Equal(t, payload["msg"], body)
+
+		return true
+	})).Return(nil)
+
 	s.messagingClient = msgMock
 
 	// Mock API interactions
@@ -382,7 +405,6 @@ func TestMessageWithOpts(t *testing.T) {
 	body := "hi"
 
 	expectedDeviceURLs := []string{"/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/identities/c/devices"}
-	expectedRecipients := recipients
 
 	msgMock := mocks.MessagingClientMock{}
 	msgMock.On("Send", []string{"a:device1", "b:device1", "c:device1"}, mock.MatchedBy(func(input []byte) bool {
@@ -395,8 +417,7 @@ func TestMessageWithOpts(t *testing.T) {
 		assert.Nil(t, json.Unmarshal(payloadStr, &payload))
 
 		assert.Equal(t, payload["typ"], "chat.message")
-		assert.Equal(t, payload["aud"], expectedRecipients[0])
-		expectedRecipients = expectedRecipients[1:]
+		assert.Equal(t, payload["aud"], "gid")
 		assert.Equal(t, payload["iss"], config.SelfID)
 		assert.Equal(t, payload["msg"], body)
 		assert.Equal(t, payload["gid"], "gid")

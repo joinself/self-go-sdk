@@ -50,7 +50,6 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 			payload["rid"] = opts[0].RID
 		}
 
-		// fi := NewRemoteFileInteractor(s.api)
 		objects := make([]interface{}, 0)
 		for _, o := range opts[0].Objects {
 			if len(o.Link) > 0 {
@@ -58,6 +57,7 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 				objects = append(objects, map[string]interface{}{
 					"link": o.Link,
 					"name": o.Name,
+					"mime": o.Mime,
 				})
 			} else {
 				fo := NewObject(s.FileInteractor)
@@ -199,40 +199,63 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	req["exp"] = ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339)
 	req["device_id"] = s.deviceID
 
-	for _, recipient := range recs {
-		r := strings.Split(recipient, ":")[0]
-		req["aud"] = r
-		req["sub"] = r
+	if gid, ok := req["gid"]; ok && len(gid.(string)) > 0 {
+		req["aud"] = gid
+		req["sub"] = gid
 
-		payload, err := json.Marshal(req)
+		body, err := s.serialize(req)
 		if err != nil {
 			return err
 		}
-
-		opts := &jose.SignerOptions{
-			ExtraHeaders: map[jose.HeaderKey]interface{}{
-				"kid": s.keyID,
-			},
-		}
-
-		signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-		if err != nil {
-			return err
-		}
-
-		signature, err := signer.Sign(payload)
-		if err != nil {
-			return err
-		}
-
-		body := []byte(signature.FullSerialize())
 
 		err = s.messagingClient.Send(recs, body)
 		if err != nil {
 			return err
 		}
+	} else {
+		for _, recipient := range recs {
+			r := strings.Split(recipient, ":")[0]
+			req["aud"] = r
+			req["sub"] = r
+
+			body, err := s.serialize(req)
+			if err != nil {
+				return err
+			}
+
+			err = s.messagingClient.Send([]string{recipient}, body)
+			if err != nil {
+				return err
+			}
+		}
 	}
+
 	return nil
+}
+
+func (s *Service) serialize(req map[string]interface{}) ([]byte, error) {
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	opts := &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{
+			"kid": s.keyID,
+		},
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	signature, err := signer.Sign(payload)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return []byte(signature.FullSerialize()), nil
 }
 
 // builds a list of all devices associated with an identity
@@ -257,11 +280,11 @@ func (s Service) recipients(recipients []string) ([]string, error) {
 func (s *Service) createMissingSessions(members []string) error {
 	println("creating missing sessions 1")
 	sw := false
-	posteriorMembers := make([]string, 0)
+	unconnectedMembers := make([]string, 0)
 
 	for _, m := range members {
 		if sw {
-			posteriorMembers = append(posteriorMembers, m)
+			unconnectedMembers = append(unconnectedMembers, m)
 		}
 		if m == s.selfID {
 			sw = true
@@ -269,7 +292,7 @@ func (s *Service) createMissingSessions(members []string) error {
 	}
 
 	println("creating missing sessions")
-	return s.send(posteriorMembers, map[string]interface{}{"typ": "sessions.create"})
+	return s.send(unconnectedMembers, map[string]interface{}{"typ": "sessions.create"})
 }
 
 func (s Service) getDevices(selfID string) ([]string, error) {

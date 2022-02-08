@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/joinself/self-go-sdk/chat"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -41,38 +42,41 @@ type device struct {
 
 // Service handles all fact operations
 type Service struct {
-	selfID      string
-	deviceID    string
-	keyID       string
-	environment string
-	sk          ed25519.PrivateKey
-	api         restTransport
-	pki         pkiClient
-	messaging   messagingClient
+	selfID         string
+	deviceID       string
+	keyID          string
+	environment    string
+	sk             ed25519.PrivateKey
+	api            restTransport
+	pki            pkiClient
+	messaging      messagingClient
+	fileInteractor *chat.RemoteFileInteractor
 }
 
 // Config stores all configuration needed by the fact service
 type Config struct {
-	SelfID      string
-	DeviceID    string
-	KeyID       string
-	Environment string
-	PrivateKey  ed25519.PrivateKey
-	Rest        restTransport
-	PKI         pkiClient
-	Messaging   messagingClient
+	SelfID         string
+	DeviceID       string
+	KeyID          string
+	Environment    string
+	PrivateKey     ed25519.PrivateKey
+	Rest           restTransport
+	PKI            pkiClient
+	Messaging      messagingClient
+	FileInteractor *chat.RemoteFileInteractor
 }
 
 // NewService creates a new client for interacting with facts
 func NewService(cfg Config) *Service {
 	return &Service{
-		selfID:      cfg.SelfID,
-		deviceID:    cfg.DeviceID,
-		keyID:       cfg.KeyID,
-		environment: cfg.Environment,
-		sk:          cfg.PrivateKey,
-		api:         cfg.Rest,
-		pki:         cfg.PKI,
-		messaging:   cfg.Messaging,
+		selfID:         cfg.SelfID,
+		deviceID:       cfg.DeviceID,
+		keyID:          cfg.KeyID,
+		environment:    cfg.Environment,
+		sk:             cfg.PrivateKey,
+		api:            cfg.Rest,
+		pki:            cfg.PKI,
+		messaging:      cfg.Messaging,
+		fileInteractor: cfg.FileInteractor,
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/pkg/crypto"
 	"github.com/joinself/self-go-sdk/pkg/messaging"
 	"github.com/joinself/self-go-sdk/pkg/pki"
@@ -57,6 +58,7 @@ type Config struct {
 	TCPDeadline          time.Duration
 	RequestTimeout       time.Duration
 	Connectors           *Connectors
+	FileInteractor       *chat.RemoteFileInteractor
 	offsetStorageDir     string
 	cryptoStorageDir     string
 	kid                  string
@@ -178,6 +180,8 @@ func (c *Config) load() error {
 		return err
 	}
 
+	c.loadRemoteFileInteractor()
+
 	return c.loadMessagingConnector()
 }
 
@@ -209,6 +213,12 @@ func (c Config) loadRestConnector() error {
 	c.Connectors.Rest = rest
 
 	return nil
+}
+
+func (c Config) loadRemoteFileInteractor() {
+	if c.FileInteractor == nil {
+		c.FileInteractor = chat.NewRemoteFileInteractor(c.Connectors.Rest)
+	}
 }
 
 func (c Config) loadWebsocketConnector() error {

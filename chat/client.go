@@ -44,6 +44,7 @@ type Config struct {
 	MessagingService messagingService
 	Rest             restTransport
 	PrivateKey       ed25519.PrivateKey
+	FileInteractor   *RemoteFileInteractor
 }
 
 func NewService(config Config) *Service {
@@ -56,6 +57,6 @@ func NewService(config Config) *Service {
 		api:              config.Rest,
 		expiry:           time.Minute,
 		sk:               config.PrivateKey,
-		FileInteractor:   NewRemoteFileInteractor(config.Rest),
+		FileInteractor:   config.FileInteractor,
 	}
 }

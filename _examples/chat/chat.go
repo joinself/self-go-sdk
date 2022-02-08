@@ -63,7 +63,7 @@ func main() {
 		cm.Respond("tupu")
 		time.Sleep(5 * time.Second)
 		println("sending a new message to that conversation")
-		nm := cm.Message("supu")
+		nm, _ := cm.Message("supu")
 		time.Sleep(5 * time.Second)
 		println("editing new message")
 		nm.Edit("about to be removed")
@@ -91,14 +91,14 @@ func main() {
 	})
 
 	// Public object
-	obj = chat.MessageOp{
-		"name": "Hello",
-		"link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
-		"mime": "image/gif",
+	obj := chat.MessageObject{
+		Name: "Hello",
+		Link: "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
+		Mime: "image/gif",
 	}
 
-	cs.Message([]string{os.Args[1]}, "oyoyo!", chat.MessageOptions{
-		Objects: []map[string][]chat.MessageObject{obj},
+	_, err = cs.Message([]string{os.Args[1]}, "oyoyo!", chat.MessageOptions{
+		Objects: []chat.MessageObject{obj},
 	})
 
 	if err != nil {
