@@ -92,27 +92,28 @@ func main() {
 	})
 
 	var opts map[string]interface{}
+	// Public object
+	obj = map[string]interface{}{
+		"name": "Hello",
+		"link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
+		"mime": "image/gif",
+	}
 	/*
-		// Public object
-		obj = map[string]interface{}{
-			"name": "Hello",
-			"link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
-			"mime": "image/gif",
+		// Add a private object
+		dat, err := os.ReadFile("/tmp/obj.png")
+		if err == nil {
+			println("attaching local object")
+			// Private object
+			obj := map[string]interface{}{
+				"name": "Test",
+				"data": dat,
+				"mime": "image/png",
+			}
+			opts = map[string]interface{}{
+				"objects": []map[string]interface{}{obj},
+			}
 		}
 	*/
-	dat, err := os.ReadFile("/tmp/obj.png")
-	if err == nil {
-		println("attaching local object")
-		// Private object
-		obj := map[string]interface{}{
-			"name": "Test",
-			"data": dat,
-			"mime": "image/png",
-		}
-		opts = map[string]interface{}{
-			"objects": []map[string]interface{}{obj},
-		}
-	}
 
 	cs.Message([]string{os.Args[1]}, "oyoyo!", opts)
 
