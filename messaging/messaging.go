@@ -107,13 +107,10 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 			return
 		}
 
-		// TODO: recover this validation once https://github.com/joinself/self-android/issues/1709 is fixed
-		/*
-			if ntp.TimeFunc().After(mp.ExpiresAt) {
-				log.Println("messaging:", ErrMessageExpired.Error())
-				return
-			}
-		*/
+		if ntp.TimeFunc().After(mp.ExpiresAt) {
+			log.Println("messaging:", ErrMessageExpired.Error())
+			return
+		}
 
 		if mp.IssuedAt.Add(-time.Second * 5).After(ntp.TimeFunc()) {
 			log.Println("messaging:", ErrMessageIssuedTooSoon.Error())
