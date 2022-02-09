@@ -162,7 +162,7 @@ func (c *Client) ChatService() *chat.Service {
 		Rest:             c.connectors.Rest,
 		MessagingService: c.MessagingService(),
 		MessagingClient:  c.connectors.Messaging,
-		FileInteractor:   c.config.FileInteractor,
+		FileInteractor:   c.connectors.FileInteractor,
 	}
 
 	return chat.NewService(cfg)

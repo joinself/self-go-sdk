@@ -33,12 +33,13 @@ var (
 
 // Connectors stores all connectors for working with different self api's
 type Connectors struct {
-	Rest      RestTransport
-	Websocket WebsocketTransport
-	Messaging MessagingClient
-	PKI       PKIClient
-	Crypto    CryptoClient
-	Storage   CryptoStorage
+	Rest           RestTransport
+	Websocket      WebsocketTransport
+	Messaging      MessagingClient
+	PKI            PKIClient
+	Crypto         CryptoClient
+	Storage        CryptoStorage
+	FileInteractor *object.RemoteFileInteractor
 }
 
 // Config configuration options for the sdk
@@ -58,7 +59,6 @@ type Config struct {
 	TCPDeadline          time.Duration
 	RequestTimeout       time.Duration
 	Connectors           *Connectors
-	FileInteractor       *object.RemoteFileInteractor
 	offsetStorageDir     string
 	cryptoStorageDir     string
 	kid                  string
@@ -216,8 +216,9 @@ func (c Config) loadRestConnector() error {
 }
 
 func (c Config) loadRemoteFileInteractor() {
-	if c.FileInteractor == nil {
-		c.FileInteractor = object.NewRemoteFileInteractor(c.Connectors.Rest)
+	if c.Connectors.FileInteractor == nil {
+		println("loading file interactor")
+		c.Connectors.FileInteractor = object.NewRemoteFileInteractor(c.Connectors.Rest)
 	}
 }
 
