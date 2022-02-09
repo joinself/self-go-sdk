@@ -304,12 +304,25 @@ func (c *Websocket) connect() error {
 		return errors.New("could not connect")
 	}
 
+	var ws *websocket.Conn
 	var connected bool
 
 	defer func(success *bool) {
 		if !(*success) {
 			// if it failed to reconnect, set the connection status to closed
 			atomic.CompareAndSwapInt32(&c.closed, 0, 1)
+
+			// close the connection
+			if ws == nil {
+				return
+			}
+
+			log.Println("[websocket] closing errored connection")
+
+			err := ws.Close()
+			if err != nil {
+				log.Println("[websocket]", err)
+			}
 		}
 	}(&connected)
 
@@ -318,7 +331,7 @@ func (c *Websocket) connect() error {
 		return err
 	}
 
-	ws, _, err := websocket.DefaultDialer.Dial(c.config.MessagingURL, nil)
+	ws, _, err = websocket.DefaultDialer.Dial(c.config.MessagingURL, nil)
 	if err != nil {
 		return err
 	}
@@ -340,6 +353,7 @@ func (c *Websocket) connect() error {
 	c.ws.SetReadDeadline(time.Now().Add(c.config.TCPDeadline))
 	_, data, err := c.ws.ReadMessage()
 	if err != nil {
+		log.Println("[websocket] authentication timeout:", err.Error())
 		return err
 	}
 
@@ -523,12 +537,16 @@ func (c *Websocket) reconnect(err error) {
 	}
 
 	for i := 0; i < 20; i++ {
+		log.Println("[websocket] attempting reconnect")
+
 		time.Sleep(c.config.TCPDeadline)
 
 		err := c.connect()
 		if err == nil {
 			return
 		}
+
+		log.Println("[websocket] failed to connect to messaging")
 	}
 }
 

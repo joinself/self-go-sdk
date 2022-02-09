@@ -15,6 +15,7 @@ require (
 	github.com/square/go-jose v2.4.1+incompatible
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.6.5
+	github.com/tidwall/gjson v1.9.3
 	github.com/tidwall/sjson v1.0.4
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 // indirect
