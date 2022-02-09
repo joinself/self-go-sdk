@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/joinself/self-go-sdk/messaging"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -33,7 +34,7 @@ type Service struct {
 	keyID            string
 	expiry           time.Duration
 	sk               ed25519.PrivateKey
-	FileInteractor   *RemoteFileInteractor
+	FileInteractor   *object.RemoteFileInteractor
 }
 
 type Config struct {
@@ -44,7 +45,7 @@ type Config struct {
 	MessagingService messagingService
 	Rest             restTransport
 	PrivateKey       ed25519.PrivateKey
-	FileInteractor   *RemoteFileInteractor
+	FileInteractor   *object.RemoteFileInteractor
 }
 
 func NewService(config Config) *Service {

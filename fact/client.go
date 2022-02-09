@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -50,7 +50,7 @@ type Service struct {
 	api            restTransport
 	pki            pkiClient
 	messaging      messagingClient
-	fileInteractor *chat.RemoteFileInteractor
+	fileInteractor *object.RemoteFileInteractor
 }
 
 // Config stores all configuration needed by the fact service
@@ -63,7 +63,7 @@ type Config struct {
 	Rest           restTransport
 	PKI            pkiClient
 	Messaging      messagingClient
-	FileInteractor *chat.RemoteFileInteractor
+	FileInteractor *object.RemoteFileInteractor
 }
 
 // NewService creates a new client for interacting with facts

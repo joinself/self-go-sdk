@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-package chat
+package object
 
 import (
 	"crypto/rand"
@@ -13,6 +13,12 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
+type restTransport interface {
+	Get(path string) ([]byte, error)
+	Post(path string, ctype string, data []byte) ([]byte, error)
+	BuildURL(path string) string
+}
+
 type EncryptedObject struct {
 	Link    string
 	Key     string
@@ -20,6 +26,7 @@ type EncryptedObject struct {
 	Content string
 	Expires int64
 }
+
 type RemoteFileInteractor struct {
 	api restTransport
 }
