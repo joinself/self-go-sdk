@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/beevik/ntp v0.2.0
-	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/golang/protobuf v1.4.1
 	github.com/google/flatbuffers v2.0.0+incompatible
 	github.com/google/uuid v1.1.1
