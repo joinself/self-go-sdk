@@ -9,17 +9,22 @@ import (
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
+type OnMessageOptions struct {
+	MarkAsDelivered bool
+	MarkAsRead      bool
+}
+
 // OnMessage subscribes to an incoming chat message.
-func (s *Service) OnMessage(callback func(cm *Message)) {
+func (s *Service) OnMessage(callback func(cm *Message), opts ...OnMessageOptions) {
 	s.messagingService.Subscribe("chat.message", func(m *messaging.Message) {
-		nm, err := s.processChatMessage(m)
+		nm, err := s.processChatMessage(m, opts...)
 		if err == nil {
 			callback(nm)
 		}
 	})
 }
 
-func (s *Service) processChatMessage(m *messaging.Message) (*Message, error) {
+func (s *Service) processChatMessage(m *messaging.Message, opts ...OnMessageOptions) (*Message, error) {
 	println("message received from " + m.Sender)
 	var payload map[string]interface{}
 	err := json.Unmarshal(m.Payload, &payload)
@@ -29,8 +34,17 @@ func (s *Service) processChatMessage(m *messaging.Message) (*Message, error) {
 	}
 
 	nm := NewMessage(s, []string{payload["aud"].(string)}, payload)
-	nm.MarkAsDelivered()
-	nm.MarkAsRead()
+
+	if len(opts) > 0 {
+		if opts[0].MarkAsRead == true {
+			nm.MarkAsRead()
+		}
+		if opts[0].MarkAsDelivered != false {
+			nm.MarkAsDelivered()
+		}
+	} else {
+		nm.MarkAsDelivered()
+	}
 
 	return nm, err
 }

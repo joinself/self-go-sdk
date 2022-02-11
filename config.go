@@ -39,7 +39,7 @@ type Connectors struct {
 	PKI            PKIClient
 	Crypto         CryptoClient
 	Storage        CryptoStorage
-	FileInteractor *object.RemoteFileInteractor
+	FileInteractor RemoteFile
 }
 
 // Config configuration options for the sdk

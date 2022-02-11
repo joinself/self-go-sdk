@@ -5,12 +5,10 @@ package chat
 import (
 	"log"
 	"strconv"
-
-	"github.com/joinself/self-go-sdk/pkg/object"
 )
 
 type Object struct {
-	fi         *object.RemoteFileInteractor
+	fi         RemoteFile
 	Link       string
 	Name       string
 	Mime       string
@@ -20,7 +18,7 @@ type Object struct {
 	Ciphertext string
 }
 
-func NewObject(fi *object.RemoteFileInteractor) *Object {
+func NewObject(fi RemoteFile) *Object {
 	return &Object{
 		fi: fi,
 	}

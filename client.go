@@ -11,6 +11,7 @@ import (
 	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
+	"github.com/joinself/self-go-sdk/pkg/object"
 )
 
 // RestTransport defines the interface required for the sdk to perform
@@ -68,6 +69,11 @@ type CryptoStorage interface {
 	SetAccount(account []byte) error
 	GetSession(recipient string) ([]byte, error)
 	SetSession(recipient string, session []byte) error
+}
+
+type RemoteFile interface {
+	SetObject(data []byte) (*object.EncryptedObject, error)
+	GetObject(link, key string) ([]byte, error)
 }
 
 // Client handles all interactions with self services

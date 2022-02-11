@@ -25,6 +25,11 @@ type restTransport interface {
 	BuildURL(path string) string
 }
 
+type RemoteFile interface {
+	SetObject(data []byte) (*object.EncryptedObject, error)
+	GetObject(link, key string) ([]byte, error)
+}
+
 type Service struct {
 	messagingService messagingService
 	messagingClient  messagingClient
@@ -34,7 +39,7 @@ type Service struct {
 	keyID            string
 	expiry           time.Duration
 	sk               ed25519.PrivateKey
-	FileInteractor   *object.RemoteFileInteractor
+	FileInteractor   RemoteFile
 }
 
 type Config struct {
@@ -45,7 +50,7 @@ type Config struct {
 	MessagingService messagingService
 	Rest             restTransport
 	PrivateKey       ed25519.PrivateKey
-	FileInteractor   *object.RemoteFileInteractor
+	FileInteractor   RemoteFile
 }
 
 func NewService(config Config) *Service {
