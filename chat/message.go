@@ -34,7 +34,7 @@ func NewMessage(chat *Service, recipients []string, payload map[string]interface
 	if payload["objects"] != nil {
 		for _, oo := range payload["objects"].([]interface{}) {
 			o := oo.(map[string]interface{})
-			obj := NewObject(chat.FileInteractor)
+			obj := NewObject(chat.fileInteractor)
 			if _, ok := o["key"]; ok {
 				err := obj.BuildFromObject(o)
 				if err != nil {

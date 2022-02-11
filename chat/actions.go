@@ -60,7 +60,7 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 					"mime": o.Mime,
 				})
 			} else {
-				fo := NewObject(s.FileInteractor)
+				fo := NewObject(s.fileInteractor)
 				err := fo.BuildFromData(o.Data, o.Name, o.Mime)
 				if err != nil {
 					return nil, err
@@ -126,7 +126,7 @@ type InviteOptions struct {
 }
 
 // Invite sends a group invitation to a list of members.
-func (s *Service) Invite(gid string, name string, members []string, opts ...InviteOptions) {
+func (s *Service) Invite(gid string, name string, members []string, opts ...InviteOptions) error {
 	p := map[string]interface{}{
 		"typ":     "chat.invite",
 		"gid":     gid,
@@ -136,17 +136,18 @@ func (s *Service) Invite(gid string, name string, members []string, opts ...Invi
 	}
 
 	if len(opts) > 0 {
-		fo := NewObject(s.FileInteractor)
+		fo := NewObject(s.fileInteractor)
 		err := fo.BuildFromData(opts[0].Data, "", opts[0].Mime)
-		if err == nil {
-			objPayload := fo.ToPayload()
-			p["link"] = objPayload["link"]
-			p["key"] = objPayload["key"]
-			p["expires"] = objPayload["expires"]
+		if err != nil {
+			return err
 		}
+		objPayload := fo.ToPayload()
+		p["link"] = objPayload["link"]
+		p["key"] = objPayload["key"]
+		p["expires"] = objPayload["expires"]
 	}
 
-	s.send(members, p)
+	return s.send(members, p)
 }
 
 // Join joins a group.

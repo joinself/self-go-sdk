@@ -8,7 +8,7 @@ import (
 )
 
 type Object struct {
-	fi         RemoteFile
+	fi         remoteFile
 	Link       string
 	Name       string
 	Mime       string
@@ -18,7 +18,7 @@ type Object struct {
 	Ciphertext string
 }
 
-func NewObject(fi RemoteFile) *Object {
+func NewObject(fi remoteFile) *Object {
 	return &Object{
 		fi: fi,
 	}

@@ -71,7 +71,7 @@ type CryptoStorage interface {
 	SetSession(recipient string, session []byte) error
 }
 
-type RemoteFile interface {
+type remoteFile interface {
 	SetObject(data []byte) (*object.EncryptedObject, error)
 	GetObject(link, key string) ([]byte, error)
 }
