@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/joinself/self-go-sdk/authentication"
+	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
+	"github.com/joinself/self-go-sdk/pkg/object"
 )
 
 // RestTransport defines the interface required for the sdk to perform
@@ -19,6 +21,7 @@ type RestTransport interface {
 	Post(path string, ctype string, data []byte) ([]byte, error)
 	Put(path string, ctype string, data []byte) ([]byte, error)
 	Delete(path string) ([]byte, error)
+	BuildURL(path string) string
 }
 
 // WebsocketTransport defines the interface required for the sdk to perform
@@ -68,6 +71,11 @@ type CryptoStorage interface {
 	SetSession(recipient string, session []byte) error
 }
 
+type remoteFile interface {
+	SetObject(data []byte) (*object.EncryptedObject, error)
+	GetObject(link, key string) ([]byte, error)
+}
+
 // Client handles all interactions with self services
 type Client struct {
 	config     Config
@@ -90,6 +98,9 @@ func New(cfg Config) (*Client, error) {
 		config:     cfg,
 		connectors: cfg.Connectors,
 	}
+
+	var utcZone = time.FixedZone("UTC", 0)
+	time.Local = utcZone
 
 	return client, nil
 }
@@ -146,6 +157,21 @@ func (c *Client) MessagingService() *messaging.Service {
 	}
 
 	return messaging.NewService(cfg)
+}
+
+// ChatService returns a client for interacting with chat
+func (c *Client) ChatService() *chat.Service {
+	cfg := chat.Config{
+		SelfID:           c.config.SelfAppID,
+		PrivateKey:       c.config.sk,
+		KeyID:            c.config.kid,
+		Rest:             c.connectors.Rest,
+		MessagingService: c.MessagingService(),
+		MessagingClient:  c.connectors.Messaging,
+		FileInteractor:   c.connectors.FileInteractor,
+	}
+
+	return chat.NewService(cfg)
 }
 
 // Close gracefully closes the self client

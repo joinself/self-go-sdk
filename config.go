@@ -14,6 +14,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/pkg/crypto"
 	"github.com/joinself/self-go-sdk/pkg/messaging"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"github.com/joinself/self-go-sdk/pkg/pki"
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"golang.org/x/crypto/ed25519"
@@ -32,12 +33,13 @@ var (
 
 // Connectors stores all connectors for working with different self api's
 type Connectors struct {
-	Rest      RestTransport
-	Websocket WebsocketTransport
-	Messaging MessagingClient
-	PKI       PKIClient
-	Crypto    CryptoClient
-	Storage   CryptoStorage
+	Rest           RestTransport
+	Websocket      WebsocketTransport
+	Messaging      MessagingClient
+	PKI            PKIClient
+	Crypto         CryptoClient
+	Storage        CryptoStorage
+	FileInteractor remoteFile
 }
 
 // Config configuration options for the sdk
@@ -178,6 +180,8 @@ func (c *Config) load() error {
 		return err
 	}
 
+	c.loadRemoteFileInteractor()
+
 	return c.loadMessagingConnector()
 }
 
@@ -209,6 +213,13 @@ func (c Config) loadRestConnector() error {
 	c.Connectors.Rest = rest
 
 	return nil
+}
+
+func (c Config) loadRemoteFileInteractor() {
+	if c.Connectors.FileInteractor == nil {
+		println("loading file interactor")
+		c.Connectors.FileInteractor = object.NewRemoteFileInteractor(c.Connectors.Rest)
+	}
 }
 
 func (c Config) loadWebsocketConnector() error {

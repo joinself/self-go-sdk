@@ -55,6 +55,11 @@ func (c *Rest) Delete(path string) ([]byte, error) {
 	return c.request("DELETE", path, nil, nil)
 }
 
+// BuildURL builds a url for the given path.
+func (c *Rest) BuildURL(path string) string {
+	return c.config.APIURL + path
+}
+
 // Request make a raw request to the self api
 func (c *Rest) request(method, path string, data []byte, headers map[string]string) ([]byte, error) {
 	u, err := url.Parse(c.config.APIURL + path)
