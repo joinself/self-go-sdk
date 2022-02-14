@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+// Message represents a chat message.
 type Message struct {
 	service    *Service
 	Body       string
@@ -17,6 +18,7 @@ type Message struct {
 	Objects    []*Object
 }
 
+// NewMessage creates a chat message object.
 func NewMessage(chat *Service, recipients []string, payload map[string]interface{}) *Message {
 	m := Message{
 		service:    chat,
@@ -54,10 +56,12 @@ func NewMessage(chat *Service, recipients []string, payload map[string]interface
 	return &m
 }
 
+// Sends deletes the current message.
 func (m *Message) Delete() {
 	m.service.Delete(m.Recipients, []string{m.JTI}, m.GID)
 }
 
+// Edit edit the current message.
 func (m *Message) Edit(Body string) {
 	if m.amITheRecipient() {
 		return
@@ -67,6 +71,7 @@ func (m *Message) Edit(Body string) {
 	m.service.Edit(m.Recipients, m.JTI, m.Body, m.GID)
 }
 
+// MarkAsDelivered marks the current message as delivered.
 func (m *Message) MarkAsDelivered() {
 	if !m.amITheRecipient() {
 		return
@@ -75,6 +80,7 @@ func (m *Message) MarkAsDelivered() {
 	m.service.Delivered([]string{m.ISS}, []string{m.JTI}, m.GID)
 }
 
+// MarkAsRead marks the current message as read.
 func (m *Message) MarkAsRead() {
 	if !m.amITheRecipient() {
 		return
@@ -83,10 +89,12 @@ func (m *Message) MarkAsRead() {
 	m.service.Read([]string{m.ISS}, []string{m.JTI}, m.GID)
 }
 
+// Respond sends a response to the current message.
 func (m *Message) Respond(body string) (*Message, error) {
 	return m.Message(body, MessageOptions{RID: m.JTI})
 }
 
+// Message sends a message to the current conversation.
 func (m *Message) Message(body string, opts ...MessageOptions) (*Message, error) {
 	if len(opts) == 0 {
 		opts = append(opts, MessageOptions{})

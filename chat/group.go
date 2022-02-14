@@ -13,6 +13,7 @@ type Group struct {
 	Mime    string
 }
 
+// NewGroup creates a chat group object.
 func NewGroup(service *Service, payload map[string]interface{}) *Group {
 	members := []string{}
 	for _, v := range payload["members"].([]interface{}) {
@@ -39,6 +40,7 @@ func NewGroup(service *Service, payload map[string]interface{}) *Group {
 	return &g
 }
 
+// Invite sends an invitation request to the specified user.
 func (m *Group) Invite(user string) {
 	if len(user) == 0 {
 		return
@@ -48,14 +50,17 @@ func (m *Group) Invite(user string) {
 	m.service.Invite(m.GID, m.Name, m.Members)
 }
 
+// Leave notify all group users the current user is leaving the group.
 func (m *Group) Leave() {
 	m.service.Leave(m.GID, m.Members)
 }
 
+// Join sends a notification the user has joined the group.
 func (m *Group) Join() {
 	m.service.Join(m.GID, m.Members)
 }
 
+// Message sends a text message to the group members.
 func (m *Group) Message(body string, opts ...MessageOptions) (*Message, error) {
 	if len(opts) == 0 {
 		opts = append(opts, MessageOptions{})

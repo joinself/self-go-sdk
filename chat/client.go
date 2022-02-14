@@ -10,26 +10,31 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
+// messagingService handles all interactions with the messaging service
 type messagingService interface {
 	Subscribe(msgType string, h func(m *messaging.Message))
 	PermitConnection(selfID string) error
 }
 
+// messagingClient handles all interactions with self messaging and its users
 type messagingClient interface {
 	Send(recipients []string, data []byte) error
 }
 
+// restTransport handles all interactions with the self api
 type restTransport interface {
 	Get(path string) ([]byte, error)
 	Post(path string, ctype string, data []byte) ([]byte, error)
 	BuildURL(path string) string
 }
 
+// remoteFile manages interactions with the remote filles
 type remoteFile interface {
 	SetObject(data []byte) (*object.EncryptedObject, error)
 	GetObject(link, key string) ([]byte, error)
 }
 
+// Service handles all chat interactions.
 type Service struct {
 	messagingService messagingService
 	messagingClient  messagingClient
@@ -42,6 +47,7 @@ type Service struct {
 	fileInteractor   remoteFile
 }
 
+// Config stores all configuration needed by the chat service.
 type Config struct {
 	SelfID           string
 	DeviceID         string
@@ -53,6 +59,7 @@ type Config struct {
 	FileInteractor   remoteFile
 }
 
+// NewService creates a new client for interacting with facts.
 func NewService(config Config) *Service {
 	return &Service{
 		selfID:           config.SelfID,
