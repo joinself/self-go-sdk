@@ -49,21 +49,23 @@ var (
 
 // FactRequest specifies the parameters of an information request
 type FactRequest struct {
-	SelfID      string
-	Description string
-	Facts       []Fact
-	Expiry      time.Duration
-	Callback    json.RawMessage
+	SelfID       string
+	Description  string
+	Facts        []Fact
+	Expiry       time.Duration
+	AllowedUntil time.Duration
+	Callback     json.RawMessage
 }
 
 // FactRequestAsync specifies the parameters of an information requestAsync
 type FactRequestAsync struct {
-	SelfID      string
-	Description string
-	Facts       []Fact
-	Expiry      time.Duration
-	CID         string
-	Callback    json.RawMessage
+	SelfID       string
+	Description  string
+	Facts        []Fact
+	Expiry       time.Duration
+	AllowedUntil time.Duration
+	CID          string
+	Callback     json.RawMessage
 }
 
 // FactResponse contains the details of the requested facts
@@ -79,6 +81,7 @@ type QRFactRequest struct {
 	Facts          []Fact
 	Options        map[string]string
 	Expiry         time.Duration
+	AllowedUntil   time.Duration
 	QRConfig       QRConfig
 }
 
@@ -96,6 +99,7 @@ type DeepLinkFactRequest struct {
 	Callback       string
 	Facts          []Fact
 	Expiry         time.Duration
+	AllowedUntil   time.Duration
 }
 
 type QRConfig struct {
@@ -111,6 +115,7 @@ type IntermediaryFactRequest struct {
 	Intermediary string
 	Facts        []Fact
 	Expiry       time.Duration
+	AllowedUntil time.Duration
 }
 
 // IntermediaryFactResponse contains the details of the requested facts
@@ -164,7 +169,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 
 	cid := uuid.New().String()
 
-	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, req.Callback)
+	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, req.AllowedUntil, req.Callback)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +225,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return ErrNotConnected
 	}
 
-	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, req.Callback)
+	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, req.AllowedUntil, req.Callback)
 	if err != nil {
 		return err
 	}
@@ -247,7 +252,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 
 	cid := uuid.New().String()
 
-	payload, err := s.factPayload(cid, req.SelfID, req.Intermediary, req.Description, req.Facts, nil, req.Expiry, nil)
+	payload, err := s.factPayload(cid, req.SelfID, req.Intermediary, req.Description, req.Facts, nil, req.Expiry, req.AllowedUntil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +315,7 @@ func (s Service) GenerateQRCode(req *QRFactRequest) ([]byte, error) {
 		req.QRConfig.Size = 400
 	}
 
-	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, req.Options, req.Expiry, nil)
+	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, req.Options, req.Expiry, req.AllowedUntil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +342,7 @@ func (s Service) GenerateDeepLink(req *DeepLinkFactRequest) (string, error) {
 	}
 	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
-	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, nil)
+	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, req.AllowedUntil, nil)
 	if err != nil {
 		return "", err
 	}
@@ -516,19 +521,20 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 	}
 }
 
-func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, callback json.RawMessage) ([]byte, error) {
+func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, au time.Duration, callback json.RawMessage) ([]byte, error) {
 	req := map[string]interface{}{
-		"typ":         RequestInformation,
-		"cid":         cid,
-		"jti":         uuid.New().String(),
-		"iss":         s.selfID,
-		"sub":         selfID,
-		"aud":         intermediary,
-		"iat":         ntp.TimeFunc().Format(time.RFC3339),
-		"exp":         ntp.TimeFunc().Add(exp).Format(time.RFC3339),
-		"device_id":   s.deviceID,
-		"description": description,
-		"facts":       facts,
+		"typ":           RequestInformation,
+		"cid":           cid,
+		"jti":           uuid.New().String(),
+		"iss":           s.selfID,
+		"sub":           selfID,
+		"aud":           intermediary,
+		"iat":           ntp.TimeFunc().Format(time.RFC3339),
+		"exp":           ntp.TimeFunc().Add(exp).Format(time.RFC3339),
+		"allowed_until": ntp.TimeFunc().Add(au).Format(time.RFC3339),
+		"device_id":     s.deviceID,
+		"description":   description,
+		"facts":         facts,
 	}
 
 	if options != nil {
