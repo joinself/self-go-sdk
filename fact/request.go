@@ -49,23 +49,23 @@ var (
 
 // FactRequest specifies the parameters of an information request
 type FactRequest struct {
-	SelfID       string
-	Description  string
-	Facts        []Fact
-	Expiry       time.Duration
-	AllowedUntil time.Duration
-	Callback     json.RawMessage
+	SelfID      string
+	Description string
+	Facts       []Fact
+	Expiry      time.Duration
+	AllowedFor  time.Duration
+	Callback    json.RawMessage
 }
 
 // FactRequestAsync specifies the parameters of an information requestAsync
 type FactRequestAsync struct {
-	SelfID       string
-	Description  string
-	Facts        []Fact
-	Expiry       time.Duration
-	AllowedUntil time.Duration
-	CID          string
-	Callback     json.RawMessage
+	SelfID      string
+	Description string
+	Facts       []Fact
+	Expiry      time.Duration
+	AllowedFor  time.Duration
+	CID         string
+	Callback    json.RawMessage
 }
 
 // FactResponse contains the details of the requested facts
@@ -166,7 +166,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 
 	cid := uuid.New().String()
 
-	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedUntil, req.Callback)
+	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Callback)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return ErrNotConnected
 	}
 
-	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedUntil, req.Callback)
+	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Callback)
 	if err != nil {
 		return err
 	}
