@@ -5,8 +5,16 @@ package request
 import (
 	"crypto/ed25519"
 	"encoding/json"
+	"errors"
 
+	"github.com/joinself/self-go-sdk/pkg/kidhelper"
+	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
+)
+
+var (
+	ErrBadJSONPayload       = errors.New("bad json payload")
+	ErrResponseBadSignature = errors.New("bad response signature")
 )
 
 type RestTransport interface {
@@ -77,4 +85,33 @@ func Serialize(req map[string]interface{}, kid string, sk ed25519.PrivateKey) ([
 	}
 
 	return []byte(signature.FullSerialize()), nil
+}
+
+func ParseResponse(response []byte, history []json.RawMessage) (msg []byte, err error) {
+	sg, err := siggraph.New(history)
+	if err != nil {
+		return msg, err
+	}
+
+	kid, err := kidhelper.GetJWSKID(response)
+	if err != nil {
+		return msg, err
+	}
+
+	pk, err := sg.ActiveKey(kid)
+	if err != nil {
+		return msg, err
+	}
+
+	jws, err := jose.ParseSigned(string(response))
+	if err != nil {
+		return msg, err
+	}
+
+	msg, err = jws.Verify(pk)
+	if err != nil {
+		return msg, ErrResponseBadSignature
+	}
+
+	return msg, nil
 }

@@ -11,11 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/chat"
-	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/request"
-	"github.com/joinself/self-go-sdk/pkg/siggraph"
-	"github.com/square/go-jose"
 )
 
 var (
@@ -101,27 +98,7 @@ func (s *Service) response(issuer string, response []byte) (resp Response, err e
 		return resp, err
 	}
 
-	sg, err := siggraph.New(history)
-	if err != nil {
-		return resp, err
-	}
-
-	kid, err := kidhelper.GetJWSKID(response)
-	if err != nil {
-		return resp, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return resp, err
-	}
-
-	jws, err := jose.ParseSigned(string(response))
-	if err != nil {
-		return resp, err
-	}
-
-	msg, err := jws.Verify(pk)
+	msg, err := request.ParseResponse(response, history)
 	if err != nil {
 		return resp, ErrResponseBadSignature
 	}

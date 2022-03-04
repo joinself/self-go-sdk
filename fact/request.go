@@ -397,27 +397,7 @@ func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact,
 		return nil, err
 	}
 
-	sg, err := siggraph.New(history)
-	if err != nil {
-		return nil, err
-	}
-
-	kid, err := kidhelper.GetJWSKID(response)
-	if err != nil {
-		return nil, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return nil, err
-	}
-
-	jws, err := jose.ParseSigned(string(response))
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := jws.Verify(pk)
+	msg, err := request.ParseResponse(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}

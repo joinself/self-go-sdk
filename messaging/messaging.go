@@ -151,10 +151,10 @@ func (s *Service) serializeRequest(request []byte, cid string) (string, error) {
 }
 
 // Request make a request to an identity
-func (s *Service) Request(recipients []string, request []byte) ([]byte, error) {
+func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
 	cid := uuid.New().String()
 
-	plaintext, err := s.serializeRequest(request, cid)
+	plaintext, err := s.serializeRequest(req, cid)
 	if err != nil {
 		return nil, err
 	}
@@ -166,32 +166,12 @@ func (s *Service) Request(recipients []string, request []byte) ([]byte, error) {
 
 	selfID := strings.Split(sender, ":")[0]
 
-	jws, err := jose.ParseSigned(string(response))
-	if err != nil {
-		return nil, err
-	}
-
 	history, err := s.pki.GetHistory(selfID)
 	if err != nil {
 		return nil, err
 	}
 
-	sg, err := siggraph.New(history)
-	if err != nil {
-		return nil, err
-	}
-
-	kid, err := kidhelper.GetJWSKID(response)
-	if err != nil {
-		return nil, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := jws.Verify(pk)
+	msg, err := request.ParseResponse(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}
