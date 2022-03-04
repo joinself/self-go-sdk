@@ -171,7 +171,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	recipients, err := s.recipients(req.SelfID)
+	recipients, err := s.requestHelper.FormatRecipients([]string{req.SelfID})
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return err
 	}
 
-	recipients, err := s.recipients(req.SelfID)
+	recipients, err := s.requestHelper.FormatRecipients([]string{req.SelfID})
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, err
 	}
 
-	recipients, err := s.recipients(req.Intermediary)
+	recipients, err := s.requestHelper.FormatRecipients([]string{req.Intermediary})
 	if err != nil {
 		return nil, err
 	}
@@ -566,35 +566,6 @@ func (s *Service) factPayload(cid, selfID, intermediary, description string, fac
 	}
 
 	return []byte(signedRequest.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range devices {
-		devices[i] = selfID + ":" + devices[i]
-	}
-
-	return devices, nil
 }
 
 // builds a list of all devices associated with an identity

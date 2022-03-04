@@ -7,6 +7,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
+	"github.com/joinself/self-go-sdk/pkg/request"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -34,6 +35,11 @@ type remoteFile interface {
 	GetObject(link, key string) ([]byte, error)
 }
 
+type requestHelper interface {
+	SetAPI(api request.RestTransport)
+	FormatRecipients(recipients []string) ([]string, error)
+}
+
 // Service handles all chat interactions.
 type Service struct {
 	messagingService messagingService
@@ -45,6 +51,7 @@ type Service struct {
 	expiry           time.Duration
 	sk               ed25519.PrivateKey
 	fileInteractor   remoteFile
+	requestHelper    requestHelper
 }
 
 // Config stores all configuration needed by the chat service.
@@ -57,6 +64,7 @@ type Config struct {
 	Rest             restTransport
 	PrivateKey       ed25519.PrivateKey
 	FileInteractor   remoteFile
+	RequestHelper    requestHelper
 }
 
 // NewService creates a new client for interacting with facts.
@@ -71,5 +79,6 @@ func NewService(config Config) *Service {
 		expiry:           time.Minute,
 		sk:               config.PrivateKey,
 		fileInteractor:   config.FileInteractor,
+		requestHelper:    config.RequestHelper,
 	}
 }

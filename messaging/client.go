@@ -26,25 +26,30 @@ type messagingClient interface {
 type pkiClient interface {
 	GetHistory(selfID string) ([]json.RawMessage, error)
 }
+type requestHelper interface {
+	FormatRecipients(recipients []string) ([]string, error)
+}
 
 // Service handles all messaging operations
 type Service struct {
-	selfID    string
-	keyID     string
-	sk        ed25519.PrivateKey
-	api       restTransport
-	pki       pkiClient
-	messaging messagingClient
+	selfID        string
+	keyID         string
+	sk            ed25519.PrivateKey
+	api           restTransport
+	pki           pkiClient
+	messaging     messagingClient
+	requestHelper requestHelper
 }
 
 // Config stores all configuration needed by the messaging service
 type Config struct {
-	SelfID     string
-	KeyID      string
-	PrivateKey ed25519.PrivateKey
-	PKI        pkiClient
-	Messaging  messagingClient
-	Rest       restTransport
+	SelfID        string
+	KeyID         string
+	PrivateKey    ed25519.PrivateKey
+	PKI           pkiClient
+	Messaging     messagingClient
+	Rest          restTransport
+	RequestHelper requestHelper
 }
 
 type jwsPayload struct {
@@ -60,11 +65,12 @@ type jwsPayload struct {
 // NewService creates a new client for interacting with messaging
 func NewService(cfg Config) *Service {
 	return &Service{
-		selfID:    cfg.SelfID,
-		keyID:     cfg.KeyID,
-		sk:        cfg.PrivateKey,
-		api:       cfg.Rest,
-		pki:       cfg.PKI,
-		messaging: cfg.Messaging,
+		selfID:        cfg.SelfID,
+		keyID:         cfg.KeyID,
+		sk:            cfg.PrivateKey,
+		api:           cfg.Rest,
+		pki:           cfg.PKI,
+		messaging:     cfg.Messaging,
+		requestHelper: cfg.RequestHelper,
 	}
 }

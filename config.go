@@ -16,6 +16,7 @@ import (
 	"github.com/joinself/self-go-sdk/pkg/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
 	"github.com/joinself/self-go-sdk/pkg/pki"
+	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"golang.org/x/crypto/ed25519"
 )
@@ -42,6 +43,10 @@ type Connectors struct {
 	FileInteractor remoteFile
 }
 
+type Helpers struct {
+	Request RequestHelper
+}
+
 // Config configuration options for the sdk
 type Config struct {
 	SelfAppID            string
@@ -59,6 +64,7 @@ type Config struct {
 	TCPDeadline          time.Duration
 	RequestTimeout       time.Duration
 	Connectors           *Connectors
+	Helpers              *Helpers
 	offsetStorageDir     string
 	cryptoStorageDir     string
 	kid                  string
@@ -181,6 +187,9 @@ func (c *Config) load() error {
 	}
 
 	c.loadRemoteFileInteractor()
+
+	// load helpers
+	c.loadHelpers()
 
 	return c.loadMessagingConnector()
 }
@@ -335,6 +344,19 @@ func (c Config) loadMessagingConnector() error {
 	c.Connectors.Messaging = client
 
 	return nil
+}
+
+func (c *Config) loadHelpers() {
+	c.Helpers = &Helpers{}
+	c.loadRequestHelper()
+}
+
+func (c *Config) loadRequestHelper() {
+	c.Helpers.Request = request.New(request.Config{
+		SelfID:   c.SelfAppID,
+		DeviceID: c.DeviceID,
+		API:      c.Connectors.Rest,
+	})
 }
 
 func (c *Config) migrateStorage() error {

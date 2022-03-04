@@ -44,7 +44,7 @@ func TestDelivered(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Delivered(recipients, cids, gid)
@@ -84,7 +84,7 @@ func TestRead(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Read(recipients, cids, gid)
@@ -128,7 +128,7 @@ func TestEdit(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Edit(recipients, cid, newBody, gid)
@@ -170,7 +170,7 @@ func TestDelete(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Delete(recipients, cids, gid)
@@ -212,7 +212,7 @@ func TestInviite(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Invite(gid, name, recipients)
@@ -274,7 +274,7 @@ func TestJoin(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Join(gid, recipients)
@@ -314,7 +314,7 @@ func TestLeave(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Leave(gid, recipients)
@@ -392,7 +392,7 @@ func TestMessage(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Message(recipients, body)
@@ -434,7 +434,7 @@ func TestMessageWithOpts(t *testing.T) {
 		expectedDeviceURLs = expectedDeviceURLs[1:]
 		return true
 	})).Return([]byte(`["device1"]`), nil)
-	s.api = &restMock
+	s.requestHelper.SetAPI(&restMock)
 
 	// Call public method
 	s.Message(recipients, body, MessageOptions{

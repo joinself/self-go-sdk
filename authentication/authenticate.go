@@ -87,7 +87,7 @@ func (s Service) Request(selfID string) error {
 		return err
 	}
 
-	recipients, err := s.recipients(selfID)
+	recipients, err := s.requestHelper.FormatRecipients([]string{selfID})
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (s Service) RequestAsync(selfID, cid string) error {
 		return err
 	}
 
-	recipients, err := s.recipients(selfID)
+	recipients, err := s.requestHelper.FormatRecipients([]string{selfID})
 	if err != nil {
 		return err
 	}
@@ -356,35 +356,6 @@ func (s *Service) authenticationPayload(cid, selfID string, exp time.Duration) (
 	}
 
 	return []byte(signature.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range devices {
-		devices[i] = selfID + ":" + devices[i]
-	}
-
-	return devices, nil
 }
 
 // builds a list of all devices associated with an identity

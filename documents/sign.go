@@ -71,7 +71,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		return resp, err
 	}
 
-	recs, err := s.recipients([]string{recipient})
+	recs, err := s.requestHelper.FormatRecipients([]string{recipient})
 	if err != nil {
 		return resp, err
 	}
@@ -115,47 +115,6 @@ func (s *Service) serialize(req map[string]interface{}) ([]byte, error) {
 	}
 
 	return []byte(signature.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(recipients []string) ([]string, error) {
-	devices := make([]string, 0)
-	for _, selfID := range recipients {
-		dds, err := s.getDevices(selfID)
-		if err != nil {
-			return nil, err
-		}
-
-		for i := range dds {
-			if selfID != s.selfID && dds[i] != s.deviceID {
-				devices = append(devices, selfID+":"+dds[i])
-			}
-		}
-	}
-
-	return devices, nil
-}
-
-func (s Service) getDevices(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
 }
 
 func (s *Service) response(issuer string, response []byte) (resp Response, err error) {
