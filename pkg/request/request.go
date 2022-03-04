@@ -3,7 +3,10 @@
 package request
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
+
+	"github.com/square/go-jose"
 )
 
 type RestTransport interface {
@@ -76,4 +79,29 @@ func (c *Client) getDevices(selfID string) ([]string, error) {
 	}
 
 	return devices, nil
+}
+
+func Serialize(req map[string]interface{}, kid string, sk ed25519.PrivateKey) ([]byte, error) {
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	opts := &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{
+			"kid": kid,
+		},
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: sk}, opts)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	signature, err := signer.Sign(payload)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return []byte(signature.FullSerialize()), nil
 }

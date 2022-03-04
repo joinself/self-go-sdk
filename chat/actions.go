@@ -3,13 +3,12 @@
 package chat
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/square/go-jose"
+	"github.com/joinself/self-go-sdk/pkg/request"
 )
 
 func (s *Service) SelfID() string {
@@ -204,7 +203,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 		req["aud"] = gid
 		req["sub"] = gid
 
-		body, err := s.serialize(req)
+		body, err := request.Serialize(req, s.keyID, s.sk)
 		if err != nil {
 			return err
 		}
@@ -219,7 +218,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 			req["aud"] = r
 			req["sub"] = r
 
-			body, err := s.serialize(req)
+			body, err := request.Serialize(req, s.keyID, s.sk)
 			if err != nil {
 				return err
 			}
@@ -232,31 +231,6 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func (s *Service) serialize(req map[string]interface{}) ([]byte, error) {
-	payload, err := json.Marshal(req)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	signature, err := signer.Sign(payload)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	return []byte(signature.FullSerialize()), nil
 }
 
 func (s *Service) createMissingSessions(members []string) error {

@@ -3,7 +3,6 @@
 package messaging
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
@@ -71,7 +71,7 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 			return
 		}
 
-		kid, err := getJWSKID(payload)
+		kid, err := kidhelper.GetJWSKID(payload)
 		if err != nil {
 			log.Println("messaging: ", err)
 			return
@@ -180,7 +180,7 @@ func (s *Service) Request(recipients []string, request []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	kid, err := getJWSKID(response)
+	kid, err := kidhelper.GetJWSKID(response)
 	if err != nil {
 		return nil, err
 	}
@@ -263,38 +263,4 @@ func (s *Service) Notify(selfID, content string) error {
 	}
 
 	return s.Send(recipients, cid, data)
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
 }

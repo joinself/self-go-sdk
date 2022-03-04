@@ -3,7 +3,6 @@
 package documents
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"log"
@@ -12,7 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
 )
@@ -66,7 +67,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		"exp":     ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339),
 	}
 
-	payload, err := s.serialize(req)
+	payload, err := request.Serialize(req, s.keyID, s.sk)
 	if err != nil {
 		return resp, err
 	}
@@ -92,31 +93,6 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 	return resp, nil
 }
 
-func (s *Service) serialize(req map[string]interface{}) ([]byte, error) {
-	payload, err := json.Marshal(req)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	signature, err := signer.Sign(payload)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	return []byte(signature.FullSerialize()), nil
-}
-
 func (s *Service) response(issuer string, response []byte) (resp Response, err error) {
 	selfID := strings.Split(issuer, ":")[0]
 
@@ -130,7 +106,7 @@ func (s *Service) response(issuer string, response []byte) (resp Response, err e
 		return resp, err
 	}
 
-	kid, err := getJWSKID(response)
+	kid, err := kidhelper.GetJWSKID(response)
 	if err != nil {
 		return resp, err
 	}
@@ -157,38 +133,4 @@ func (s *Service) response(issuer string, response []byte) (resp Response, err e
 	resp.Signature = string(response)
 
 	return resp, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
 }

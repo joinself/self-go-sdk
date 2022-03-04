@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
@@ -400,7 +402,7 @@ func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact,
 		return nil, err
 	}
 
-	kid, err := getJWSKID(response)
+	kid, err := kidhelper.GetJWSKID(response)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +474,7 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 				return nil, err
 			}
 
-			kid, err := getJWSKID(adata)
+			kid, err := kidhelper.GetJWSKID(adata)
 			if err != nil {
 				return nil, err
 			}
@@ -544,28 +546,7 @@ func (s *Service) factPayload(cid, selfID, intermediary, description string, fac
 		req["callback"] = callback
 	}
 
-	request, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	signedRequest, err := signer.Sign(request)
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(signedRequest.FullSerialize()), nil
+	return request.Serialize(req, s.keyID, s.sk)
 }
 
 // builds a list of all devices associated with an identity
@@ -588,38 +569,4 @@ func (s Service) paidActions() bool {
 	}
 
 	return app.PaidActions
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
 }
