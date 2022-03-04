@@ -35,10 +35,6 @@ type remoteFile interface {
 	GetObject(link, key string) ([]byte, error)
 }
 
-type requestHelper interface {
-	FormatRecipients(recipients []string) ([]string, error)
-}
-
 // Service handles all messaging operations
 type Service struct {
 	selfID         string
@@ -51,7 +47,6 @@ type Service struct {
 	pki            pkiClient
 	expiry         time.Duration
 	fileInteractor remoteFile
-	requestHelper  requestHelper
 }
 
 // Config stores all configuration needed by the messaging service
@@ -64,7 +59,6 @@ type Config struct {
 	Messaging      messagingClient
 	PKI            pkiClient
 	FileInteractor remoteFile
-	RequestHelper  requestHelper
 }
 
 // NewService creates a new client for interacting with messaging
@@ -79,6 +73,5 @@ func NewService(cfg Config) *Service {
 		pki:            cfg.PKI,
 		expiry:         time.Minute,
 		fileInteractor: cfg.FileInteractor,
-		requestHelper:  cfg.RequestHelper,
 	}
 }

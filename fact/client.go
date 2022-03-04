@@ -36,10 +36,6 @@ type pkiClient interface {
 	GetHistory(selfID string) ([]json.RawMessage, error)
 }
 
-type requestHelper interface {
-	FormatRecipients(recipients []string) ([]string, error)
-}
-
 type device struct {
 	ID string `json:"device_id"`
 }
@@ -55,7 +51,6 @@ type Service struct {
 	pki            pkiClient
 	messaging      messagingClient
 	fileInteractor *object.RemoteFileInteractor
-	requestHelper  requestHelper
 }
 
 // Config stores all configuration needed by the fact service
@@ -69,7 +64,6 @@ type Config struct {
 	PKI            pkiClient
 	Messaging      messagingClient
 	FileInteractor *object.RemoteFileInteractor
-	RequestHelper  requestHelper
 }
 
 // NewService creates a new client for interacting with facts
@@ -84,6 +78,5 @@ func NewService(cfg Config) *Service {
 		pki:            cfg.PKI,
 		messaging:      cfg.Messaging,
 		fileInteractor: cfg.FileInteractor,
-		requestHelper:  cfg.RequestHelper,
 	}
 }

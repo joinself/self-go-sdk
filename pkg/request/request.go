@@ -11,47 +11,20 @@ import (
 
 type RestTransport interface {
 	Get(path string) ([]byte, error)
-	Post(path string, ctype string, data []byte) ([]byte, error)
-	BuildURL(path string) string
 }
 
-type Client struct {
-	selfID   string
-	deviceID string
-	api      RestTransport
-}
-
-type Config struct {
-	SelfID   string
-	DeviceID string
-	API      RestTransport
-}
-
-func New(config Config) *Client {
-	return &Client{
-		selfID:   config.SelfID,
-		deviceID: config.DeviceID,
-		api:      config.API,
-	}
-}
-
-func (c *Client) SetAPI(api RestTransport) {
-	c.api = api
-}
-
-// builds a list of all devices associated with a list of identities
-func (c *Client) FormatRecipients(recipients []string) ([]string, error) {
+func FormatRecipients(recipients []string, selfID, deviceID string, api RestTransport) ([]string, error) {
 	devices := make([]string, 0)
-	for _, selfID := range recipients {
-		dds, err := c.getDevices(selfID)
+	for _, sID := range recipients {
+		dds, err := getDevices(api, sID)
 		if err != nil {
 			return nil, err
 		}
 
 		for i := range dds {
 			// if is not the current device
-			if selfID != c.selfID && dds[i] != c.deviceID {
-				devices = append(devices, selfID+":"+dds[i])
+			if sID != selfID && dds[i] != deviceID {
+				devices = append(devices, sID+":"+dds[i])
 			}
 		}
 	}
@@ -59,14 +32,14 @@ func (c *Client) FormatRecipients(recipients []string) ([]string, error) {
 	return devices, nil
 }
 
-func (c *Client) getDevices(selfID string) ([]string, error) {
+func getDevices(api RestTransport, selfID string) ([]string, error) {
 	var resp []byte
 	var err error
 
 	if len(selfID) > 11 {
-		resp, err = c.api.Get("/v1/apps/" + selfID + "/devices")
+		resp, err = api.Get("/v1/apps/" + selfID + "/devices")
 	} else {
-		resp, err = c.api.Get("/v1/identities/" + selfID + "/devices")
+		resp, err = api.Get("/v1/identities/" + selfID + "/devices")
 	}
 	if err != nil {
 		return nil, err

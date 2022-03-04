@@ -89,7 +89,7 @@ func (s Service) Request(selfID string) error {
 		return err
 	}
 
-	recipients, err := s.requestHelper.FormatRecipients([]string{selfID})
+	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (s Service) RequestAsync(selfID, cid string) error {
 		return err
 	}
 
-	recipients, err := s.requestHelper.FormatRecipients([]string{selfID})
+	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
 	if err != nil {
 		return err
 	}

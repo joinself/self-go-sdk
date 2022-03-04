@@ -141,7 +141,7 @@ func TestRequest(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, called)
 	assert.Len(t, resp.Facts, 2)
-	assert.Equal(t, []string{"1234567890:1", "1234567890:2"}, r.recipients)
+	assert.Equal(t, []string{"1234567890:2"}, r.recipients)
 }
 
 func TestRequestTimeout(t *testing.T) {
@@ -1457,7 +1457,7 @@ func TestRequestViaIntermediary(t *testing.T) {
 	assert.Len(t, resp.Facts, 1)
 	require.NotNil(t, resp.Facts[0].Result)
 	assert.True(t, resp.Facts[0].Result())
-	assert.Equal(t, []string{"intermediary:1", "intermediary:2"}, r.recipients)
+	assert.Equal(t, []string{"intermediary:2"}, r.recipients)
 }
 
 func TestRequestViaIntermediaryTimeout(t *testing.T) {

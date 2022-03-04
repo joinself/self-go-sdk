@@ -39,7 +39,7 @@ func TestProcessChatMessage(t *testing.T) {
 	// Mock API interactions
 	restMock := mocks.RestTransportMock{}
 	restMock.On("Get", "/v1/identities/iss/devices").Return([]byte(`["device1"]`), nil)
-	s.requestHelper.SetAPI(&restMock)
+	s.api = &restMock
 
 	payload, err := json.Marshal(map[string]interface{}{
 		"iss": "iss",

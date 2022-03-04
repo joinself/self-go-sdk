@@ -188,7 +188,7 @@ func (s *Service) confirm(action string, recipients []string, cids []string, gid
 }
 
 func (s *Service) send(recipients []string, req map[string]interface{}) error {
-	recs, err := s.requestHelper.FormatRecipients(recipients)
+	recs, err := request.FormatRecipients(recipients, s.selfID, s.deviceID, s.api)
 	if err != nil {
 		return err
 	}

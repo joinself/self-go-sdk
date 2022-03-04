@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
 	"github.com/tidwall/sjson"
@@ -257,7 +258,7 @@ func (s *Service) Notify(selfID, content string) error {
 		return err
 	}
 
-	recipients, err := s.requestHelper.FormatRecipients([]string{selfID})
+	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
 	if err != nil {
 		return err
 	}

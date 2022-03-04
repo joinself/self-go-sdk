@@ -43,13 +43,12 @@ func setup(t *testing.T) (*testResponder, Config) {
 	}
 
 	return &tr, Config{
-		SelfID:        "test",
-		DeviceID:      "1",
-		PrivateKey:    sk,
-		PKI:           &tr,
-		Messaging:     &tr,
-		Rest:          &tr,
-		RequestHelper: &requestMock{},
+		SelfID:     "test",
+		DeviceID:   "1",
+		PrivateKey: sk,
+		PKI:        &tr,
+		Messaging:  &tr,
+		Rest:       &tr,
 	}
 }
 

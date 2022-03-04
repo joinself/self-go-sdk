@@ -13,13 +13,7 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
-	"github.com/joinself/self-go-sdk/pkg/request"
 )
-
-type RequestHelper interface {
-	SetAPI(api request.RestTransport)
-	FormatRecipients(recipients []string) ([]string, error)
-}
 
 // RestTransport defines the interface required for the sdk to perform
 // operations against self's rest api
@@ -87,7 +81,6 @@ type remoteFile interface {
 type Client struct {
 	config     Config
 	connectors *Connectors
-	helpers    *Helpers
 }
 
 // New creates a new self client
@@ -105,7 +98,6 @@ func New(cfg Config) (*Client, error) {
 	client := &Client{
 		config:     cfg,
 		connectors: cfg.Connectors,
-		helpers:    cfg.Helpers,
 	}
 
 	var utcZone = time.FixedZone("UTC", 0)
@@ -117,15 +109,14 @@ func New(cfg Config) (*Client, error) {
 // FactService returns a client for working with facts
 func (c *Client) FactService() *fact.Service {
 	cfg := fact.Config{
-		SelfID:        c.config.SelfAppID,
-		DeviceID:      c.config.DeviceID,
-		KeyID:         c.config.kid,
-		Environment:   c.config.Environment,
-		PrivateKey:    c.config.sk,
-		Rest:          c.connectors.Rest,
-		PKI:           c.connectors.PKI,
-		Messaging:     c.connectors.Messaging,
-		RequestHelper: c.helpers.Request,
+		SelfID:      c.config.SelfAppID,
+		DeviceID:    c.config.DeviceID,
+		KeyID:       c.config.kid,
+		Environment: c.config.Environment,
+		PrivateKey:  c.config.sk,
+		Rest:        c.connectors.Rest,
+		PKI:         c.connectors.PKI,
+		Messaging:   c.connectors.Messaging,
 	}
 	return fact.NewService(cfg)
 }
@@ -142,15 +133,14 @@ func (c *Client) IdentityService() *identity.Service {
 // AuthenticationService returns a client for working with authentication
 func (c *Client) AuthenticationService() *authentication.Service {
 	cfg := authentication.Config{
-		SelfID:        c.config.SelfAppID,
-		DeviceID:      c.config.DeviceID,
-		KeyID:         c.config.kid,
-		Environment:   c.config.Environment,
-		PrivateKey:    c.config.sk,
-		Rest:          c.connectors.Rest,
-		PKI:           c.connectors.PKI,
-		Messaging:     c.connectors.Messaging,
-		RequestHelper: c.helpers.Request,
+		SelfID:      c.config.SelfAppID,
+		DeviceID:    c.config.DeviceID,
+		KeyID:       c.config.kid,
+		Environment: c.config.Environment,
+		PrivateKey:  c.config.sk,
+		Rest:        c.connectors.Rest,
+		PKI:         c.connectors.PKI,
+		Messaging:   c.connectors.Messaging,
 	}
 
 	return authentication.NewService(cfg)
@@ -159,13 +149,13 @@ func (c *Client) AuthenticationService() *authentication.Service {
 // MessagingService returns a client for working with messages
 func (c *Client) MessagingService() *messaging.Service {
 	cfg := messaging.Config{
-		SelfID:        c.config.SelfAppID,
-		PrivateKey:    c.config.sk,
-		KeyID:         c.config.kid,
-		Rest:          c.connectors.Rest,
-		PKI:           c.connectors.PKI,
-		Messaging:     c.connectors.Messaging,
-		RequestHelper: c.helpers.Request,
+		SelfID:     c.config.SelfAppID,
+		DeviceID:   c.config.DeviceID,
+		PrivateKey: c.config.sk,
+		KeyID:      c.config.kid,
+		Rest:       c.connectors.Rest,
+		PKI:        c.connectors.PKI,
+		Messaging:  c.connectors.Messaging,
 	}
 
 	return messaging.NewService(cfg)
@@ -181,7 +171,6 @@ func (c *Client) ChatService() *chat.Service {
 		MessagingService: c.MessagingService(),
 		MessagingClient:  c.connectors.Messaging,
 		FileInteractor:   c.connectors.FileInteractor,
-		RequestHelper:    c.helpers.Request,
 	}
 
 	return chat.NewService(cfg)
@@ -198,7 +187,6 @@ func (c *Client) DocsService() *documents.Service {
 		Rest:           c.connectors.Rest,
 		PKI:            c.connectors.PKI,
 		FileInteractor: c.connectors.FileInteractor,
-		RequestHelper:  c.helpers.Request,
 	}
 
 	return documents.NewService(cfg)
