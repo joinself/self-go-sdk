@@ -8,6 +8,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/authentication"
 	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/documents"
 	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
@@ -172,6 +173,22 @@ func (c *Client) ChatService() *chat.Service {
 	}
 
 	return chat.NewService(cfg)
+}
+
+// DocsService returns a client for interacting with document signatures.
+func (c *Client) DocsService() *documents.Service {
+	cfg := documents.Config{
+		SelfID:         c.config.SelfAppID,
+		DeviceID:       c.config.DeviceID,
+		PrivateKey:     c.config.sk,
+		KeyID:          c.config.kid,
+		Messaging:      c.connectors.Messaging,
+		Rest:           c.connectors.Rest,
+		PKI:            c.connectors.PKI,
+		FileInteractor: c.connectors.FileInteractor,
+	}
+
+	return documents.NewService(cfg)
 }
 
 // Close gracefully closes the self client
