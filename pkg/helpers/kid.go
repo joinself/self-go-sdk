@@ -1,4 +1,4 @@
-package kidhelper
+package helpers
 
 import (
 	"encoding/base64"

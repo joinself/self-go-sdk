@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/square/go-jose"
 	"github.com/tidwall/sjson"
 )
@@ -58,7 +58,7 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 			return
 		}
 
-		msg, err := request.ParseResponse(payload, history)
+		msg, err := helpers.ParseJWS(payload, history)
 		if err != nil {
 			log.Println("messaging: " + err.Error())
 			return
@@ -145,7 +145,7 @@ func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	msg, err := request.ParseResponse(response, history)
+	msg, err := helpers.ParseJWS(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}
@@ -212,7 +212,7 @@ func (s *Service) Notify(selfID, content string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}

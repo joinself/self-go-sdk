@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/request"
 )
 
 func (s *Service) SelfID() string {
@@ -188,7 +188,7 @@ func (s *Service) confirm(action string, recipients []string, cids []string, gid
 }
 
 func (s *Service) send(recipients []string, req map[string]interface{}) error {
-	recs, err := request.FormatRecipients(recipients, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recs, err := helpers.PrepareRecipients(recipients, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 		req["aud"] = gid
 		req["sub"] = gid
 
-		body, err := request.Serialize(req, s.keyID, s.sk)
+		body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
 		if err != nil {
 			return err
 		}
@@ -218,7 +218,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 			req["aud"] = r
 			req["sub"] = r
 
-			body, err := request.Serialize(req, s.keyID, s.sk)
+			body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
 			if err != nil {
 				return err
 			}

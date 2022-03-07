@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/pkg/kidhelper"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
@@ -173,7 +172,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +228,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -256,7 +255,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.Intermediary}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{req.Intermediary}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +396,7 @@ func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact,
 		return nil, err
 	}
 
-	msg, err := request.ParseResponse(response, history)
+	msg, err := helpers.ParseJWS(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}
@@ -454,7 +453,7 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 				return nil, err
 			}
 
-			kid, err := kidhelper.GetJWSKID(adata)
+			kid, err := helpers.GetJWSKID(adata)
 			if err != nil {
 				return nil, err
 			}
@@ -526,7 +525,7 @@ func (s *Service) factPayload(cid, selfID, intermediary, description string, fac
 		req["callback"] = callback
 	}
 
-	return request.Serialize(req, s.keyID, s.sk)
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
 }
 
 // builds a list of all devices associated with an identity

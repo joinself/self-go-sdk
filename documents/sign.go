@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/request"
 )
 
 var (
@@ -64,12 +64,12 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		"exp":     ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339),
 	}
 
-	payload, err := request.Serialize(req, s.keyID, s.sk)
+	payload, err := helpers.PrepareJWS(req, s.keyID, s.sk)
 	if err != nil {
 		return resp, err
 	}
 
-	recs, err := request.FormatRecipients([]string{recipient}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recs, err := helpers.PrepareRecipients([]string{recipient}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return resp, err
 	}
@@ -98,7 +98,7 @@ func (s *Service) response(issuer string, response []byte) (resp Response, err e
 		return resp, err
 	}
 
-	msg, err := request.ParseResponse(response, history)
+	msg, err := helpers.ParseJWS(response, history)
 	if err != nil {
 		return resp, ErrResponseBadSignature
 	}

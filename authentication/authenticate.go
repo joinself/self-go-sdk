@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/request"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
 	"github.com/square/go-jose"
@@ -87,7 +87,7 @@ func (s Service) Request(selfID string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (s Service) RequestAsync(selfID, cid string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (s *Service) authenticationResponse(selfID string, resp []byte) (string, er
 		return cid, err
 	}
 
-	_, err = request.ParseResponse(resp, history)
+	_, err = helpers.ParseJWS(resp, history)
 	if err != nil {
 		return cid, err
 	}
@@ -319,7 +319,7 @@ func (s *Service) authenticationPayload(cid, selfID string, exp time.Duration) (
 		"device_id": s.deviceID,
 	}
 
-	return request.Serialize(req, s.keyID, s.sk)
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
 }
 
 // builds a list of all devices associated with an identity
