@@ -20,17 +20,6 @@ import (
 
 var cts = strings.Contains
 
-type requestMock struct {
-}
-
-func (r *requestMock) FormatRecipients(recipients []string) ([]string, error) {
-	recs := []string{}
-	recs = append(recs, recipients[0]+":1")
-	recs = append(recs, recipients[0]+":2")
-
-	return recs, nil
-}
-
 func setup(t *testing.T) (*testResponder, Config) {
 	pk, sk, err := ed25519.GenerateKey(rand.Reader)
 	require.Nil(t, err)

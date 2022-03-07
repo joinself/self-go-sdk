@@ -21,7 +21,7 @@ type RestTransport interface {
 	Get(path string) ([]byte, error)
 }
 
-func FormatRecipients(recipients []string, selfID, deviceID string, api RestTransport) ([]string, error) {
+func FormatRecipients(recipients, excludedDevices []string, api RestTransport) ([]string, error) {
 	devices := make([]string, 0)
 	for _, sID := range recipients {
 		dds, err := getDevices(api, sID)
@@ -30,9 +30,9 @@ func FormatRecipients(recipients []string, selfID, deviceID string, api RestTran
 		}
 
 		for i := range dds {
-			// if is not the current device
-			if sID != selfID && dds[i] != deviceID {
-				devices = append(devices, sID+":"+dds[i])
+			dd := sID + ":" + dds[i]
+			if !stringInSlice(dd, excludedDevices) {
+				devices = append(devices, dd)
 			}
 		}
 	}
@@ -114,4 +114,13 @@ func ParseResponse(response []byte, history []json.RawMessage) (msg []byte, err 
 	}
 
 	return msg, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }

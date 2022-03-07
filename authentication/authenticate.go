@@ -10,10 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/request"
-	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
 	"github.com/square/go-jose"
@@ -89,7 +87,7 @@ func (s Service) Request(selfID string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -119,7 +117,7 @@ func (s Service) RequestAsync(selfID, cid string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -289,24 +287,9 @@ func (s *Service) authenticationResponse(selfID string, resp []byte) (string, er
 		return cid, err
 	}
 
-	sg, err := siggraph.New(history)
+	_, err = request.ParseResponse(resp, history)
 	if err != nil {
 		return cid, err
-	}
-
-	kid, err := kidhelper.GetJWSKID(resp)
-	if err != nil {
-		return cid, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return cid, err
-	}
-
-	_, err = jws.Verify(pk)
-	if err != nil {
-		return cid, ErrResponseBadSignature
 	}
 
 	switch payload["status"] {

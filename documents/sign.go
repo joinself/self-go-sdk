@@ -69,7 +69,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		return resp, err
 	}
 
-	recs, err := request.FormatRecipients([]string{recipient}, s.selfID, s.deviceID, s.api)
+	recs, err := request.FormatRecipients([]string{recipient}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return resp, err
 	}

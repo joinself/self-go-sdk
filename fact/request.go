@@ -173,7 +173,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.SelfID}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.SelfID}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, err
 	}
 
-	recipients, err := request.FormatRecipients([]string{req.Intermediary}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{req.Intermediary}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}

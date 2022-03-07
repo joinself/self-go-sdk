@@ -10,10 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/pkg/kidhelper"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/request"
-	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
 	"github.com/tidwall/sjson"
 )
@@ -54,39 +52,15 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 	s.messaging.Subscribe(messageType, func(sender string, payload []byte) {
 		selfID := strings.Split(sender, ":")[0]
 
-		jws, err := jose.ParseSigned(string(payload))
-		if err != nil {
-			log.Println("messaging: message does not contain a valid jws")
-			return
-		}
-
 		history, err := s.pki.GetHistory(selfID)
 		if err != nil {
 			log.Println("messaging: ", err)
 			return
 		}
 
-		sg, err := siggraph.New(history)
+		msg, err := request.ParseResponse(payload, history)
 		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		kid, err := kidhelper.GetJWSKID(payload)
-		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		pk, err := sg.ActiveKey(kid)
-		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		msg, err := jws.Verify(pk)
-		if err != nil {
-			log.Println("messaging: message does not have a valid signature")
+			log.Println("messaging: " + err.Error())
 			return
 		}
 
@@ -238,7 +212,7 @@ func (s *Service) Notify(selfID, content string) error {
 		return err
 	}
 
-	recipients, err := request.FormatRecipients([]string{selfID}, s.selfID, s.deviceID, s.api)
+	recipients, err := request.FormatRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
