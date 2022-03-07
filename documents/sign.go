@@ -74,12 +74,10 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		return resp, err
 	}
 
-	log.Println("sending request")
 	issuer, response, err := s.messaging.Request(recs, jti, payload, 0)
 	if err != nil {
 		return resp, err
 	}
-	log.Println("response received")
 
 	resp, err = s.response(issuer, response)
 	if err != nil {
