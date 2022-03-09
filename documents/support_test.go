@@ -1,4 +1,4 @@
-package chat
+package documents
 
 import (
 	"crypto/ed25519"

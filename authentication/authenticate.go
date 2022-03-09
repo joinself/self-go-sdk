@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
 	"github.com/square/go-jose"
@@ -87,7 +87,7 @@ func (s Service) Request(selfID string) error {
 		return err
 	}
 
-	recipients, err := s.recipients(selfID)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (s Service) RequestAsync(selfID, cid string) error {
 		return err
 	}
 
-	recipients, err := s.recipients(selfID)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -287,24 +287,9 @@ func (s *Service) authenticationResponse(selfID string, resp []byte) (string, er
 		return cid, err
 	}
 
-	sg, err := siggraph.New(history)
+	_, err = helpers.ParseJWS(resp, history)
 	if err != nil {
 		return cid, err
-	}
-
-	kid, err := getJWSKID(resp)
-	if err != nil {
-		return cid, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return cid, err
-	}
-
-	_, err = jws.Verify(pk)
-	if err != nil {
-		return cid, ErrResponseBadSignature
 	}
 
 	switch payload["status"] {
@@ -322,7 +307,7 @@ func (s *Service) authenticationPayload(cid, selfID string, exp time.Duration) (
 		selfID = "-"
 	}
 
-	req := map[string]string{
+	req := map[string]interface{}{
 		"jti":       uuid.New().String(),
 		"cid":       cid,
 		"typ":       RequestAuthentication,
@@ -334,57 +319,7 @@ func (s *Service) authenticationPayload(cid, selfID string, exp time.Duration) (
 		"device_id": s.deviceID,
 	}
 
-	payload, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	signature, err := signer.Sign(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(signature.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range devices {
-		devices[i] = selfID + ":" + devices[i]
-	}
-
-	return devices, nil
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
 }
 
 // builds a list of all devices associated with an identity
@@ -407,38 +342,4 @@ func (s Service) paidActions() bool {
 	}
 
 	return app.PaidActions
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
 }

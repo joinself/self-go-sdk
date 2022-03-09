@@ -30,6 +30,7 @@ type pkiClient interface {
 // Service handles all messaging operations
 type Service struct {
 	selfID    string
+	deviceID  string
 	keyID     string
 	sk        ed25519.PrivateKey
 	api       restTransport
@@ -40,6 +41,7 @@ type Service struct {
 // Config stores all configuration needed by the messaging service
 type Config struct {
 	SelfID     string
+	DeviceID   string
 	KeyID      string
 	PrivateKey ed25519.PrivateKey
 	PKI        pkiClient
@@ -61,6 +63,7 @@ type jwsPayload struct {
 func NewService(cfg Config) *Service {
 	return &Service{
 		selfID:    cfg.SelfID,
+		deviceID:  cfg.DeviceID,
 		keyID:     cfg.KeyID,
 		sk:        cfg.PrivateKey,
 		api:       cfg.Rest,

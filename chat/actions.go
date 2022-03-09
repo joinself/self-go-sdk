@@ -3,13 +3,12 @@
 package chat
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/square/go-jose"
 )
 
 func (s *Service) SelfID() string {
@@ -189,7 +188,7 @@ func (s *Service) confirm(action string, recipients []string, cids []string, gid
 }
 
 func (s *Service) send(recipients []string, req map[string]interface{}) error {
-	recs, err := s.recipients(recipients)
+	recs, err := helpers.PrepareRecipients(recipients, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -204,7 +203,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 		req["aud"] = gid
 		req["sub"] = gid
 
-		body, err := s.serialize(req)
+		body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
 		if err != nil {
 			return err
 		}
@@ -219,7 +218,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 			req["aud"] = r
 			req["sub"] = r
 
-			body, err := s.serialize(req)
+			body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
 			if err != nil {
 				return err
 			}
@@ -234,52 +233,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	return nil
 }
 
-func (s *Service) serialize(req map[string]interface{}) ([]byte, error) {
-	payload, err := json.Marshal(req)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	signature, err := signer.Sign(payload)
-	if err != nil {
-		return []byte(""), err
-	}
-
-	return []byte(signature.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(recipients []string) ([]string, error) {
-	devices := make([]string, 0)
-	for _, selfID := range recipients {
-		dds, err := s.getDevices(selfID)
-		if err != nil {
-			return nil, err
-		}
-
-		for i := range dds {
-			if selfID != s.selfID && dds[i] != s.deviceID {
-				devices = append(devices, selfID+":"+dds[i])
-			}
-		}
-	}
-
-	return devices, nil
-}
-
 func (s *Service) createMissingSessions(members []string) error {
-	println("creating missing sessions 1")
 	sw := false
 	unconnectedMembers := make([]string, 0)
 
@@ -292,28 +246,5 @@ func (s *Service) createMissingSessions(members []string) error {
 		}
 	}
 
-	println("creating missing sessions")
 	return s.send(unconnectedMembers, map[string]interface{}{"typ": "sessions.create"})
-}
-
-func (s Service) getDevices(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
 }

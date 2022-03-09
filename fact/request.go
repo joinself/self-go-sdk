@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
@@ -171,7 +172,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	recipients, err := s.recipients(req.SelfID)
+	recipients, err := helpers.PrepareRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +228,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return err
 	}
 
-	recipients, err := s.recipients(req.SelfID)
+	recipients, err := helpers.PrepareRecipients([]string{req.SelfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
@@ -254,7 +255,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, err
 	}
 
-	recipients, err := s.recipients(req.Intermediary)
+	recipients, err := helpers.PrepareRecipients([]string{req.Intermediary}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return nil, err
 	}
@@ -395,27 +396,7 @@ func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact,
 		return nil, err
 	}
 
-	sg, err := siggraph.New(history)
-	if err != nil {
-		return nil, err
-	}
-
-	kid, err := getJWSKID(response)
-	if err != nil {
-		return nil, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return nil, err
-	}
-
-	jws, err := jose.ParseSigned(string(response))
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := jws.Verify(pk)
+	msg, err := helpers.ParseJWS(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}
@@ -472,7 +453,7 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 				return nil, err
 			}
 
-			kid, err := getJWSKID(adata)
+			kid, err := helpers.GetJWSKID(adata)
 			if err != nil {
 				return nil, err
 			}
@@ -544,57 +525,7 @@ func (s *Service) factPayload(cid, selfID, intermediary, description string, fac
 		req["callback"] = callback
 	}
 
-	request, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": s.keyID,
-		},
-	}
-
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.EdDSA, Key: s.sk}, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	signedRequest, err := signer.Sign(request)
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(signedRequest.FullSerialize()), nil
-}
-
-// builds a list of all devices associated with an identity
-func (s Service) recipients(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range devices {
-		devices[i] = selfID + ":" + devices[i]
-	}
-
-	return devices, nil
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
 }
 
 // builds a list of all devices associated with an identity
@@ -617,38 +548,4 @@ func (s Service) paidActions() bool {
 	}
 
 	return app.PaidActions
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
 }

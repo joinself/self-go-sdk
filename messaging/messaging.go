@@ -3,7 +3,6 @@
 package messaging
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"log"
@@ -11,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
-	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
 	"github.com/tidwall/sjson"
 )
@@ -53,39 +52,15 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 	s.messaging.Subscribe(messageType, func(sender string, payload []byte) {
 		selfID := strings.Split(sender, ":")[0]
 
-		jws, err := jose.ParseSigned(string(payload))
-		if err != nil {
-			log.Println("messaging: message does not contain a valid jws")
-			return
-		}
-
 		history, err := s.pki.GetHistory(selfID)
 		if err != nil {
 			log.Println("messaging: ", err)
 			return
 		}
 
-		sg, err := siggraph.New(history)
+		msg, err := helpers.ParseJWS(payload, history)
 		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		kid, err := getJWSKID(payload)
-		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		pk, err := sg.ActiveKey(kid)
-		if err != nil {
-			log.Println("messaging: ", err)
-			return
-		}
-
-		msg, err := jws.Verify(pk)
-		if err != nil {
-			log.Println("messaging: message does not have a valid signature")
+			log.Println("messaging: " + err.Error())
 			return
 		}
 
@@ -150,10 +125,10 @@ func (s *Service) serializeRequest(request []byte, cid string) (string, error) {
 }
 
 // Request make a request to an identity
-func (s *Service) Request(recipients []string, request []byte) ([]byte, error) {
+func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
 	cid := uuid.New().String()
 
-	plaintext, err := s.serializeRequest(request, cid)
+	plaintext, err := s.serializeRequest(req, cid)
 	if err != nil {
 		return nil, err
 	}
@@ -165,32 +140,12 @@ func (s *Service) Request(recipients []string, request []byte) ([]byte, error) {
 
 	selfID := strings.Split(sender, ":")[0]
 
-	jws, err := jose.ParseSigned(string(response))
-	if err != nil {
-		return nil, err
-	}
-
 	history, err := s.pki.GetHistory(selfID)
 	if err != nil {
 		return nil, err
 	}
 
-	sg, err := siggraph.New(history)
-	if err != nil {
-		return nil, err
-	}
-
-	kid, err := getJWSKID(response)
-	if err != nil {
-		return nil, err
-	}
-
-	pk, err := sg.ActiveKey(kid)
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := jws.Verify(pk)
+	msg, err := helpers.ParseJWS(response, history)
 	if err != nil {
 		return nil, ErrResponseBadSignature
 	}
@@ -257,73 +212,10 @@ func (s *Service) Notify(selfID, content string) error {
 		return err
 	}
 
-	recipients, err := s.recipients(selfID)
+	recipients, err := helpers.PrepareRecipients([]string{selfID}, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
 	}
 
 	return s.Send(recipients, cid, data)
-}
-
-// builds a list of all devices associated with an identity
-func (s *Service) recipients(selfID string) ([]string, error) {
-	var resp []byte
-	var err error
-
-	if len(selfID) > 11 {
-		resp, err = s.api.Get("/v1/apps/" + selfID + "/devices")
-	} else {
-		resp, err = s.api.Get("/v1/identities/" + selfID + "/devices")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []string
-
-	err = json.Unmarshal(resp, &devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range devices {
-		devices[i] = selfID + ":" + devices[i]
-	}
-
-	return devices, nil
-}
-
-func getKID(token string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[0])
-	if err != nil {
-		return "", err
-	}
-
-	hdr := make(map[string]string)
-
-	err = json.Unmarshal(data, &hdr)
-	if err != nil {
-		return "", err
-	}
-
-	kid := hdr["kid"]
-	if kid == "" {
-		return "", errors.New("token must specify an identifier for the signing key")
-	}
-
-	return kid, nil
-}
-
-func getJWSKID(payload []byte) (string, error) {
-	var jws struct {
-		Protected string `json:"protected"`
-	}
-
-	err := json.Unmarshal(payload, &jws)
-	if err != nil {
-		return "", err
-	}
-
-	return getKID(jws.Protected)
 }
