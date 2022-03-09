@@ -38,6 +38,7 @@ type Response struct {
 	Status        string         `json:"status"`
 }
 
+// RequestSignature sends a signature request to the specified user.
 func (s *Service) RequestSignature(recipient string, body string, objects []InputObject) (Response, error) {
 	var resp Response
 	jti := uuid.New().String()

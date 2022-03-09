@@ -234,7 +234,6 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 }
 
 func (s *Service) createMissingSessions(members []string) error {
-	println("creating missing sessions 1")
 	sw := false
 	unconnectedMembers := make([]string, 0)
 
@@ -247,6 +246,5 @@ func (s *Service) createMissingSessions(members []string) error {
 		}
 	}
 
-	println("creating missing sessions")
 	return s.send(unconnectedMembers, map[string]interface{}{"typ": "sessions.create"})
 }
