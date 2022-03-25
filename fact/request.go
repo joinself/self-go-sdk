@@ -345,13 +345,13 @@ func (s Service) GenerateDeepLink(req *DeepLinkFactRequest) (string, error) {
 		return "", err
 	}
 
-	url := "https://joinself.page.link/?link=" + req.Callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload)
+	url := "https://links.joinself.com/?link=" + req.Callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload)
 	if s.environment == "" {
 		return url + "&apn=com.joinself.app", nil
 	} else if s.environment == "development" {
 		return url + "&apn=com.joinself.app.dev", nil
 	}
-	return url + "&apn=com.joinself.app." + s.environment, nil
+	return "https://" + s.environment + ".links.joinself.com/?link=" + req.Callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload) + "&apn=com.joinself.app." + s.environment, nil
 }
 
 // WaitForResponse waits for completion of a fact request that was initiated by qr code
