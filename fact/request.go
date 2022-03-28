@@ -56,6 +56,7 @@ type FactRequest struct {
 	Expiry      time.Duration
 	AllowedFor  time.Duration
 	Callback    json.RawMessage
+	Auth        bool
 }
 
 // FactRequestAsync specifies the parameters of an information requestAsync
@@ -67,6 +68,7 @@ type FactRequestAsync struct {
 	AllowedFor  time.Duration
 	CID         string
 	Callback    json.RawMessage
+	Auth        bool
 }
 
 // FactResponse contains the details of the requested facts
@@ -83,6 +85,7 @@ type QRFactRequest struct {
 	Options        map[string]string
 	Expiry         time.Duration
 	QRConfig       QRConfig
+	Auth           bool
 }
 
 // QRFactResponse contains the details of the requested facts
@@ -99,6 +102,7 @@ type DeepLinkFactRequest struct {
 	Callback       string
 	Facts          []Fact
 	Expiry         time.Duration
+	Auth           bool
 }
 
 type QRConfig struct {
@@ -167,7 +171,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 
 	cid := uuid.New().String()
 
-	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Callback)
+	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Auth, req.Callback)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +227,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return ErrNotConnected
 	}
 
-	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Callback)
+	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Auth, req.Callback)
 	if err != nil {
 		return err
 	}
@@ -250,7 +254,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 
 	cid := uuid.New().String()
 
-	payload, err := s.factPayload(cid, req.SelfID, req.Intermediary, req.Description, req.Facts, nil, req.Expiry, nil, nil)
+	payload, err := s.factPayload(cid, req.SelfID, req.Intermediary, req.Description, req.Facts, nil, req.Expiry, nil, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +317,7 @@ func (s Service) GenerateQRCode(req *QRFactRequest) ([]byte, error) {
 		req.QRConfig.Size = 400
 	}
 
-	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, req.Options, req.Expiry, nil, nil)
+	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, req.Options, req.Expiry, nil, req.Auth, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +344,7 @@ func (s Service) GenerateDeepLink(req *DeepLinkFactRequest) (string, error) {
 	}
 	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
-	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, nil, nil)
+	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, nil, req.Auth, nil)
 	if err != nil {
 		return "", err
 	}
@@ -499,7 +503,7 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 	}
 }
 
-func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, au *time.Duration, callback json.RawMessage) ([]byte, error) {
+func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, au *time.Duration, auth bool, callback json.RawMessage) ([]byte, error) {
 	req := map[string]interface{}{
 		"typ":         RequestInformation,
 		"cid":         cid,
@@ -512,6 +516,7 @@ func (s *Service) factPayload(cid, selfID, intermediary, description string, fac
 		"device_id":   s.deviceID,
 		"description": description,
 		"facts":       facts,
+		"auth":        auth,
 	}
 
 	if au != nil {
