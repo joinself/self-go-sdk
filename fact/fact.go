@@ -16,6 +16,9 @@ var (
 	SourceDrivingLicense = "driving_license"
 	SourceUserSpecified  = "user_specified"
 	SourceIDCard         = "identity_card"
+	SourceTwitter        = "twitter"
+	SourceLinkedin       = "linkedin"
+	SourceFacebook       = "facebook"
 
 	FactEmail             = "email_address"
 	FactPhone             = "phone_number"
@@ -36,6 +39,8 @@ var (
 	FactSortCode          = "sort_code"
 	FactCountryOfIssuance = "country_of_issuance"
 	FactDocumentNumber    = "document_number"
+	FactAccountID         = "account_id"
+	FactNickname          = "nickname"
 
 	OperatorEqual              = "=="
 	OperatorDifferent          = "!="
@@ -85,6 +90,21 @@ var (
 		FactDisplayName: struct{}{},
 		FactEmail:       struct{}{},
 		FactPhone:       struct{}{},
+	}
+
+	sourceTwitterFacts = map[string]struct{}{
+		FactAccountID: struct{}{},
+		FactNickname:  struct{}{},
+	}
+
+	sourceLinkedinFacts = map[string]struct{}{
+		FactAccountID: struct{}{},
+		FactNickname:  struct{}{},
+	}
+
+	sourceFacebookFacts = map[string]struct{}{
+		FactAccountID: struct{}{},
+		FactNickname:  struct{}{},
 	}
 )
 
@@ -141,7 +161,7 @@ func (f *Fact) validate() error {
 	}
 
 	for _, s := range f.Sources {
-		if s != SourcePassport && s != SourceDrivingLicense && s != SourceUserSpecified && s != SourceIDCard {
+		if s != SourcePassport && s != SourceDrivingLicense && s != SourceUserSpecified && s != SourceIDCard && s != SourceTwitter && s != SourceLinkedin && s != SourceFacebook {
 			return ErrFactInvalidSource
 		}
 
@@ -159,6 +179,24 @@ func (f *Fact) validate() error {
 
 		if s == SourceUserSpecified {
 			if _, ok := sourceUserFacts[f.Fact]; !ok {
+				return ErrFactInvalidFactToSource
+			}
+		}
+
+		if s == SourceTwitter {
+			if _, ok := sourceTwitterFacts[f.Fact]; !ok {
+				return ErrFactInvalidFactToSource
+			}
+		}
+
+		if s == SourceLinkedin {
+			if _, ok := sourceLinkedinFacts[f.Fact]; !ok {
+				return ErrFactInvalidFactToSource
+			}
+		}
+
+		if s == SourceFacebook {
+			if _, ok := sourceFacebookFacts[f.Fact]; !ok {
 				return ErrFactInvalidFactToSource
 			}
 		}
