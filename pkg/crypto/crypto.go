@@ -195,10 +195,34 @@ func (c *Client) Decrypt(sender string, ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	var gm selfcrypto.GroupMessage
+
+	err = json.Unmarshal(ciphertext, &gm)
+	if err != nil {
+		return nil, err
+	}
+
 	if sp == nil {
-		s, err = c.createInboundSession(sender, ciphertext)
+		s, err = c.createInboundSession(sender, &gm)
 	} else {
 		s, err = selfcrypto.SessionFromPickle(sender, c.config.StorageKey, string(sp))
+		if err != nil {
+			return nil, err
+		}
+
+		m := gm.Recipients[c.address]
+
+		matches, err := s.MatchesInboundSession(m)
+		if err != nil {
+			return nil, err
+		}
+
+		// sender is attempting to renegotiate the session
+		// so create a new inbound session as this is a
+		// one time key message
+		if m.Type == 0 && !matches {
+			s, err = c.createInboundSession(sender, &gm)
+		}
 	}
 
 	if err != nil {
@@ -323,15 +347,8 @@ func (c *Client) createOutboundSession(recipient string) (*selfcrypto.Session, e
 	return selfcrypto.CreateOutboundSession(c.account, recipient, pk, prk.Key)
 }
 
-func (c *Client) createInboundSession(recipient string, ciphertext []byte) (*selfcrypto.Session, error) {
-	var m selfcrypto.GroupMessage
-
-	err := json.Unmarshal(ciphertext, &m)
-	if err != nil {
-		return nil, err
-	}
-
-	otkm, ok := m.Recipients[c.address]
+func (c *Client) createInboundSession(recipient string, gm *selfcrypto.GroupMessage) (*selfcrypto.Session, error) {
+	otkm, ok := gm.Recipients[c.address]
 	if !ok {
 		return nil, ErrInvalidGroupMessageRecipient
 	}

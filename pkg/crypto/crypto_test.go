@@ -75,6 +75,94 @@ func TestCryptoClientEncrypt(t *testing.T) {
 	assert.Equal(t, []byte("hello"), plaintext)
 }
 
+func TestCryptoClientSessionNegotiation(t *testing.T) {
+	_, pki, astorage := setup(t, 1)
+	_, _, bstorage := setup(t, 1)
+
+	// setup alice
+	apk, ask, err := ed25519.GenerateKey(rand.Reader)
+	require.Nil(t, err)
+
+	acfg := Config{
+		SelfID:     "alice",
+		DeviceID:   "1",
+		PrivateKey: ask,
+		StorageKey: "my-secret-key",
+		Storage:    astorage,
+		PKI:        pki,
+	}
+
+	ac, err := New(acfg)
+	require.Nil(t, err)
+
+	// setup bob
+	bpk, bsk, err := ed25519.GenerateKey(rand.Reader)
+	require.Nil(t, err)
+
+	bcfg := Config{
+		SelfID:     "bob",
+		DeviceID:   "1",
+		PrivateKey: bsk,
+		StorageKey: "my-secret-key",
+		Storage:    bstorage,
+		PKI:        pki,
+	}
+
+	bc, err := New(bcfg)
+	require.Nil(t, err)
+
+	// publish alices public key
+	_, err = ac.account.IdentityKeys()
+	require.Nil(t, err)
+	pki.addpk("alice", ask, apk)
+
+	// publish bobs public key
+	_, err = bc.account.IdentityKeys()
+	require.Nil(t, err)
+	pki.addpk("bob", bsk, bpk)
+
+	// encrypt from alices session
+	var ciphertexts [][]byte
+
+	for i := 0; i < 5; i++ {
+		ciphertext, err := ac.Encrypt([]string{"bob:1"}, []byte("hello"))
+		require.Nil(t, err)
+		ciphertexts = append(ciphertexts, ciphertext)
+	}
+
+	for i := 0; i < 5; i++ {
+		// descrypt from bobs session
+		plaintext, err := bc.Decrypt("alice:1", ciphertexts[i])
+		require.Nil(t, err)
+		assert.Equal(t, []byte("hello"), plaintext)
+	}
+
+	// generate a new session for bob
+	nbs, err := ac.createOutboundSession("bob:1")
+	require.Nil(t, err)
+
+	nbp, err := nbs.Pickle(ac.config.StorageKey)
+	require.Nil(t, err)
+
+	err = ac.storage.SetSession("bob:1", []byte(nbp))
+	require.Nil(t, err)
+
+	ciphertexts = [][]byte{}
+
+	for i := 0; i < 5; i++ {
+		ciphertext, err := ac.Encrypt([]string{"bob:1"}, []byte("hello"))
+		require.Nil(t, err)
+		ciphertexts = append(ciphertexts, ciphertext)
+	}
+
+	for i := 0; i < 5; i++ {
+		// descrypt from bobs session
+		plaintext, err := bc.Decrypt("alice:1", ciphertexts[i])
+		require.Nil(t, err)
+		assert.Equal(t, []byte("hello"), plaintext)
+	}
+}
+
 func TestCryptoClientEncryptMultipleRecipients(t *testing.T) {
 	rcps, pki, storage := setup(t, 20)
 
