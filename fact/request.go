@@ -483,7 +483,7 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 
 			sub := gjson.GetBytes(msg, "sub").String()
 
-			if sub != subject {
+			if strings.Split(sub, ":")[0] != subject {
 				return nil, ErrBadAttestationSubject
 			}
 
