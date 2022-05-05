@@ -19,6 +19,7 @@ var (
 	SourceTwitter        = "twitter"
 	SourceLinkedin       = "linkedin"
 	SourceFacebook       = "facebook"
+	SourceLive           = "live"
 
 	FactEmail             = "email_address"
 	FactPhone             = "phone_number"
@@ -41,6 +42,7 @@ var (
 	FactDocumentNumber    = "document_number"
 	FactAccountID         = "account_id"
 	FactNickname          = "nickname"
+	FactSelfie            = "selfie_verification"
 
 	OperatorEqual              = "=="
 	OperatorDifferent          = "!="
@@ -106,6 +108,10 @@ var (
 		FactAccountID: struct{}{},
 		FactNickname:  struct{}{},
 	}
+
+	sourceLiveFacts = map[string]struct{}{
+		FactSelfie: struct{}{},
+	}
 )
 
 // Fact specific details about the fact
@@ -161,7 +167,7 @@ func (f *Fact) validate() error {
 	}
 
 	for _, s := range f.Sources {
-		if s != SourcePassport && s != SourceDrivingLicense && s != SourceUserSpecified && s != SourceIDCard && s != SourceTwitter && s != SourceLinkedin && s != SourceFacebook {
+		if s != SourcePassport && s != SourceDrivingLicense && s != SourceUserSpecified && s != SourceIDCard && s != SourceTwitter && s != SourceLinkedin && s != SourceFacebook && s != SourceLive {
 			return ErrFactInvalidSource
 		}
 
@@ -197,6 +203,12 @@ func (f *Fact) validate() error {
 
 		if s == SourceFacebook {
 			if _, ok := sourceFacebookFacts[f.Fact]; !ok {
+				return ErrFactInvalidFactToSource
+			}
+		}
+
+		if s == SourceLive {
+			if _, ok := sourceLiveFacts[f.Fact]; !ok {
 				return ErrFactInvalidFactToSource
 			}
 		}
