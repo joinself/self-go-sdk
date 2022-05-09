@@ -26,12 +26,12 @@ func TestRequest(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -72,10 +72,10 @@ func TestRequest(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -90,7 +90,7 @@ func TestRequest(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -113,7 +113,7 @@ func TestRequest(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -154,12 +154,12 @@ func TestRequestTimeout(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -200,10 +200,10 @@ func TestRequestTimeout(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		return "", nil, ErrRequestTimeout
 	}
@@ -223,12 +223,12 @@ func TestRequestBadAttestation(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -269,10 +269,10 @@ func TestRequestBadAttestation(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -287,7 +287,7 @@ func TestRequestBadAttestation(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -310,7 +310,7 @@ func TestRequestBadAttestation(t *testing.T) {
 			"sub":     "bad-id",
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -349,12 +349,12 @@ func TestRequestBadStatus(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -395,10 +395,10 @@ func TestRequestBadStatus(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -413,7 +413,7 @@ func TestRequestBadStatus(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -436,7 +436,7 @@ func TestRequestBadStatus(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -475,12 +475,12 @@ func TestRequestBadAttestationSignature(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -523,10 +523,10 @@ func TestRequestBadAttestationSignature(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -541,7 +541,7 @@ func TestRequestBadAttestationSignature(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -564,7 +564,7 @@ func TestRequestBadAttestationSignature(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -603,12 +603,12 @@ func TestRequestBadSignature(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -651,10 +651,10 @@ func TestRequestBadSignature(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -669,7 +669,7 @@ func TestRequestBadSignature(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -692,7 +692,7 @@ func TestRequestBadSignature(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -731,12 +731,12 @@ func TestRequestBadResponder(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -777,10 +777,10 @@ func TestRequestBadResponder(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -795,7 +795,7 @@ func TestRequestBadResponder(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -818,7 +818,7 @@ func TestRequestBadResponder(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -857,12 +857,12 @@ func TestRequestBadIssuingIdentity(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -903,10 +903,10 @@ func TestRequestBadIssuingIdentity(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = "bad"
@@ -921,7 +921,7 @@ func TestRequestBadIssuingIdentity(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -944,7 +944,7 @@ func TestRequestBadIssuingIdentity(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -983,12 +983,12 @@ func TestRequestBadAudienceIdentity(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -1029,10 +1029,10 @@ func TestRequestBadAudienceIdentity(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -1047,7 +1047,7 @@ func TestRequestBadAudienceIdentity(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -1070,7 +1070,7 @@ func TestRequestBadAudienceIdentity(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -1109,12 +1109,12 @@ func TestRequestResponseExpired(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -1155,10 +1155,10 @@ func TestRequestResponseExpired(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -1173,7 +1173,7 @@ func TestRequestResponseExpired(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -1196,7 +1196,7 @@ func TestRequestResponseExpired(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -1235,12 +1235,12 @@ func TestRequestResponseIssuedInFuture(t *testing.T) {
 		Expiry: time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:    "given_names",
-				Sources: []string{"driving_license"},
+				Fact:    FactGivenNames,
+				Sources: []string{SourceDrivingLicense},
 			},
 			{
-				Fact:    "surname",
-				Sources: []string{"driving_license"},
+				Fact:    FactSurname,
+				Sources: []string{SourceDrivingLicense},
 			},
 		},
 	}
@@ -1281,10 +1281,10 @@ func TestRequestResponseIssuedInFuture(t *testing.T) {
 		assert.Equal(t, fr.SelfID, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 2)
-		assert.Equal(t, "given_names", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[0].Sources)
-		assert.Equal(t, "surname", m.Facts[1].Fact)
-		assert.Equal(t, []string{"driving_license"}, m.Facts[1].Sources)
+		assert.Equal(t, FactGivenNames, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[0].Sources)
+		assert.Equal(t, FactSurname, m.Facts[1].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense}, m.Facts[1].Sources)
 
 		m.Type = ResponseInformation
 		m.Issuer = fr.SelfID
@@ -1299,7 +1299,7 @@ func TestRequestResponseIssuedInFuture(t *testing.T) {
 			"sub":         fr.SelfID,
 			"iss":         "test-attester",
 			"iat":         ntp.TimeFunc().Format(time.RFC3339),
-			"source":      "driving_license",
+			"source":      SourceDrivingLicense,
 			"given_names": "pontiac",
 		})
 
@@ -1322,7 +1322,7 @@ func TestRequestResponseIssuedInFuture(t *testing.T) {
 			"sub":     fr.SelfID,
 			"iss":     "test-attester",
 			"iat":     ntp.TimeFunc().Format(time.RFC3339),
-			"source":  "driving_license",
+			"source":  SourceDrivingLicense,
 			"surname": "bandit",
 		})
 
@@ -1362,8 +1362,8 @@ func TestRequestViaIntermediary(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1412,8 +1412,8 @@ func TestRequestViaIntermediary(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1431,7 +1431,7 @@ func TestRequestViaIntermediary(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -1471,8 +1471,8 @@ func TestRequestViaIntermediaryTimeout(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1510,8 +1510,8 @@ func TestRequestViaIntermediaryBadStatus(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1551,8 +1551,8 @@ func TestRequestViaIntermediaryBadStatus(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1597,8 +1597,8 @@ func TestRequestViaIntermediaryBadSignature(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1649,8 +1649,8 @@ func TestRequestViaIntermediaryBadSignature(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1668,7 +1668,7 @@ func TestRequestViaIntermediaryBadSignature(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -1704,8 +1704,8 @@ func TestRequestViaIntermediaryBadResponder(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1754,8 +1754,8 @@ func TestRequestViaIntermediaryBadResponder(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1773,7 +1773,7 @@ func TestRequestViaIntermediaryBadResponder(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -1809,8 +1809,8 @@ func TestRequestViaIntermediaryBadIssuingIdentity(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1859,8 +1859,8 @@ func TestRequestViaIntermediaryBadIssuingIdentity(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1878,7 +1878,7 @@ func TestRequestViaIntermediaryBadIssuingIdentity(t *testing.T) {
 			"aud":           "test",
 			"iss":           "bad",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -1914,8 +1914,8 @@ func TestRequestViaIntermediaryBadAudienceIdentity(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -1964,8 +1964,8 @@ func TestRequestViaIntermediaryBadAudienceIdentity(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -1983,7 +1983,7 @@ func TestRequestViaIntermediaryBadAudienceIdentity(t *testing.T) {
 			"aud":           "bad",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -2019,8 +2019,8 @@ func TestRequestViaIntermediaryBadSubjectIdentity(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -2069,8 +2069,8 @@ func TestRequestViaIntermediaryBadSubjectIdentity(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -2089,7 +2089,7 @@ func TestRequestViaIntermediaryBadSubjectIdentity(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -2125,8 +2125,8 @@ func TestRequestViaIntermediaryResponseExpired(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -2175,8 +2175,8 @@ func TestRequestViaIntermediaryResponseExpired(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -2194,7 +2194,7 @@ func TestRequestViaIntermediaryResponseExpired(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Add(-time.Hour).Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
@@ -2230,8 +2230,8 @@ func TestRequestViaIntermediaryResponseIssuedInFuture(t *testing.T) {
 		Expiry:       time.Millisecond,
 		Facts: []Fact{
 			{
-				Fact:          "date_of_birth",
-				Sources:       []string{"driving_license", "passport"},
+				Fact:          FactDateOfBirth,
+				Sources:       []string{SourceDrivingLicense, SourcePassport},
 				Operator:      "<=",
 				ExpectedValue: time.Now().Add(time.Hour * 183960).Format(time.RFC3339),
 			},
@@ -2280,8 +2280,8 @@ func TestRequestViaIntermediaryResponseIssuedInFuture(t *testing.T) {
 		assert.Equal(t, fr.Intermediary, m.Audience)
 		assert.Equal(t, fr.Description, m.Description)
 		require.Len(t, m.Facts, 1)
-		assert.Equal(t, "date_of_birth", m.Facts[0].Fact)
-		assert.Equal(t, []string{"driving_license", "passport"}, m.Facts[0].Sources)
+		assert.Equal(t, FactDateOfBirth, m.Facts[0].Fact)
+		assert.Equal(t, []string{SourceDrivingLicense, SourcePassport}, m.Facts[0].Sources)
 		assert.Equal(t, "<=", m.Facts[0].Operator)
 		assert.Equal(t, fr.Facts[0].ExpectedValue, m.Facts[0].ExpectedValue)
 
@@ -2300,7 +2300,7 @@ func TestRequestViaIntermediaryResponseIssuedInFuture(t *testing.T) {
 			"aud":           "test",
 			"iss":           "intermediary",
 			"iat":           ntp.TimeFunc().Add(time.Hour).Format(time.RFC3339),
-			"date_of_birth": true,
+			FactDateOfBirth: true,
 		})
 
 		require.Nil(t, err)
