@@ -1,6 +1,4 @@
-package fact
-
-var sourceDefinition = []byte(`{
+{
 	"sources": {
 		"user_specified": [
 			"document_number",
@@ -55,4 +53,4 @@ var sourceDefinition = []byte(`{
 			"selfie_verification"
 		]
 	}
-}`)
+}
