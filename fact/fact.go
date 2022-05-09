@@ -11,39 +11,11 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+type sourceSpec struct {
+	sources map[string][]string
+}
+
 var (
-	SourcePassport       = "passport"
-	SourceDrivingLicense = "driving_license"
-	SourceUserSpecified  = "user_specified"
-	SourceIDCard         = "identity_card"
-	SourceTwitter        = "twitter"
-	SourceLinkedin       = "linkedin"
-	SourceFacebook       = "facebook"
-	SourceLive           = "live"
-
-	FactEmail             = "email_address"
-	FactPhone             = "phone_number"
-	FactDisplayName       = "display_name"
-	FactGivenNames        = "given_names"
-	FactSurname           = "surname"
-	FactSex               = "sex"
-	FactIssuingAuthority  = "issuing_authority"
-	FactNationality       = "nationality"
-	FactAddress           = "address"
-	FactPlaceOfBirth      = "place_of_birth"
-	FactDateOfBirth       = "date_of_birth"
-	FactDateOfIssuance    = "date_of_issuance"
-	FactDateOfExpiration  = "date_of_expiration"
-	FactValidFrom         = "valid_from"
-	FactValidTo           = "valid_to"
-	FactCategories        = "categories"
-	FactSortCode          = "sort_code"
-	FactCountryOfIssuance = "country_of_issuance"
-	FactDocumentNumber    = "document_number"
-	FactAccountID         = "account_id"
-	FactNickname          = "nickname"
-	FactSelfie            = "selfie_verification"
-
 	OperatorEqual              = "=="
 	OperatorDifferent          = "!="
 	OperatorGreaterOrEqualThan = ">="
@@ -63,55 +35,7 @@ var (
 	ErrFactInvalidSource       = errors.New("provided fact does not specify a valid source")
 	ErrFactInvalidOperator     = errors.New("provided fact does not specify a valid operator")
 	ErrFactInvalidFactToSource = errors.New("provided source does not support given fact")
-
-	sourcePassportFacts = map[string]struct{}{
-		FactDocumentNumber:    struct{}{},
-		FactSurname:           struct{}{},
-		FactGivenNames:        struct{}{},
-		FactDateOfBirth:       struct{}{},
-		FactDateOfExpiration:  struct{}{},
-		FactSex:               struct{}{},
-		FactNationality:       struct{}{},
-		FactCountryOfIssuance: struct{}{},
-	}
-
-	sourceDLFacts = map[string]struct{}{
-		FactDocumentNumber:    struct{}{},
-		FactSurname:           struct{}{},
-		FactGivenNames:        struct{}{},
-		FactDateOfBirth:       struct{}{},
-		FactDateOfIssuance:    struct{}{},
-		FactDateOfExpiration:  struct{}{},
-		FactAddress:           struct{}{},
-		FactIssuingAuthority:  struct{}{},
-		FactPlaceOfBirth:      struct{}{},
-		FactCountryOfIssuance: struct{}{},
-	}
-
-	sourceUserFacts = map[string]struct{}{
-		FactDisplayName: struct{}{},
-		FactEmail:       struct{}{},
-		FactPhone:       struct{}{},
-	}
-
-	sourceTwitterFacts = map[string]struct{}{
-		FactAccountID: struct{}{},
-		FactNickname:  struct{}{},
-	}
-
-	sourceLinkedinFacts = map[string]struct{}{
-		FactAccountID: struct{}{},
-		FactNickname:  struct{}{},
-	}
-
-	sourceFacebookFacts = map[string]struct{}{
-		FactAccountID: struct{}{},
-		FactNickname:  struct{}{},
-	}
-
-	sourceLiveFacts = map[string]struct{}{
-		FactSelfie: struct{}{},
-	}
+	ErrInvalidSourceSpec       = errors.New("internal error : invalid source spec")
 )
 
 // Fact specific details about the fact
@@ -166,53 +90,22 @@ func (f *Fact) validate() error {
 		return ErrFactEmptyName
 	}
 
+	var spec sourceSpec
+	err := json.Unmarshal(sourceDefinition, &spec)
+	if err != nil {
+		return ErrInvalidSourceSpec
+	}
+
 	for _, s := range f.Sources {
-		if s != SourcePassport && s != SourceDrivingLicense && s != SourceUserSpecified && s != SourceIDCard && s != SourceTwitter && s != SourceLinkedin && s != SourceFacebook && s != SourceLive {
+		// Return if s is not a valid source
+		if _, ok := spec.sources[s]; !ok {
 			return ErrFactInvalidSource
 		}
 
-		if s == SourcePassport || s == SourceIDCard {
-			if _, ok := sourcePassportFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
+		// return error if the fact does not belong to the source
+		if !contains(spec.sources[s], f.Fact) {
+			return ErrFactInvalidFactToSource
 		}
-
-		if s == SourceDrivingLicense {
-			if _, ok := sourceDLFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
-		if s == SourceUserSpecified {
-			if _, ok := sourceUserFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
-		if s == SourceTwitter {
-			if _, ok := sourceTwitterFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
-		if s == SourceLinkedin {
-			if _, ok := sourceLinkedinFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
-		if s == SourceFacebook {
-			if _, ok := sourceFacebookFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
-		if s == SourceLive {
-			if _, ok := sourceLiveFacts[f.Fact]; !ok {
-				return ErrFactInvalidFactToSource
-			}
-		}
-
 	}
 
 	if !f.hasValidOperator() {
@@ -227,6 +120,15 @@ func (f *Fact) hasValidOperator() bool {
 
 	for _, b := range validOperators {
 		if b == f.Operator {
+			return true
+		}
+	}
+	return false
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
