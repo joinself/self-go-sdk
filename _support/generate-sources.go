@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -21,15 +22,17 @@ func constNames(body []byte) (string, error) {
 		return "", err
 	}
 
-	output := "\n"
+	output := ""
 	sources := map[string]struct{}{}
 	facts := map[string]struct{}{}
+	definitions := []string{}
 	relations := "var spec = map[string][]string{\n"
+
 	for key, specFacts := range spec.Sources {
 		source := snakeCaseToCamelCase("Source_" + key)
 		relations += fmt.Sprintf("\t%s: []string{\n", source)
 		if _, ok := sources[key]; !ok {
-			output += fmt.Sprintf("const %s = \"%s\"", source, key) + "\n"
+			definitions = append(definitions, fmt.Sprintf("const %s = \"%s\"", source, key))
 			sources[key] = struct{}{}
 		}
 
@@ -37,15 +40,18 @@ func constNames(body []byte) (string, error) {
 			fact := snakeCaseToCamelCase("Fact_" + f)
 			relations += fmt.Sprintf("\t\t%s,\n", fact)
 			if _, ok := facts[f]; !ok {
-				output += fmt.Sprintf("const %s = \"%s\"", fact, f) + "\n"
+				definitions = append(definitions, fmt.Sprintf("const %s = \"%s\"", fact, f))
 				facts[f] = struct{}{}
 			}
 		}
 		relations += fmt.Sprintf("\t},\n")
 	}
+	sort.Strings(definitions)
 	relations += "}"
-	output += "\n"
+
+	output += strings.Join(definitions, "\n") + "\n\n"
 	output += relations
+
 	return output, nil
 }
 
@@ -61,14 +67,9 @@ func main() {
 		log.Fatal(err)
 
 	}
-	spec := string(content)
 
 	output := "package fact\n"
 	output += "\n"
-	output += "var sourceDefinition = []byte(`"
-	output += spec
-	output += "`)\n"
-
 	output += cts
 
 	fmt.Println(output)
