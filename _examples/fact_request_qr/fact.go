@@ -86,8 +86,8 @@ func (s server) qrcode(w http.ResponseWriter, r *http.Request) {
 		Description:    "Info", // this is optional
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactEmail,                     // required
-				Sources: []string{fact.SourceUserSpecified}, // required
+				Fact:    "email_address",            // required
+				Sources: []string{"user_specified"}, // required
 			},
 		},
 		Expiry: time.Minute * 5, // this is required ?

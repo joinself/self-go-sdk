@@ -47,8 +47,8 @@ func main() {
 		Description:  "info",
 		Facts: []fact.Fact{
 			{
-				Fact:          fact.FactEmail,
-				Sources:       []string{fact.SourceUserSpecified},
+				Fact:          "email_address",
+				Sources:       []string{"user_specified"},
 				Operator:      "==",
 				ExpectedValue: "test@example.com",
 			},
