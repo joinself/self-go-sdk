@@ -56,3 +56,85 @@ var sourceDefinition = []byte(`{
 		]
 	}
 }`)
+
+const SourcePassport = "passport"
+const FactDocumentNumber = "document_number"
+const FactSurname = "surname"
+const FactGivenNames = "given_names"
+const FactDateOfBirth = "date_of_birth"
+const FactDateOfExpiration = "date_of_expiration"
+const FactSex = "sex"
+const FactNationality = "nationality"
+const FactCountryOfIssuance = "country_of_issuance"
+const SourceDrivingLicense = "driving_license"
+const FactDateOfIssuance = "date_of_issuance"
+const FactAddress = "address"
+const FactIssuingAuthority = "issuing_authority"
+const FactPlaceOfBirth = "place_of_birth"
+const SourceIdentityCard = "identity_card"
+const SourceTwitter = "twitter"
+const FactAccountId = "account_id"
+const FactNickname = "nickname"
+const SourceLinkedin = "linkedin"
+const SourceFacebook = "facebook"
+const SourceLive = "live"
+const FactSelfieVerification = "selfie_verification"
+const SourceUserSpecified = "user_specified"
+const FactDisplayName = "display_name"
+const FactEmailAddress = "email_address"
+const FactPhoneNumber = "phone_number"
+
+var spec = map[string][]string{
+	SourcePassport: []string{
+		FactDocumentNumber,
+		FactSurname,
+		FactGivenNames,
+		FactDateOfBirth,
+		FactDateOfExpiration,
+		FactSex,
+		FactNationality,
+		FactCountryOfIssuance,
+	},
+	SourceDrivingLicense: []string{
+		FactDocumentNumber,
+		FactSurname,
+		FactGivenNames,
+		FactDateOfBirth,
+		FactDateOfIssuance,
+		FactDateOfExpiration,
+		FactAddress,
+		FactIssuingAuthority,
+		FactPlaceOfBirth,
+	},
+	SourceIdentityCard: []string{
+		FactDocumentNumber,
+		FactSurname,
+		FactGivenNames,
+		FactDateOfBirth,
+		FactDateOfExpiration,
+		FactSex,
+		FactNationality,
+		FactCountryOfIssuance,
+	},
+	SourceTwitter: []string{
+		FactAccountId,
+		FactNickname,
+	},
+	SourceLinkedin: []string{
+		FactAccountId,
+		FactNickname,
+	},
+	SourceFacebook: []string{
+		FactAccountId,
+		FactNickname,
+	},
+	SourceLive: []string{
+		FactSelfieVerification,
+	},
+	SourceUserSpecified: []string{
+		FactDocumentNumber,
+		FactDisplayName,
+		FactEmailAddress,
+		FactPhoneNumber,
+	},
+}

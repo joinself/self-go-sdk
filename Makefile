@@ -1,5 +1,5 @@
 test:
 	go test -v -race ./...
 generate-sources:
-	./_support/generate-sources.sh > fact/sources.go
+	go run _support/generate-sources.go _support/sources.json > fact/sources.go
 	

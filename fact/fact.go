@@ -11,10 +11,6 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-type sourceSpec struct {
-	sources map[string][]string
-}
-
 var (
 	OperatorEqual              = "=="
 	OperatorDifferent          = "!="
@@ -90,20 +86,14 @@ func (f *Fact) validate() error {
 		return ErrFactEmptyName
 	}
 
-	var spec sourceSpec
-	err := json.Unmarshal(sourceDefinition, &spec)
-	if err != nil {
-		return ErrInvalidSourceSpec
-	}
-
 	for _, s := range f.Sources {
 		// Return if s is not a valid source
-		if _, ok := spec.sources[s]; !ok {
+		if _, ok := spec[s]; !ok {
 			return ErrFactInvalidSource
 		}
 
 		// return error if the fact does not belong to the source
-		if !contains(spec.sources[s], f.Fact) {
+		if !contains(spec[s], f.Fact) {
 			return ErrFactInvalidFactToSource
 		}
 	}

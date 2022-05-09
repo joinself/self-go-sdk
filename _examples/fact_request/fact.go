@@ -45,7 +45,7 @@ func main() {
 		Description: "info",
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactPhone,
+				Fact:    fact.FactPhoneNumber,
 				Sources: []string{fact.SourceUserSpecified},
 			},
 		},
