@@ -28,7 +28,14 @@ func constNames(body []byte) (string, error) {
 	definitions := []string{}
 	relations := "var spec = map[string][]string{\n"
 
-	for key, specFacts := range spec.Sources {
+	keys := make([]string, 0, len(spec.Sources))
+	for k := range spec.Sources {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		specFacts := spec.Sources[key]
 		source := snakeCaseToCamelCase("Source_" + key)
 		relations += fmt.Sprintf("\t%s: []string{\n", source)
 		if _, ok := sources[key]; !ok {
