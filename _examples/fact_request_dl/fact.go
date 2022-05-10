@@ -45,7 +45,7 @@ func main() {
 		Callback:       "https://www.joinself.com",
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactPhone,
+				Fact:    fact.FactPhoneNumber,
 				Sources: []string{fact.SourceUserSpecified},
 			},
 		},
