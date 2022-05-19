@@ -3,13 +3,8 @@ workflow:
     - if: $CI_COMMIT_BRANCH
 
 stages:
-  - prerelease
+  - checks
   - release
-
-.license-check: &license-check |
-  git clone https://${GITHUB_TOKEN}:@github.com/aldgate-ventures/license-finder.git
-  source ~/.profile
-  license_finder --decisions_file ./license-finder/dependency_decisions.yml
 
 .setup: &setup |
   apt-get update
@@ -24,26 +19,22 @@ before_script:
   - export SCRIPTS_DIR=$(mktemp -d)
   - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
-license-check:
-  stage: prerelease
+license-compliance:
+  stage: checks
   image: licensefinder/license_finder
   script:
-    - ${SCRIPTS_DIR}/git-setup
-    - *license-check
+    - ${SCRIPTS_DIR}/license-check
 
-secrets-check:
-  stage: prerelease
-  image: docker:stable-git
-  services:
-    - docker:20.10.12-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+secret-scan:
+  stage: checks
+  image:
+    name: zricethezav/gitleaks:v8.2.4
+    entrypoint: [""]
   script:
-    - ${SCRIPTS_DIR}/git-secrets
+    - ${SCRIPTS_DIR}/git-secret-scan
 
 unit-test:
-  stage: prerelease
+  stage: checks
   image: golang:1.14.4-buster
   script:
     - *setup
