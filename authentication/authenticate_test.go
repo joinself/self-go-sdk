@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joinself/self-go-sdk/request"
 	"github.com/square/go-jose"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,25 +25,25 @@ func TestAuthenticationRequest(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
 		assert.NotEmpty(t, req["jti"])
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
+			"cid":    req["cid"].(string),
 			"typ":    ResponseAuthentication,
-			"iss":    req["sub"],
-			"sub":    req["sub"],
-			"aud":    req["iss"],
+			"iss":    req["sub"].(string),
+			"sub":    req["sub"].(string),
+			"aud":    req["iss"].(string),
 			"iat":    time.Now().Format(time.RFC3339),
 			"exp":    time.Now().Add(time.Minute).Format(time.RFC3339),
 			"status": "accepted",
@@ -61,7 +62,7 @@ func TestAuthenticationRequest(t *testing.T) {
 
 		jws, err := s.Sign(resp)
 
-		return req["sub"], []byte(jws.FullSerialize()), err
+		return req["sub"].(string), []byte(jws.FullSerialize()), err
 	}
 
 	tr.addpk("1234567890", sk, pk)
@@ -69,9 +70,10 @@ func TestAuthenticationRequest(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.Nil(t, err)
 	assert.True(t, called)
 }
@@ -84,7 +86,7 @@ func TestAuthenticationRequestTimeout(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 		return "", nil, errors.New("request timeout")
 	}
@@ -94,10 +96,12 @@ func TestAuthenticationRequestTimeout(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
 	c.expiry = time.Millisecond
 
-	err = c.Request("1234567890")
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }
@@ -113,25 +117,25 @@ func TestAuthenticationBadSignature(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
 		assert.NotEmpty(t, req["jti"])
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
-			"typ":    RequestAuthentication,
-			"iss":    req["sub"],
-			"sub":    req["sub"],
-			"aud":    req["iss"],
+			"cid":    req["cid"].(string),
+			"typ":    request.RequestInformation,
+			"iss":    req["sub"].(string),
+			"sub":    req["sub"].(string),
+			"aud":    req["iss"].(string),
 			"iat":    time.Now().Format(time.RFC3339),
 			"exp":    time.Now().Add(time.Minute).Format(time.RFC3339),
 			"status": "accepted",
@@ -150,7 +154,7 @@ func TestAuthenticationBadSignature(t *testing.T) {
 
 		jws, err := s.Sign(resp)
 
-		return req["sub"], []byte(jws.FullSerialize()), err
+		return req["sub"].(string), []byte(jws.FullSerialize()), err
 	}
 
 	tr.addpk("1234567890", sk, pk)
@@ -158,9 +162,10 @@ func TestAuthenticationBadSignature(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }
@@ -173,25 +178,25 @@ func TestAuthenticationBadIssuingIdentity(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
 		assert.NotEmpty(t, req["jti"])
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
+			"cid":    req["cid"].(string),
 			"typ":    ResponseAuthentication,
 			"iss":    "some-other-individual",
-			"sub":    req["sub"],
-			"aud":    req["iss"],
+			"sub":    req["sub"].(string),
+			"aud":    req["iss"].(string),
 			"iat":    time.Now().Format(time.RFC3339),
 			"exp":    time.Now().Add(time.Minute).Format(time.RFC3339),
 			"status": "accepted",
@@ -218,9 +223,10 @@ func TestAuthenticationBadIssuingIdentity(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }
@@ -233,24 +239,24 @@ func TestAuthenticationBadAudienceIdentity(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
-		assert.NotEmpty(t, req["jti"])
-		assert.NotEmpty(t, req["cid"])
-		assert.NotEmpty(t, req["exp"])
-		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.NotEmpty(t, req["jti"].(string))
+		assert.NotEmpty(t, req["cid"].(string))
+		assert.NotEmpty(t, req["exp"].(string))
+		assert.NotEmpty(t, req["iat"].(string))
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
+			"cid":    req["cid"].(string),
 			"typ":    ResponseAuthentication,
-			"iss":    req["sub"],
-			"sub":    req["sub"],
+			"iss":    req["sub"].(string),
+			"sub":    req["sub"].(string),
 			"aud":    "some-other-app",
 			"iat":    time.Now().Format(time.RFC3339),
 			"exp":    time.Now().Add(time.Minute).Format(time.RFC3339),
@@ -270,7 +276,7 @@ func TestAuthenticationBadAudienceIdentity(t *testing.T) {
 
 		jws, err := s.Sign(resp)
 
-		return req["sub"], []byte(jws.FullSerialize()), err
+		return req["sub"].(string), []byte(jws.FullSerialize()), err
 	}
 
 	tr.addpk("1234567890", sk, pk)
@@ -278,9 +284,10 @@ func TestAuthenticationBadAudienceIdentity(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }
@@ -293,25 +300,25 @@ func TestAuthenticationRequestExpired(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
-		assert.NotEmpty(t, req["jti"])
-		assert.NotEmpty(t, req["cid"])
-		assert.NotEmpty(t, req["exp"])
-		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.NotEmpty(t, req["jti"].(string))
+		assert.NotEmpty(t, req["cid"].(string))
+		assert.NotEmpty(t, req["exp"].(string))
+		assert.NotEmpty(t, req["iat"].(string))
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
+			"cid":    req["cid"].(string),
 			"typ":    ResponseAuthentication,
-			"iss":    req["sub"],
-			"sub":    req["sub"],
-			"aud":    req["iss"],
+			"iss":    req["sub"].(string),
+			"sub":    req["sub"].(string),
+			"aud":    req["iss"].(string),
 			"iat":    time.Now().Add(-time.Hour).Format(time.RFC3339),
 			"exp":    time.Now().Add(-time.Minute).Format(time.RFC3339),
 			"status": "accepted",
@@ -330,7 +337,7 @@ func TestAuthenticationRequestExpired(t *testing.T) {
 
 		jws, err := s.Sign(resp)
 
-		return req["sub"], []byte(jws.FullSerialize()), err
+		return req["sub"].(string), []byte(jws.FullSerialize()), err
 	}
 
 	tr.addpk("1234567890", sk, pk)
@@ -338,9 +345,10 @@ func TestAuthenticationRequestExpired(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }
@@ -353,25 +361,25 @@ func TestAuthenticationRequestIssuedInFuture(t *testing.T) {
 
 	var called bool
 
-	tr.responder = func(req map[string]string) (string, []byte, error) {
+	tr.responder = func(req map[string]interface{}) (string, []byte, error) {
 		called = true
 
-		assert.NotEmpty(t, req["jti"])
-		assert.NotEmpty(t, req["cid"])
-		assert.NotEmpty(t, req["exp"])
-		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, RequestAuthentication, req["typ"])
+		assert.NotEmpty(t, req["jti"].(string))
+		assert.NotEmpty(t, req["cid"].(string))
+		assert.NotEmpty(t, req["exp"].(string))
+		assert.NotEmpty(t, req["iat"].(string))
+		assert.Equal(t, request.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
 
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
-			"cid":    req["cid"],
+			"cid":    req["cid"].(string),
 			"typ":    ResponseAuthentication,
-			"iss":    req["sub"],
-			"sub":    req["sub"],
-			"aud":    req["iss"],
+			"iss":    req["sub"].(string),
+			"sub":    req["sub"].(string),
+			"aud":    req["iss"].(string),
 			"iat":    time.Now().Add(time.Minute).Format(time.RFC3339),
 			"exp":    time.Now().Add(time.Minute * 5).Format(time.RFC3339),
 			"status": "accepted",
@@ -390,7 +398,7 @@ func TestAuthenticationRequestIssuedInFuture(t *testing.T) {
 
 		jws, err := s.Sign(resp)
 
-		return req["sub"], []byte(jws.FullSerialize()), err
+		return req["sub"].(string), []byte(jws.FullSerialize()), err
 	}
 
 	tr.addpk("1234567890", sk, pk)
@@ -398,9 +406,10 @@ func TestAuthenticationRequestIssuedInFuture(t *testing.T) {
 	tr.payload = []byte(`["1", "2"]`)
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
-	c := NewService(cfg)
-
-	err = c.Request("1234567890")
+	c := NewService(Config{
+		Requester: request.NewService(cfg),
+	})
+	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
 	assert.True(t, called)
 }

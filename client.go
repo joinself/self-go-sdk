@@ -13,6 +13,7 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
+	"github.com/joinself/self-go-sdk/request"
 )
 
 // RestTransport defines the interface required for the sdk to perform
@@ -106,9 +107,8 @@ func New(cfg Config) (*Client, error) {
 	return client, nil
 }
 
-// FactService returns a client for working with facts
-func (c *Client) FactService() *fact.Service {
-	cfg := fact.Config{
+func (c *Client) requester() *request.Service {
+	cfg := request.Config{
 		SelfID:      c.config.SelfAppID,
 		DeviceID:    c.config.DeviceID,
 		KeyID:       c.config.kid,
@@ -118,7 +118,14 @@ func (c *Client) FactService() *fact.Service {
 		PKI:         c.connectors.PKI,
 		Messaging:   c.connectors.Messaging,
 	}
-	return fact.NewService(cfg)
+	return request.NewService(cfg)
+}
+
+// FactService returns a client for working with facts
+func (c *Client) FactService() *fact.Service {
+	return fact.NewService(fact.Config{
+		Requester: c.requester(),
+	})
 }
 
 // IdentityService returns a client for working with identities
@@ -132,18 +139,9 @@ func (c *Client) IdentityService() *identity.Service {
 
 // AuthenticationService returns a client for working with authentication
 func (c *Client) AuthenticationService() *authentication.Service {
-	cfg := authentication.Config{
-		SelfID:      c.config.SelfAppID,
-		DeviceID:    c.config.DeviceID,
-		KeyID:       c.config.kid,
-		Environment: c.config.Environment,
-		PrivateKey:  c.config.sk,
-		Rest:        c.connectors.Rest,
-		PKI:         c.connectors.PKI,
-		Messaging:   c.connectors.Messaging,
-	}
-
-	return authentication.NewService(cfg)
+	return authentication.NewService(authentication.Config{
+		Requester: c.requester(),
+	})
 }
 
 // MessagingService returns a client for working with messages
