@@ -207,10 +207,6 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return ErrFactRequestBadIdentity
 	}
 
-	if len(req.Facts) < 1 {
-		return ErrFactRequestBadFacts
-	}
-
 	if req.Expiry == 0 {
 		req.Expiry = defaultRequestTimeout
 	}
@@ -303,7 +299,6 @@ func (s Service) GenerateQRCode(req *QRFactRequest) ([]byte, error) {
 	if req.Expiry == 0 {
 		req.Expiry = defaultRequestTimeout
 	}
-	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
 	if req.QRConfig.ForegroundColor == "" {
 		req.QRConfig.ForegroundColor = "#0E1C42"
