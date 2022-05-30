@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/joinself/self-go-sdk/request"
+	"github.com/joinself/self-go-sdk/fact"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 type QRAuthenticationRequest struct {
 	ConversationID string
 	Expiry         time.Duration
-	QRConfig       request.QRConfig
+	QRConfig       fact.QRConfig
 }
 
 // DeepLinkAuthenticationRequest specifies options in a deep link authentication request
@@ -57,18 +57,18 @@ type Response struct {
 
 type AuthRequest struct {
 	SelfID string
-	Facts  []request.Fact
+	Facts  []fact.Fact
 }
 
 type AuthRequestAsync struct {
 	SelfID string
-	Facts  []request.Fact
+	Facts  []fact.Fact
 	CID    string
 }
 
 // Request prompts a user to authenticate via biometrics
 func (s Service) Request(req AuthRequest) error {
-	resp, err := s.requester.Request(&request.FactRequest{
+	resp, err := s.requester.Request(&fact.FactRequest{
 		SelfID: req.SelfID,
 		Facts:  req.Facts,
 		Auth:   true,
@@ -91,7 +91,7 @@ func (s Service) Request(req AuthRequest) error {
 // RequestAsync prompts a user to authenticate via biometrics but
 // does not wait for the response.
 func (s Service) RequestAsync(req AuthRequestAsync) error {
-	return s.requester.RequestAsync(&request.FactRequestAsync{
+	return s.requester.RequestAsync(&fact.FactRequestAsync{
 		SelfID: req.SelfID,
 		Facts:  req.Facts,
 		Auth:   true,
@@ -101,7 +101,7 @@ func (s Service) RequestAsync(req AuthRequestAsync) error {
 
 // GenerateQRCode generates an authentication request as a qr code
 func (s *Service) GenerateQRCode(req *QRAuthenticationRequest) ([]byte, error) {
-	return s.requester.GenerateQRCode(&request.QRFactRequest{
+	return s.requester.GenerateQRCode(&fact.QRFactRequest{
 		ConversationID: req.ConversationID,
 		Expiry:         req.Expiry,
 		QRConfig:       req.QRConfig,
@@ -111,7 +111,7 @@ func (s *Service) GenerateQRCode(req *QRAuthenticationRequest) ([]byte, error) {
 
 // GenerateDeepLink generates an authentication request as a deep link
 func (s *Service) GenerateDeepLink(req *DeepLinkAuthenticationRequest) (string, error) {
-	return s.requester.GenerateDeepLink(&request.DeepLinkFactRequest{
+	return s.requester.GenerateDeepLink(&fact.DeepLinkFactRequest{
 		ConversationID: req.ConversationID,
 		Expiry:         req.Expiry,
 		Auth:           true,
@@ -120,13 +120,22 @@ func (s *Service) GenerateDeepLink(req *DeepLinkAuthenticationRequest) (string, 
 }
 
 // WaitForResponse waits for a response from a qr code authentication request
-func (s *Service) WaitForResponse(cid string, exp time.Duration) (*request.QRFactResponse, error) {
-	return s.requester.WaitForResponse(cid, exp)
+func (s *Service) WaitForResponse(cid string, exp time.Duration) (*Response, error) {
+	resp, err := s.requester.WaitForResponse(cid, exp)
+	if err != nil {
+		return nil, err
+	}
+	return &Response{
+		CID:      resp.ConversationID,
+		SelfID:   resp.Responder,
+		DeviceID: resp.DeviceID,
+		Accepted: resp.Accepted,
+	}, nil
 }
 
 // Subscribe subscribes to fact request responses
 func (s *Service) Subscribe(sub func(sender, cid string, authenticated bool)) {
-	s.requester.Subscribe(true, func(sender string, res *request.StandardResponse) {
+	s.requester.Subscribe(true, func(sender string, res *fact.StandardResponse) {
 		sub(sender, res.Conversation, res.Auth)
 	})
 }

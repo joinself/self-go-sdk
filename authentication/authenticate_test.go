@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/request"
+	"github.com/joinself/self-go-sdk/fact"
 	"github.com/square/go-jose"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestAuthenticationRequest(t *testing.T) {
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -71,7 +71,7 @@ func TestAuthenticationRequest(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.Nil(t, err)
@@ -97,7 +97,7 @@ func TestAuthenticationRequestTimeout(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	c.expiry = time.Millisecond
 
@@ -124,7 +124,7 @@ func TestAuthenticationBadSignature(t *testing.T) {
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -132,7 +132,7 @@ func TestAuthenticationBadSignature(t *testing.T) {
 		resp, err := json.Marshal(map[string]string{
 			"jti":    uuid.New().String(),
 			"cid":    req["cid"].(string),
-			"typ":    request.RequestInformation,
+			"typ":    fact.RequestInformation,
 			"iss":    req["sub"].(string),
 			"sub":    req["sub"].(string),
 			"aud":    req["iss"].(string),
@@ -163,7 +163,7 @@ func TestAuthenticationBadSignature(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
@@ -185,7 +185,7 @@ func TestAuthenticationBadIssuingIdentity(t *testing.T) {
 		assert.NotEmpty(t, req["cid"])
 		assert.NotEmpty(t, req["exp"])
 		assert.NotEmpty(t, req["iat"])
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -224,7 +224,7 @@ func TestAuthenticationBadIssuingIdentity(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
@@ -246,7 +246,7 @@ func TestAuthenticationBadAudienceIdentity(t *testing.T) {
 		assert.NotEmpty(t, req["cid"].(string))
 		assert.NotEmpty(t, req["exp"].(string))
 		assert.NotEmpty(t, req["iat"].(string))
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -285,7 +285,7 @@ func TestAuthenticationBadAudienceIdentity(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
@@ -307,7 +307,7 @@ func TestAuthenticationRequestExpired(t *testing.T) {
 		assert.NotEmpty(t, req["cid"].(string))
 		assert.NotEmpty(t, req["exp"].(string))
 		assert.NotEmpty(t, req["iat"].(string))
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -346,7 +346,7 @@ func TestAuthenticationRequestExpired(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)
@@ -368,7 +368,7 @@ func TestAuthenticationRequestIssuedInFuture(t *testing.T) {
 		assert.NotEmpty(t, req["cid"].(string))
 		assert.NotEmpty(t, req["exp"].(string))
 		assert.NotEmpty(t, req["iat"].(string))
-		assert.Equal(t, request.RequestInformation, req["typ"])
+		assert.Equal(t, fact.RequestInformation, req["typ"])
 		assert.Equal(t, cfg.SelfID, req["iss"])
 		assert.Equal(t, "1234567890", req["aud"])
 		assert.Equal(t, cfg.DeviceID, req["device_id"])
@@ -407,7 +407,7 @@ func TestAuthenticationRequestIssuedInFuture(t *testing.T) {
 	tr.secondaryPaths["/v1/apps/test"] = []byte(`{"paid_actions":true}`)
 
 	c := NewService(Config{
-		Requester: request.NewService(cfg),
+		Requester: fact.NewService(cfg),
 	})
 	err = c.Request(AuthRequest{SelfID: "1234567890"})
 	require.NotNil(t, err)

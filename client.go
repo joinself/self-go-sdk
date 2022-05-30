@@ -13,7 +13,6 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
-	"github.com/joinself/self-go-sdk/request"
 )
 
 // RestTransport defines the interface required for the sdk to perform
@@ -107,8 +106,9 @@ func New(cfg Config) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) requester() *request.Service {
-	cfg := request.Config{
+// FactService returns a client for working with facts
+func (c *Client) FactService() *fact.Service {
+	cfg := fact.Config{
 		SelfID:      c.config.SelfAppID,
 		DeviceID:    c.config.DeviceID,
 		KeyID:       c.config.kid,
@@ -118,14 +118,7 @@ func (c *Client) requester() *request.Service {
 		PKI:         c.connectors.PKI,
 		Messaging:   c.connectors.Messaging,
 	}
-	return request.NewService(cfg)
-}
-
-// FactService returns a client for working with facts
-func (c *Client) FactService() *fact.Service {
-	return fact.NewService(fact.Config{
-		Requester: c.requester(),
-	})
+	return fact.NewService(cfg)
 }
 
 // IdentityService returns a client for working with identities
@@ -140,7 +133,7 @@ func (c *Client) IdentityService() *identity.Service {
 // AuthenticationService returns a client for working with authentication
 func (c *Client) AuthenticationService() *authentication.Service {
 	return authentication.NewService(authentication.Config{
-		Requester: c.requester(),
+		Requester: c.FactService(),
 	})
 }
 

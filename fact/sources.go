@@ -1,4 +1,4 @@
-package request
+package fact
 
 const FactAccountId = "account_id"
 const FactAddress = "address"

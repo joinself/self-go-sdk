@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/authentication"
+	"github.com/joinself/self-go-sdk/fact"
 )
 
 func main() {
@@ -86,7 +87,7 @@ func (s server) qrcode(w http.ResponseWriter, r *http.Request) {
 	req := authentication.QRAuthenticationRequest{
 		ConversationID: s.cid,
 		Expiry:         time.Minute * 5,
-		QRConfig: authentication.QRConfig{
+		QRConfig: fact.QRConfig{
 			Size:            400,
 			BackgroundColor: "#FFFFFF",
 			ForegroundColor: "#000000",

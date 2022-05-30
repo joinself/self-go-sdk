@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-package request
+package fact
 
 import (
 	"encoding/base64"
@@ -90,9 +90,12 @@ type QRFactRequest struct {
 
 // QRFactResponse contains the details of the requested facts
 type QRFactResponse struct {
-	Responder string
-	Facts     []Fact
-	Options   map[string]string
+	Responder      string
+	Facts          []Fact
+	Options        map[string]string
+	Accepted       bool
+	ConversationID string
+	DeviceID       string
 }
 
 // DeepLinkFactRequest contains the details of the requested facts
@@ -369,7 +372,12 @@ func (s Service) WaitForResponse(cid string, exp time.Duration) (*QRFactResponse
 		return nil, err
 	}
 
-	return &QRFactResponse{Responder: responder, Facts: resp.Facts}, nil
+	return &QRFactResponse{
+		Responder: responder,
+		Facts:     resp.Facts,
+		Accepted:  (resp.Status == "accepted"),
+		DeviceID:  resp.DeviceID,
+	}, nil
 }
 
 // Subscribe subscribes to fact request responses
@@ -517,6 +525,9 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 }
 
 func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, au *time.Duration, auth bool, callback json.RawMessage) ([]byte, error) {
+	if facts == nil {
+		facts = make([]Fact, 0)
+	}
 	req := map[string]interface{}{
 		"typ":         RequestInformation,
 		"cid":         cid,

@@ -5,18 +5,18 @@ package authentication
 import (
 	"time"
 
-	"github.com/joinself/self-go-sdk/request"
+	"github.com/joinself/self-go-sdk/fact"
 )
 
 // Service handles all fact operations
 type Service struct {
-	requester request.Service
+	requester fact.Service
 	expiry    time.Duration
 }
 
 // Config stores all configuration needed by the authentication service
 type Config struct {
-	Requester *request.Service
+	Requester *fact.Service
 }
 
 // NewService creates a new client for interacting with facts

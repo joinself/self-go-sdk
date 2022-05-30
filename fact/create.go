@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-package request
+package fact
 
 import (
 	"encoding/json"

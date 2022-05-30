@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
-	"github.com/joinself/self-go-sdk/request"
 	"github.com/square/go-jose"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ed25519"
@@ -21,7 +21,7 @@ import (
 
 var cts = strings.Contains
 
-func setup(t *testing.T) (*testResponder, request.Config) {
+func setup(t *testing.T) (*testResponder, fact.Config) {
 	pk, sk, err := ed25519.GenerateKey(rand.Reader)
 	require.Nil(t, err)
 
@@ -32,7 +32,7 @@ func setup(t *testing.T) (*testResponder, request.Config) {
 		secondaryPaths: make(map[string][]byte),
 	}
 
-	return &tr, request.Config{
+	return &tr, fact.Config{
 		SelfID:     "test",
 		DeviceID:   "1",
 		PrivateKey: sk,

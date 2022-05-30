@@ -7,6 +7,7 @@ import (
 	"os"
 
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/self-go-sdk/authentication"
 )
 
 // expects 1 argument - the Self ID you want to authenticate
@@ -35,7 +36,7 @@ func main() {
 
 	authService := client.AuthenticationService()
 
-	err = authService.Request(os.Args[1])
+	err = authService.Request(authentication.AuthRequest{SelfID: os.Args[1]})
 	if err != nil {
 		log.Fatal("auth returned with: ", err)
 	}
