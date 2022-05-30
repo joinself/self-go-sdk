@@ -337,7 +337,6 @@ func (s Service) GenerateDeepLink(req *DeepLinkFactRequest) (string, error) {
 	if req.Callback == "" {
 		return "", ErrMissingCallback
 	}
-	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
 	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, nil, req.Auth, nil)
 	if err != nil {
