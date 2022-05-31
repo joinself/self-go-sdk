@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
@@ -20,7 +21,7 @@ import (
 
 var cts = strings.Contains
 
-func setup(t *testing.T) (*testResponder, Config) {
+func setup(t *testing.T) (*testResponder, fact.Config) {
 	pk, sk, err := ed25519.GenerateKey(rand.Reader)
 	require.Nil(t, err)
 
@@ -31,7 +32,7 @@ func setup(t *testing.T) (*testResponder, Config) {
 		secondaryPaths: make(map[string][]byte),
 	}
 
-	return &tr, Config{
+	return &tr, fact.Config{
 		SelfID:     "test",
 		DeviceID:   "1",
 		PrivateKey: sk,
@@ -47,12 +48,12 @@ type testResponder struct {
 	path           string
 	secondaryPaths map[string][]byte
 	payload        []byte
-	req            map[string]string
-	responder      func(req map[string]string) (string, []byte, error)
+	req            map[string]interface{}
+	responder      func(req map[string]interface{}) (string, []byte, error)
 }
 
 func (c *testResponder) Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error) {
-	var req map[string]string
+	var req map[string]interface{}
 
 	jws, err := jose.ParseSigned(string(data))
 	if err != nil {

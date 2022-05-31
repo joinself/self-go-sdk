@@ -41,6 +41,7 @@ type Fact struct {
 	Origin        string            `json:"iss,omitempty"`
 	Operator      string            `json:"operator,omitempty"`
 	Attestations  []json.RawMessage `json:"attestations,omitempty"`
+	Issuers       []string          `json:"issuers,omitempty"`
 	ExpectedValue string            `json:"expected_value,omitempty"`
 	AttestedValue string            `json:"-"`
 	payloads      [][]byte
@@ -54,6 +55,13 @@ func (f *Fact) AttestedValues() []string {
 
 	for i, p := range f.payloads {
 		v := gjson.GetBytes(p, f.Fact).String()
+		if v == "" {
+			for _, sf := range gjson.GetBytes(p, "facts").Array() {
+				if sf.Map()["key"].String() == f.Fact {
+					v = sf.Map()["value"].String()
+				}
+			}
+		}
 		values[i] = v
 	}
 
@@ -84,6 +92,11 @@ func (f *Fact) Result() bool {
 func (f *Fact) validate() error {
 	if f.Fact == "" {
 		return ErrFactEmptyName
+	}
+
+	// Skip validation if is a custom fact
+	if f.Issuers != nil && len(f.Issuers) > 0 {
+		return nil
 	}
 
 	for _, s := range f.Sources {

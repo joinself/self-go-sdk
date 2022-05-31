@@ -44,6 +44,8 @@ var (
 	ErrSigningKeyInvalid            = errors.New("signing key was invalid at the time the attestation was issued")
 	ErrNotConnected                 = errors.New("you're not permitting connections from the specifed recipient")
 	ErrNotEnoughCredits             = errors.New("your credits have expired, please log in to the developer portal and top up your account")
+	ErrEmptyFacts                   = errors.New("facts not provided")
+	ErrEmptySource                  = errors.New("empty source provided")
 
 	ServiceSelfIntermediary = "self_intermediary"
 )
@@ -90,9 +92,12 @@ type QRFactRequest struct {
 
 // QRFactResponse contains the details of the requested facts
 type QRFactResponse struct {
-	Responder string
-	Facts     []Fact
-	Options   map[string]string
+	Responder      string
+	Facts          []Fact
+	Options        map[string]string
+	Accepted       bool
+	ConversationID string
+	DeviceID       string
 }
 
 // DeepLinkFactRequest contains the details of the requested facts
@@ -125,7 +130,7 @@ type IntermediaryFactResponse struct {
 	Facts []Fact
 }
 
-type standardresponse struct {
+type StandardResponse struct {
 	ID           string    `json:"jti"`
 	Type         string    `json:"typ"`
 	Conversation string    `json:"cid"`
@@ -138,16 +143,13 @@ type standardresponse struct {
 	Status       string    `json:"status"`
 	Description  string    `json:"description"`
 	Facts        []Fact    `json:"facts"`
+	Auth         bool      `json:"auth"`
 }
 
 // Request requests a fact from a given identity
 func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 	if req.SelfID == "" {
 		return nil, ErrFactRequestBadIdentity
-	}
-
-	if len(req.Facts) < 1 {
-		return nil, ErrFactRequestBadFacts
 	}
 
 	for _, fact := range req.Facts {
@@ -192,12 +194,12 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, ErrMessageBadIssuer
 	}
 
-	facts, err := s.factResponse(selfID, selfID, response)
+	resp, err := s.factResponse(selfID, selfID, response)
 	if err != nil {
 		return nil, err
 	}
 
-	return &FactResponse{Facts: facts}, nil
+	return &FactResponse{Facts: resp.Facts, Status: resp.Status}, nil
 }
 
 // RequestAsync requests a fact from a given identity and does not
@@ -205,10 +207,6 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 func (s Service) RequestAsync(req *FactRequestAsync) error {
 	if req.SelfID == "" {
 		return ErrFactRequestBadIdentity
-	}
-
-	if len(req.Facts) < 1 {
-		return ErrFactRequestBadFacts
 	}
 
 	if req.Expiry == 0 {
@@ -286,12 +284,12 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, ErrMessageBadSubject
 	}
 
-	facts, err := s.factResponse(req.Intermediary, req.SelfID, response)
+	res, err := s.factResponse(req.Intermediary, req.SelfID, response)
 	if err != nil {
 		return nil, err
 	}
 
-	return &IntermediaryFactResponse{Facts: facts}, nil
+	return &IntermediaryFactResponse{Facts: res.Facts}, nil
 }
 
 // GenerateQRCode generates a qr code containing an fact request
@@ -303,7 +301,6 @@ func (s Service) GenerateQRCode(req *QRFactRequest) ([]byte, error) {
 	if req.Expiry == 0 {
 		req.Expiry = defaultRequestTimeout
 	}
-	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
 	if req.QRConfig.ForegroundColor == "" {
 		req.QRConfig.ForegroundColor = "#0E1C42"
@@ -342,7 +339,6 @@ func (s Service) GenerateDeepLink(req *DeepLinkFactRequest) (string, error) {
 	if req.Callback == "" {
 		return "", ErrMissingCallback
 	}
-	// TODO(@adriacidre) should we check the facts length to avoid empty arrays?
 
 	payload, err := s.factPayload(req.ConversationID, "-", "-", req.Description, req.Facts, nil, req.Expiry, nil, req.Auth, nil)
 	if err != nil {
@@ -367,34 +363,45 @@ func (s Service) WaitForResponse(cid string, exp time.Duration) (*QRFactResponse
 
 	selfID := strings.Split(responder, ":")[0]
 
-	facts, err := s.factResponse(selfID, selfID, response)
+	resp, err := s.factResponse(selfID, selfID, response)
 	if err != nil {
 		return nil, err
 	}
 
-	return &QRFactResponse{Responder: responder, Facts: facts}, nil
+	return &QRFactResponse{
+		Responder: responder,
+		Facts:     resp.Facts,
+		Accepted:  (resp.Status == "accepted"),
+		DeviceID:  resp.DeviceID,
+	}, nil
 }
 
 // Subscribe subscribes to fact request responses
-func (s Service) Subscribe(sub func(sender string, res *QRFactResponse)) {
+func (s Service) Subscribe(auth bool, sub func(sender string, res *StandardResponse)) {
+	if auth {
+		s.authSubscription = sub
+	} else {
+		s.factSubscription = sub
+	}
+
 	s.messaging.Subscribe(ResponseInformation, func(sender string, payload []byte) {
 		selfID := strings.Split(sender, ":")[0]
 
-		facts, err := s.factResponse(selfID, selfID, payload)
+		resp, err := s.parseFactResponse(selfID, selfID, payload)
 		if err != nil {
 			return
 		}
 
-		res, err := QRFactResponse{Responder: sender, Facts: facts}, nil
-		if err != nil {
-			return
-		}
+		if resp.Auth {
+			s.authSubscription(selfID, resp)
 
-		sub(selfID, &res)
+		} else {
+			s.factSubscription(selfID, resp)
+		}
 	})
 }
 
-func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact, error) {
+func (s *Service) factResponse(issuer, subject string, response []byte) (*StandardResponse, error) {
 	history, err := s.pki.GetHistory(issuer)
 	if err != nil {
 		return nil, err
@@ -405,12 +412,11 @@ func (s *Service) factResponse(issuer, subject string, response []byte) ([]Fact,
 		return nil, ErrResponseBadSignature
 	}
 
-	return s.FactResponse(issuer, subject, msg)
+	return s.parseFactResponse(issuer, subject, msg)
 }
 
-// FactResponse validate and process a fact response
-func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact, error) {
-	var resp standardresponse
+func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*StandardResponse, error) {
+	var resp StandardResponse
 
 	err := json.Unmarshal(response, &resp)
 	if err != nil {
@@ -490,20 +496,34 @@ func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact,
 			resp.Facts[i].payloads[x] = msg
 		}
 	}
-
 	switch resp.Status {
 	case StatusAccepted:
-		return resp.Facts, nil
+		return &resp, nil
 	case StatusRejected:
-		return nil, ErrStatusRejected
+		return &resp, ErrStatusRejected
 	case StatusUnauthorized:
-		return nil, ErrStatusUnauthorized
+		return &resp, ErrStatusUnauthorized
 	default:
-		return nil, ErrMessageBadStatus
+		return &resp, ErrMessageBadStatus
 	}
+
+	return &resp, nil
+}
+
+// FactResponse validate and process a fact response
+func (s *Service) FactResponse(issuer, subject string, response []byte) ([]Fact, error) {
+	resp, err := s.parseFactResponse(issuer, subject, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Facts, nil
 }
 
 func (s *Service) factPayload(cid, selfID, intermediary, description string, facts []Fact, options map[string]string, exp time.Duration, au *time.Duration, auth bool, callback json.RawMessage) ([]byte, error) {
+	if facts == nil {
+		facts = make([]Fact, 0)
+	}
 	req := map[string]interface{}{
 		"typ":         RequestInformation,
 		"cid":         cid,

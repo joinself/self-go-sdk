@@ -58,7 +58,7 @@ func TestRequest(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -186,7 +186,7 @@ func TestRequestTimeout(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -255,7 +255,7 @@ func TestRequestBadAttestation(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -381,7 +381,7 @@ func TestRequestBadStatus(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -509,7 +509,7 @@ func TestRequestBadAttestationSignature(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -637,7 +637,7 @@ func TestRequestBadSignature(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -763,7 +763,7 @@ func TestRequestBadResponder(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -889,7 +889,7 @@ func TestRequestBadIssuingIdentity(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1015,7 +1015,7 @@ func TestRequestBadAudienceIdentity(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1141,7 +1141,7 @@ func TestRequestResponseExpired(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1267,7 +1267,7 @@ func TestRequestResponseIssuedInFuture(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1398,7 +1398,7 @@ func TestRequestViaIntermediary(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1537,7 +1537,7 @@ func TestRequestViaIntermediaryBadStatus(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1635,7 +1635,7 @@ func TestRequestViaIntermediaryBadSignature(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1740,7 +1740,7 @@ func TestRequestViaIntermediaryBadResponder(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1845,7 +1845,7 @@ func TestRequestViaIntermediaryBadIssuingIdentity(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -1950,7 +1950,7 @@ func TestRequestViaIntermediaryBadAudienceIdentity(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -2055,7 +2055,7 @@ func TestRequestViaIntermediaryBadSubjectIdentity(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -2161,7 +2161,7 @@ func TestRequestViaIntermediaryResponseExpired(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 
@@ -2266,7 +2266,7 @@ func TestRequestViaIntermediaryResponseIssuedInFuture(t *testing.T) {
 		payload, err := jws.Verify(s.sk.Public())
 		require.Nil(t, err)
 
-		var m standardresponse
+		var m StandardResponse
 		err = json.Unmarshal(payload, &m)
 		require.Nil(t, err)
 

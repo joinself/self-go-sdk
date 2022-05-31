@@ -132,18 +132,9 @@ func (c *Client) IdentityService() *identity.Service {
 
 // AuthenticationService returns a client for working with authentication
 func (c *Client) AuthenticationService() *authentication.Service {
-	cfg := authentication.Config{
-		SelfID:      c.config.SelfAppID,
-		DeviceID:    c.config.DeviceID,
-		KeyID:       c.config.kid,
-		Environment: c.config.Environment,
-		PrivateKey:  c.config.sk,
-		Rest:        c.connectors.Rest,
-		PKI:         c.connectors.PKI,
-		Messaging:   c.connectors.Messaging,
-	}
-
-	return authentication.NewService(cfg)
+	return authentication.NewService(authentication.Config{
+		Requester: c.FactService(),
+	})
 }
 
 // MessagingService returns a client for working with messages
