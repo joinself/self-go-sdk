@@ -44,6 +44,8 @@ var (
 	ErrSigningKeyInvalid            = errors.New("signing key was invalid at the time the attestation was issued")
 	ErrNotConnected                 = errors.New("you're not permitting connections from the specifed recipient")
 	ErrNotEnoughCredits             = errors.New("your credits have expired, please log in to the developer portal and top up your account")
+	ErrEmptyFacts                   = errors.New("facts not provided")
+	ErrEmptySource                  = errors.New("empty source provided")
 
 	ServiceSelfIntermediary = "self_intermediary"
 )
