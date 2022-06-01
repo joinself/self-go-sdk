@@ -473,7 +473,7 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 				return nil, err
 			}
 
-			if !sg.IsKeyValid(kid, iat.Unix()) {
+			if !sg.IsKeyValid(kid, iat) {
 				return nil, ErrSigningKeyInvalid
 			}
 
@@ -496,6 +496,7 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 			resp.Facts[i].payloads[x] = msg
 		}
 	}
+
 	switch resp.Status {
 	case StatusAccepted:
 		return &resp, nil
@@ -506,8 +507,6 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 	default:
 		return &resp, ErrMessageBadStatus
 	}
-
-	return &resp, nil
 }
 
 // FactResponse validate and process a fact response
