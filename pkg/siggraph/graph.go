@@ -64,7 +64,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 		}
 
 		// check the timestamp is greater than the previous operations
-		if s.ops[len(s.ops)-1].timestamp() >= op.timestamp() {
+		if s.ops[len(s.ops)-1].timestamp().Equal(op.timestamp()) || s.ops[len(s.ops)-1].timestamp().After(op.timestamp()) {
 			return ErrInvalidTimestamp
 		}
 
@@ -75,7 +75,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 		}
 
 		// check the signign key hasn't been revoked before the operation
-		if sk.revokedAt() > 0 && op.timestamp() > sk.revokedAt() {
+		if !sk.revokedAt().IsZero() && op.timestamp().After(sk.revokedAt()) {
 			return ErrSignatureKeyRevoked
 		}
 
@@ -117,7 +117,7 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 	}
 
 	// check that the operation was signed before the signing key was revoked
-	if op.timestamp() < sk.createdAt() || sk.revokedAt() > 0 && op.timestamp() > sk.revokedAt() {
+	if op.timestamp().Before(sk.createdAt()) || !sk.revokedAt().IsZero() && op.timestamp().After(sk.revokedAt()) {
 		return ErrSignatureKeyRevoked
 	}
 
@@ -158,15 +158,18 @@ func (s *SignatureGraph) Execute(operation json.RawMessage) error {
 }
 
 // IsKeyValid checks if a key was valid for a given period of time
-func (s *SignatureGraph) IsKeyValid(kid string, at int64) bool {
+func (s *SignatureGraph) IsKeyValid(kid string, at time.Time) bool {
+
 	k, ok := s.keys[kid]
 	if !ok {
 		return false
 	}
 
-	pat := time.Unix(at, 0).Unix()
+	if k.createdAt().Equal(at) && k.revokedAt().IsZero() || k.createdAt().Before(at) && k.revokedAt().IsZero() {
+		return true
+	}
 
-	if k.createdAt() <= pat && k.revokedAt() == 0 || k.createdAt() <= pat && k.revokedAt() > pat {
+	if k.createdAt().Equal(at) && k.revokedAt().After(at) || k.createdAt().Before(at) && k.revokedAt().After(at) {
 		return true
 	}
 
@@ -286,7 +289,7 @@ func (s *SignatureGraph) CreatedAt(kid string) (int64, error) {
 		return 0, ErrKeyNotFound
 	}
 
-	return k.createdAt(), nil
+	return k.createdAt().Unix(), nil
 }
 
 // RevokedAt returns the time a key was revoked. If the key has not been revoked, the returned timestamp will be 0
@@ -296,7 +299,7 @@ func (s *SignatureGraph) RevokedAt(kid string) (int64, error) {
 		return 0, ErrKeyNotFound
 	}
 
-	return k.revokedAt(), nil
+	return k.revokedAt().Unix(), nil
 }
 
 func (s *SignatureGraph) add(op *Operation, a *Action) error {
@@ -403,7 +406,7 @@ func (s *SignatureGraph) revoke(op *Operation, a *Action) error {
 	} else {
 		// revoke all child keys created after the revocation takes effect
 		for _, cn := range n.collect() {
-			if cn.createdAt() < a.effectiveFrom() {
+			if cn.createdAt().Before(a.effectiveFrom()) {
 				n.ra = a.EffectiveFrom
 			}
 		}

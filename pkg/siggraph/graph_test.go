@@ -1489,26 +1489,26 @@ func TestSignatureGraphIsKeyValid(t *testing.T) {
 		keys[strconv.Itoa(i)] = sk
 	}
 
-	now := time.Now().Unix()
+	now := time.Now()
 
 	op1, sig := testop(keys, "1", &Operation{
 		Sequence:  0,
 		Version:   "1.0.0",
-		Timestamp: now,
+		Timestamp: now.Unix(),
 		Actions: []Action{
 			{
 				KID:           "1",
 				DID:           "device-1",
 				Type:          TypeDeviceKey,
 				Action:        ActionKeyAdd,
-				EffectiveFrom: now,
+				EffectiveFrom: now.Unix(),
 				Key:           dec.EncodeToString(keys["1"].Public().(ed25519.PublicKey)),
 			},
 			{
 				KID:           "2",
 				Type:          TypeRecoveryKey,
 				Action:        ActionKeyAdd,
-				EffectiveFrom: now,
+				EffectiveFrom: now.Unix(),
 				Key:           dec.EncodeToString(keys["2"].Public().(ed25519.PublicKey)),
 			},
 		},
@@ -1518,20 +1518,20 @@ func TestSignatureGraphIsKeyValid(t *testing.T) {
 		Sequence:  1,
 		Version:   "1.0.0",
 		Previous:  dec.EncodeToString(sig),
-		Timestamp: now + 1,
+		Timestamp: now.Unix() + 1,
 		Actions: []Action{
 			{
 				KID:           "1",
 				Type:          TypeDeviceKey,
 				Action:        ActionKeyRevoke,
-				EffectiveFrom: now + 1,
+				EffectiveFrom: now.Unix() + 1,
 			},
 			{
 				KID:           "3",
 				DID:           "device-1",
 				Type:          TypeDeviceKey,
 				Action:        ActionKeyAdd,
-				EffectiveFrom: now + 1,
+				EffectiveFrom: now.Unix() + 1,
 				Key:           dec.EncodeToString(keys["3"].Public().(ed25519.PublicKey)),
 			},
 		},
@@ -1546,10 +1546,10 @@ func TestSignatureGraphIsKeyValid(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.True(t, s.IsKeyValid("1", now))
-	assert.False(t, s.IsKeyValid("1", now+1))
-	assert.False(t, s.IsKeyValid("1", now+2))
-	assert.False(t, s.IsKeyValid("1", now-1))
-	assert.True(t, s.IsKeyValid("3", now+1))
-	assert.True(t, s.IsKeyValid("3", now+2))
-	assert.False(t, s.IsKeyValid("3", now-1))
+	assert.False(t, s.IsKeyValid("1", now.Add(time.Second*1)))
+	assert.False(t, s.IsKeyValid("1", now.Add(time.Second*2)))
+	assert.False(t, s.IsKeyValid("1", now.Add(-(time.Second*1))))
+	assert.True(t, s.IsKeyValid("3", now.Add(time.Second*1)))
+	assert.True(t, s.IsKeyValid("3", now.Add(time.Second*2)))
+	assert.False(t, s.IsKeyValid("3", now.Add(-(time.Second*1))))
 }

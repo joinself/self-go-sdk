@@ -106,6 +106,14 @@ func (o *Operation) ActionByKID(kid string) *Action {
 	return nil
 }
 
-func (o *Operation) timestamp() int64 {
-	return time.Unix(o.Timestamp, 0).Unix()
+func (o *Operation) timestamp() time.Time {
+	if o.Timestamp == 0 {
+		return time.Time{}
+	}
+
+	if o.Timestamp > 1<<32-1 {
+		return time.UnixMilli(o.Timestamp)
+	}
+
+	return time.Unix(o.Timestamp, 0)
 }

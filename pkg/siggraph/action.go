@@ -69,6 +69,14 @@ func (a *Action) Validate() error {
 	return nil
 }
 
-func (a *Action) effectiveFrom() int64 {
-	return time.Unix(a.EffectiveFrom, 0).Unix()
+func (a *Action) effectiveFrom() time.Time {
+	if a.EffectiveFrom == 0 {
+		return time.Time{}
+	}
+
+	if a.EffectiveFrom > 1<<32-1 {
+		return time.UnixMilli(a.EffectiveFrom)
+	}
+
+	return time.Unix(a.EffectiveFrom, 0)
 }
