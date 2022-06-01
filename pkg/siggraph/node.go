@@ -36,10 +36,27 @@ func (n *Node) collect() []*Node {
 	return nodes
 }
 
-func (n *Node) createdAt() int64 {
-	return time.Unix(n.ca, 0).Unix()
+func (n *Node) createdAt() time.Time {
+	if n.ca == 0 {
+		return time.Time{}
+	}
+
+	// is this greater than the maximum unix timestamp (seconds)?
+	if n.ca > 1<<32-1 {
+		return time.UnixMilli(n.ca)
+	}
+
+	return time.Unix(n.ca, 0)
 }
 
-func (n *Node) revokedAt() int64 {
-	return time.Unix(n.ra, 0).Unix()
+func (n *Node) revokedAt() time.Time {
+	if n.ra == 0 {
+		return time.Time{}
+	}
+
+	if n.ra > 1<<32-1 {
+		return time.UnixMilli(n.ra)
+	}
+
+	return time.Unix(n.ra, 0)
 }

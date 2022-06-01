@@ -35,7 +35,7 @@ secret-scan:
 
 unit-test:
   stage: checks
-  image: golang:1.14.4-buster
+  image: golang:1.18.2-buster
   script:
     - *setup
     - go test -v ./...
