@@ -21,6 +21,7 @@ type FactGroup struct {
 type FactToIssue struct {
 	Key         string     `json:"key"`
 	Value       string     `json:"value"`
+	Source      string     `json:"-"`
 	DisplayName string     `json:"display_name,omitempty"`
 	Group       *FactGroup `json:"group,omitempty"`
 }
@@ -34,17 +35,17 @@ func (f *FactToIssue) validate() error {
 		return errors.New("fact value not provided")
 	}
 
+	if f.Source == "" {
+		return errors.New("fact source not provided")
+	}
+
 	return nil
 }
 
 // Issues a fact to a specific user.
-func (s *Service) Issue(selfID string, source string, facts []FactToIssue, viewers []string) error {
+func (s *Service) Issue(selfID string, facts []FactToIssue, viewers []string) error {
 	if selfID == "" {
 		return ErrFactRequestBadIdentity
-	}
-
-	if source == "" {
-		return ErrEmptySource
 	}
 
 	if len(facts) == 0 {
@@ -58,10 +59,10 @@ func (s *Service) Issue(selfID string, source string, facts []FactToIssue, viewe
 		}
 	}
 
-	return s.sendIssuedFacts(selfID, source, facts, viewers)
+	return s.sendIssuedFacts(selfID, facts, viewers)
 }
 
-func (s *Service) sendIssuedFacts(selfID string, source string, facts []FactToIssue, viewers []string) error {
+func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []string) error {
 	opts := &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
 			"kid": s.keyID,
@@ -79,7 +80,7 @@ func (s *Service) sendIssuedFacts(selfID string, source string, facts []FactToIs
 			"sub":      selfID,
 			"iss":      s.selfID,
 			"iat":      ntp.TimeFunc().Format(time.RFC3339),
-			"source":   source,
+			"source":   f.Source,
 			"verified": true,
 			"facts":    []FactToIssue{f},
 		})

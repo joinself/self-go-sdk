@@ -41,23 +41,53 @@ func main() {
 
 	log.Println("issuing custom facts")
 	selfid := os.Args[1]
-	source := "supu"
-	factName := "fooGo"
+	source := "Flight Tickets"
 
-	f := fact.FactToIssue{
-		Key:   factName,
-		Value: "bar",
+	g := fact.FactGroup{
+		Name: "Trip to Shangai",
+		Icon: "wifi_find",
 	}
-	client.FactService().Issue(selfid, source, []fact.FactToIssue{f}, []string{})
+	f := []fact.FactToIssue{
+		fact.FactToIssue{
+			Key:         "BCN-SIN-cc",
+			Value:       "CD128763",
+			Source:      source,
+			DisplayName: "Barcelona to Singapore confirmation code",
+			Group:       &g,
+		},
+		fact.FactToIssue{
+			Key:         "SIN-BAL",
+			Value:       "AU128397",
+			Source:      source,
+			DisplayName: "Singapore to Bali confirmation code",
+			Group:       &g,
+		},
+		fact.FactToIssue{
+			Key:         "BAL-SIN",
+			Value:       "AU129873",
+			Source:      source,
+			DisplayName: "Bali to Singapore confirmation code",
+			Group:       &g,
+		},
+		fact.FactToIssue{
+			Key:         "SIN_BCN",
+			Value:       "CD12837",
+			Source:      source,
+			DisplayName: "Singapore to Barcelona confirmation code",
+			Group:       &g,
+		},
+	}
+
+	client.FactService().Issue(selfid, f, []string{})
 	time.Sleep(5 * time.Second)
 
 	log.Println("requesting custom facts")
 	req := fact.FactRequest{
 		SelfID:      selfid,
-		Description: "info",
+		Description: "We need access to your flight confirmation codes to reschedule your flights",
 		Facts: []fact.Fact{
 			{
-				Fact:    factName,
+				Fact:    f[0].Key,
 				Sources: []string{source},
 				Issuers: []string{appID},
 			},
