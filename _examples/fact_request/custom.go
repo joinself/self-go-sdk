@@ -49,32 +49,28 @@ func main() {
 	}
 	f := []fact.FactToIssue{
 		fact.FactToIssue{
-			Key:         "BCN-SIN-cc",
-			Value:       "CD128763",
-			Source:      source,
-			DisplayName: "Barcelona to Singapore confirmation code",
-			Group:       &g,
+			Key:    "BCN-SIN-cc",
+			Value:  "CD128763",
+			Source: source,
+			Group:  &g,
 		},
 		fact.FactToIssue{
-			Key:         "SIN-BAL",
-			Value:       "AU128397",
-			Source:      source,
-			DisplayName: "Singapore to Bali confirmation code",
-			Group:       &g,
+			Key:    "SIN-BAL",
+			Value:  "AU128397",
+			Source: source,
+			Group:  &g,
 		},
 		fact.FactToIssue{
-			Key:         "BAL-SIN",
-			Value:       "AU129873",
-			Source:      source,
-			DisplayName: "Bali to Singapore confirmation code",
-			Group:       &g,
+			Key:    "BAL-SIN",
+			Value:  "AU129873",
+			Source: source,
+			Group:  &g,
 		},
 		fact.FactToIssue{
-			Key:         "SIN_BCN",
-			Value:       "CD12837",
-			Source:      source,
-			DisplayName: "Singapore to Barcelona confirmation code",
-			Group:       &g,
+			Key:    "SIN_BCN",
+			Value:  "CD12837",
+			Source: source,
+			Group:  &g,
 		},
 	}
 

@@ -19,11 +19,10 @@ type FactGroup struct {
 }
 
 type FactToIssue struct {
-	Key         string     `json:"key"`
-	Value       string     `json:"value"`
-	Source      string     `json:"-"`
-	DisplayName string     `json:"display_name,omitempty"`
-	Group       *FactGroup `json:"group,omitempty"`
+	Key    string     `json:"key"`
+	Value  string     `json:"value"`
+	Source string     `json:"-"`
+	Group  *FactGroup `json:"group,omitempty"`
 }
 
 func (f *FactToIssue) validate() error {
