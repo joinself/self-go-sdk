@@ -6,7 +6,6 @@ const FactCountryOfIssuance = "country_of_issuance"
 const FactDateOfBirth = "date_of_birth"
 const FactDateOfExpiration = "date_of_expiration"
 const FactDateOfIssuance = "date_of_issuance"
-const FactDisplayName = "display_name"
 const FactDocumentNumber = "document_number"
 const FactEmailAddress = "email_address"
 const FactGivenNames = "given_names"
@@ -76,7 +75,6 @@ var spec = map[string][]string{
 	},
 	SourceUserSpecified: []string{
 		FactDocumentNumber,
-		FactDisplayName,
 		FactEmailAddress,
 		FactPhoneNumber,
 	},
