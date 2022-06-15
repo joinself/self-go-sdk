@@ -45,6 +45,7 @@ type Service struct {
 	expiry           time.Duration
 	sk               ed25519.PrivateKey
 	fileInteractor   remoteFile
+	environment      string
 }
 
 // Config stores all configuration needed by the chat service.
@@ -57,6 +58,7 @@ type Config struct {
 	Rest             restTransport
 	PrivateKey       ed25519.PrivateKey
 	FileInteractor   remoteFile
+	Environment      string
 }
 
 // NewService creates a new client for interacting with facts.
@@ -71,5 +73,6 @@ func NewService(config Config) *Service {
 		expiry:           time.Minute,
 		sk:               config.PrivateKey,
 		fileInteractor:   config.FileInteractor,
+		environment:      config.Environment,
 	}
 }
