@@ -3,12 +3,19 @@
 package chat
 
 import (
+	"encoding/base64"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/lucasb-eyer/go-colorful"
+	"github.com/skip2/go-qrcode"
+)
+
+var (
+	defaultRequestTimeout = time.Minute * 15
 )
 
 func (s *Service) SelfID() string {
@@ -173,6 +180,67 @@ func (s *Service) Leave(gid string, members []string) {
 		"typ": "chat.remove",
 		"gid": gid,
 	})
+}
+
+type ConnectionConfig struct {
+	Expiry time.Duration
+}
+
+func (s *Service) GenerateConnectionQR(config ConnectionConfig) ([]byte, error) {
+	if config.Expiry == 0 {
+		config.Expiry = defaultRequestTimeout
+	}
+
+	payload, err := s.buildConnectionRequest(config.Expiry)
+	if err != nil {
+		return nil, err
+	}
+
+	q, err := qrcode.New(string(payload), qrcode.Low)
+	if err != nil {
+		return nil, err
+	}
+
+	q.BackgroundColor, _ = colorful.Hex("#0E1C42")
+	q.ForegroundColor, _ = colorful.Hex("#FFFFFF")
+
+	return q.PNG(400)
+}
+
+func (s *Service) GenerateConnectionDeepLink(config ConnectionConfig) (string, error) {
+	callback := "https://joinself.com"
+	payload, err := s.buildConnectionRequest(config.Expiry)
+	if err != nil {
+		return "", err
+	}
+
+	url := "https://links.joinself.com/?link=" + callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload)
+	if s.environment == "" {
+		return url + "&apn=com.joinself.app", nil
+	} else if s.environment == "development" {
+		return url + "&apn=com.joinself.app.dev", nil
+	}
+
+	return "https://" + s.environment + ".links.joinself.com/?link=" + callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload) + "&apn=com.joinself.app." + s.environment, nil
+}
+
+func (s *Service) buildConnectionRequest(exp time.Duration) ([]byte, error) {
+	req := map[string]interface{}{
+		"typ":                  "identities.connections.req",
+		"iss":                  s.selfID,
+		"aud":                  "-",
+		"sub":                  "-",
+		"iat":                  ntp.TimeFunc().Format(time.RFC3339),
+		"exp":                  ntp.TimeFunc().Add(exp).Format(time.RFC3339),
+		"jti":                  uuid.New().String(),
+		"require_confirmation": true,
+	}
+
+	payload, err := helpers.PrepareJWS(req, s.keyID, s.sk)
+	if err != nil {
+		return []byte(""), err
+	}
+	return payload, nil
 }
 
 func (s *Service) confirm(action string, recipients []string, cids []string, gid string) error {

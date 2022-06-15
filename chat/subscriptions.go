@@ -95,6 +95,24 @@ func (s *Service) OnLeave(callback func(iss, gid string)) {
 	})
 }
 
+// OnConnection subscribes to people connecting to your app.
+func (s *Service) OnConnection(callback func(iss, status string)) {
+	s.messagingService.Subscribe("identities.connections.resp", func(m *messaging.Message) {
+		println(m.Sender + " connected to your app")
+
+		var payload map[string]interface{}
+		err := json.Unmarshal(m.Payload, &payload)
+		if err != nil {
+			log.Println(err)
+			callback(m.Sender, "errored")
+		}
+
+		if err == nil {
+			callback(m.Sender, payload["status"].(string))
+		}
+	})
+}
+
 func (s *Service) getMessageGID(m *messaging.Message) (string, error) {
 	var payload map[string]interface{}
 	err := json.Unmarshal(m.Payload, &payload)
