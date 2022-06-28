@@ -2,7 +2,9 @@
 
 package identity
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 var (
 	// IdentityTypeIndividual an individual's identity
@@ -18,7 +20,7 @@ var (
 // Identity represents all information about a self identity
 type Identity struct {
 	Name    string            `json:"name,omitempty"`
-	SelfID  string            `json:"self_id"`
+	SelfID  string            `json:"id"`
 	Type    string            `json:"type"`
 	History []json.RawMessage `json:"history"`
 }
@@ -29,8 +31,15 @@ type Device string
 // GetIdentity gets an identity by its self ID
 func (s Service) GetIdentity(selfID string) (*Identity, error) {
 	var identity Identity
+	var resp []byte
+	var err error
 
-	resp, err := s.api.Get("/v1/identities/" + selfID)
+	switch classifySelfID(selfID) {
+	case IdentityTypeIndividual:
+		resp, err = s.api.Get("/v1/identities/" + selfID)
+	case IdentityTypeApp:
+		resp, err = s.api.Get("/v1/apps/" + selfID)
+	}
 	if err != nil {
 		return nil, err
 	}
