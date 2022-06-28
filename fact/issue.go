@@ -79,6 +79,7 @@ func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []
 			"sub":      selfID,
 			"iss":      s.selfID,
 			"iat":      ntp.TimeFunc().Format(time.RFC3339),
+			"exp":      ntp.TimeFunc().Add(defaultRequestTimeout).Format(time.RFC3339),
 			"source":   f.Source,
 			"verified": true,
 			"facts":    []FactToIssue{f},
