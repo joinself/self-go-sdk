@@ -3,6 +3,7 @@
 package fact
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"time"
@@ -23,6 +24,7 @@ type FactToIssue struct {
 	Value  string     `json:"value"`
 	Source string     `json:"-"`
 	Group  *FactGroup `json:"group,omitempty"`
+	Type   string     `json:"type,omitempty"`
 }
 
 func (f *FactToIssue) validate() error {
@@ -39,6 +41,35 @@ func (f *FactToIssue) validate() error {
 	}
 
 	return nil
+}
+
+type Delegation struct {
+	Subjects    []string `json:"subjects"`
+	Actions     []string `json:"actions"`
+	Effect      string   `json:"effect"`
+	Resources   []string `json:"resources"`
+	Conditions  []string `json:"conditions"`
+	Description string   `json:"description, omitempty"`
+}
+
+func ParseDelegationCertificate(input string) (*Delegation, error) {
+	data, err := base64.RawURLEncoding.DecodeString(input)
+	if err != nil {
+		return nil, err
+	}
+
+	cert := Delegation{}
+	err = json.Unmarshal(data, &cert)
+
+	return &cert, err
+}
+
+func (d *Delegation) Encode() (string, error) {
+	payload, err := json.Marshal(d)
+	if err != nil {
+		return "", err
+	}
+	return base64.RawStdEncoding.EncodeToString(payload), nil
 }
 
 // Issues a fact to a specific user.
