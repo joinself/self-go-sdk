@@ -9,7 +9,7 @@ import "github.com/joinself/self-go-sdk/pkg/protos/msgprotov2"
 type Encoder interface {
 	MarshalAuth(device, token string, offset int64) ([]byte, error)
 	MarshalACL(id, command string, payload []byte) ([]byte, error)
-	MarshalMessage(id, sender, recipient string, ciphertext []byte) ([]byte, error)
+	MarshalMessage(id, sender, recipient, mtype string, priority int, ciphertext []byte) ([]byte, error)
 	UnmarshalHeader(data []byte) (Header, error)
 	UnmarshalNotification(data []byte) (Notification, error)
 	UnmarshalMessage(data []byte) (Message, int64, int64, error)

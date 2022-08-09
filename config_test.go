@@ -19,7 +19,7 @@ import (
 
 type testWebsocketTransport struct{}
 
-func (t *testWebsocketTransport) Send(recipients []string, data []byte) error {
+func (t *testWebsocketTransport) Send(recipients []string, mtype string, priority int, data []byte) error {
 	return nil
 }
 

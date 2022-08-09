@@ -49,7 +49,7 @@ func (e *encoderV1) MarshalACL(id, command string, payload []byte) ([]byte, erro
 }
 
 // MarshalMessage creates a protocol v1 message
-func (e *encoderV1) MarshalMessage(id, sender, recipient string, ciphertext []byte) ([]byte, error) {
+func (e *encoderV1) MarshalMessage(id, sender, recipient, mtype string, priority int, ciphertext []byte) ([]byte, error) {
 	return proto.Marshal(&msgprotov1.Message{
 		Id:         id,
 		Type:       msgprotov1.MsgType_MSG,

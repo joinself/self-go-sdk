@@ -32,7 +32,7 @@ type response struct {
 
 // Transport the stateful connection used to send and receive messages
 type Transport interface {
-	Send(recipients []string, data []byte) error
+	Send(recipients []string, mtype string, priority int, data []byte) error
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
@@ -122,18 +122,18 @@ func New(config Config) (*Client, error) {
 }
 
 // Send sends an encypted message to recipients
-func (c *Client) Send(recipients []string, plaintext []byte) error {
+func (c *Client) Send(recipients []string, mtype string, priority int, plaintext []byte) error {
 	ciphertext, err := c.crypto.Encrypt(recipients, plaintext)
 	if err != nil {
 		return err
 	}
 
-	return c.transport.Send(recipients, ciphertext)
+	return c.transport.Send(recipients, mtype, priority, ciphertext)
 }
 
 // Request sends a request to a specified identity and blocks until response is received
-func (c *Client) Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error) {
-	err := c.Send(recipients, data)
+func (c *Client) Request(recipients []string, cid string, mtype string, priority int, data []byte, timeout time.Duration) (string, []byte, error) {
+	err := c.Send(recipients, mtype, priority, data)
 	if err != nil {
 		return "", nil, err
 	}

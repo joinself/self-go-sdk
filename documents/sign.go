@@ -75,7 +75,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		return resp, err
 	}
 
-	issuer, response, err := s.messaging.Request(recs, jti, payload, 0)
+	issuer, response, err := s.messaging.Request(recs, jti, req["typ"].(string), 1, payload, 0)
 	if err != nil {
 		return resp, err
 	}

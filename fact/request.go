@@ -183,7 +183,7 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	responder, response, err := s.messaging.Request(recipients, cid, payload, req.Expiry)
+	responder, response, err := s.messaging.Request(recipients, cid, RequestInformation, 1, payload, req.Expiry)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 		return err
 	}
 
-	return s.messaging.Send(recipients, payload)
+	return s.messaging.Send(recipients, RequestInformation, 1, payload)
 }
 
 // RequestViaIntermediary requests a fact from a given identity via a trusted
@@ -262,7 +262,7 @@ func (s Service) RequestViaIntermediary(req *IntermediaryFactRequest) (*Intermed
 		return nil, err
 	}
 
-	responder, response, err := s.messaging.Request(recipients, cid, payload, req.Expiry)
+	responder, response, err := s.messaging.Request(recipients, cid, RequestInformation, 1, payload, req.Expiry)
 	if err != nil {
 		return nil, err
 	}
