@@ -77,7 +77,7 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 		payload["objects"] = objects
 	}
 
-	err := s.send(recipients, 1, payload)
+	err := s.send(recipients, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (s *Service) Edit(recipients []string, cid string, body string, gid string)
 		p["gid"] = gid
 	}
 
-	s.send(recipients, 0, p)
+	s.send(recipients, p)
 }
 
 // Delete deletes previous messages.
@@ -123,7 +123,7 @@ func (s *Service) Delete(recipients []string, cids []string, gid string) {
 		p["gid"] = gid
 	}
 
-	s.send(recipients, 0, p)
+	s.send(recipients, p)
 }
 
 type InviteOptions struct {
@@ -153,7 +153,7 @@ func (s *Service) Invite(gid string, name string, members []string, opts ...Invi
 		p["expires"] = objPayload["expires"]
 	}
 
-	return s.send(members, 1, p)
+	return s.send(members, p)
 }
 
 // Join joins a group.
@@ -169,14 +169,14 @@ func (s *Service) Join(gid string, members []string) {
 	s.createMissingSessions(members)
 
 	// Send joining confirmation.
-	s.send(members, 0, map[string]interface{}{
+	s.send(members, map[string]interface{}{
 		"typ": "chat.join", "gid": gid, "aud": gid,
 	})
 }
 
 // Leave leaves a group.
 func (s *Service) Leave(gid string, members []string) {
-	s.send(members, 0, map[string]interface{}{
+	s.send(members, map[string]interface{}{
 		"typ": "chat.remove",
 		"gid": gid,
 	})
@@ -252,10 +252,10 @@ func (s *Service) confirm(action string, recipients []string, cids []string, gid
 		req["gid"] = gid
 	}
 
-	return s.send(recipients, 0, req)
+	return s.send(recipients, req)
 }
 
-func (s *Service) send(recipients []string, priority int, req map[string]interface{}) error {
+func (s *Service) send(recipients []string, req map[string]interface{}) error {
 	recs, err := helpers.PrepareRecipients(recipients, []string{s.selfID + ":" + s.deviceID}, s.api)
 	if err != nil {
 		return err
@@ -276,7 +276,7 @@ func (s *Service) send(recipients []string, priority int, req map[string]interfa
 			return err
 		}
 
-		return s.messagingClient.Send(recs, req["typ"].(string), priority, body)
+		return s.messagingClient.Send(recs, req["typ"].(string), body)
 	} else {
 		for _, recipient := range recs {
 			r := strings.Split(recipient, ":")[0]
@@ -288,7 +288,7 @@ func (s *Service) send(recipients []string, priority int, req map[string]interfa
 				return err
 			}
 
-			err = s.messagingClient.Send([]string{recipient}, req["typ"].(string), priority, body)
+			err = s.messagingClient.Send([]string{recipient}, req["typ"].(string), body)
 			if err != nil {
 				return err
 			}
@@ -311,5 +311,5 @@ func (s *Service) createMissingSessions(members []string) error {
 		}
 	}
 
-	return s.send(unconnectedMembers, 0, map[string]interface{}{"typ": "sessions.create"})
+	return s.send(unconnectedMembers, map[string]interface{}{"typ": "sessions.create"})
 }

@@ -60,7 +60,7 @@ func (_m MessagingClient) ListConnections() ([]string, error) {
 }
 
 // Request provides a mock function with given fields: recipients, cid, data, timeout
-func (_m MessagingClient) Request(recipients []string, cid, mtype string, priority int, data []byte, timeout time.Duration) (string, []byte, error) {
+func (_m MessagingClient) Request(recipients []string, cid, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	ret := _m.Called(recipients, cid, data, timeout)
 
 	var r0 string

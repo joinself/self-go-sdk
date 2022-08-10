@@ -59,12 +59,12 @@ func (c *testResponder) Wait(cid string, timeout time.Duration) (string, []byte,
 	return c.responder(c.recipients, c.request)
 }
 
-func (c *testResponder) Request(recipients []string, cid, mtype string, priority int, data []byte, timeout time.Duration) (string, []byte, error) {
+func (c *testResponder) Request(recipients []string, cid, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	c.recipients = recipients
 	return c.responder(recipients, data)
 }
 
-func (c *testResponder) Send(recipients []string, mtype string, priority int, plaintext []byte) error {
+func (c *testResponder) Send(recipients []string, mtype string, plaintext []byte) error {
 	c.recipients = recipients
 	return nil
 }

@@ -217,7 +217,6 @@ func (c Config) loadRestConnector() error {
 
 func (c Config) loadRemoteFileInteractor() {
 	if c.Connectors.FileInteractor == nil {
-		println("loading file interactor")
 		c.Connectors.FileInteractor = object.NewRemoteFileInteractor(c.Connectors.Rest)
 	}
 }

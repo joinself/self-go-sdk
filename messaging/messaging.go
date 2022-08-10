@@ -134,7 +134,7 @@ func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	sender, response, err := s.messaging.Request(recipients, cid, gjson.GetBytes(req, "typ").String(), 1, []byte(plaintext), 0)
+	sender, response, err := s.messaging.Request(recipients, cid, gjson.GetBytes(req, "typ").String(), []byte(plaintext), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (s *Service) Send(recipients []string, conversationID string, body []byte) 
 		return err
 	}
 
-	return s.messaging.Send(recipients, gjson.GetBytes(body, "typ").String(), 1, []byte(plaintext))
+	return s.messaging.Send(recipients, gjson.GetBytes(body, "typ").String(), []byte(plaintext))
 }
 
 // Notify sends a notification to a given self ID

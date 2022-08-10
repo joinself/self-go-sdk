@@ -10,7 +10,7 @@ type MessagingClientMock struct {
 }
 
 // Send provides a mock function with given fields: recipients, data
-func (_m MessagingClientMock) Send(recipients []string, mtype string, priority int, data []byte) error {
+func (_m MessagingClientMock) Send(recipients []string, mtype string, data []byte) error {
 	ret := _m.Called(recipients, data)
 
 	var r0 error

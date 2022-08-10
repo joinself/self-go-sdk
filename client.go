@@ -37,8 +37,8 @@ type WebsocketTransport interface {
 // MessagingClient defines the interface required for the sdk to perform
 // operations against self's messaging service
 type MessagingClient interface {
-	Send(recipients []string, mtype string, priority int, plaintext []byte) error
-	Request(recipients []string, cid string, mtype string, priority int, data []byte, timeout time.Duration) (string, []byte, error)
+	Send(recipients []string, mtype string, plaintext []byte) error
+	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Register(cid string)
 	Wait(cid string, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))

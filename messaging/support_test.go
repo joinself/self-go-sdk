@@ -29,12 +29,12 @@ type testMessaging struct {
 	sendError error
 }
 
-func (c *testMessaging) Send(recipients []string, mtype string, priority int, data []byte) error {
+func (c *testMessaging) Send(recipients []string, mtype string, data []byte) error {
 	c.in = data
 	return c.sendError
 }
 
-func (c *testMessaging) Request(recipients []string, cid string, mtype string, priority int, data []byte, timeout time.Duration) (string, []byte, error) {
+func (c *testMessaging) Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	if c.responder == nil {
 		return "", nil, errors.New("request timeout")
 	}
