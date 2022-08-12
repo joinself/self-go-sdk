@@ -20,9 +20,33 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
+type priority int
+
+const (
+	priorityInvisible priority = iota
+	priorityVisible
+)
+
 var (
 	decoder  = base64.RawURLEncoding
 	emptyACL = unsafe.Pointer(nil)
+
+	priorities = map[string]priority{
+		"chat.invite":                 priorityVisible,
+		"chat.join":                   priorityInvisible,
+		"chat.message":                priorityVisible,
+		"chat.message.delete":         priorityInvisible,
+		"chat.message.delivered":      priorityInvisible,
+		"chat.message.edit":           priorityInvisible,
+		"chat.message.read":           priorityInvisible,
+		"chat.remove":                 priorityInvisible,
+		"document.sign.req":           priorityVisible,
+		"identities.authenticate.req": priorityVisible,
+		"identities.connections.req":  priorityVisible,
+		"identities.facts.query.req":  priorityVisible,
+		"identities.facts.issue":      priorityVisible,
+		"identities.notify":           priorityVisible,
+	}
 )
 
 type response struct {
@@ -32,7 +56,7 @@ type response struct {
 
 // Transport the stateful connection used to send and receive messages
 type Transport interface {
-	Send(recipients []string, data []byte) error
+	Send(recipients []string, mtype string, priority int, data []byte) error
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
@@ -122,18 +146,18 @@ func New(config Config) (*Client, error) {
 }
 
 // Send sends an encypted message to recipients
-func (c *Client) Send(recipients []string, plaintext []byte) error {
+func (c *Client) Send(recipients []string, mtype string, plaintext []byte) error {
 	ciphertext, err := c.crypto.Encrypt(recipients, plaintext)
 	if err != nil {
 		return err
 	}
 
-	return c.transport.Send(recipients, ciphertext)
+	return c.transport.Send(recipients, mtype, int(priorities[mtype]), ciphertext)
 }
 
 // Request sends a request to a specified identity and blocks until response is received
-func (c *Client) Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error) {
-	err := c.Send(recipients, data)
+func (c *Client) Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
+	err := c.Send(recipients, mtype, data)
 	if err != nil {
 		return "", nil, err
 	}

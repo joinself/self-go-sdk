@@ -174,11 +174,11 @@ func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 }
 
 // Send send a message to given recipients. recipient is a combination of "selfID:deviceID"
-func (c *Websocket) Send(recipients []string, data []byte) error {
+func (c *Websocket) Send(recipients []string, mtype string, priority int, data []byte) error {
 	for _, r := range recipients {
 		id := uuid.New().String()
 
-		msg, err := c.enc.MarshalMessage(id, c.config.messagingID, r, data)
+		msg, err := c.enc.MarshalMessage(id, c.config.messagingID, r, mtype, priority, data)
 		if err != nil {
 			return err
 		}
@@ -201,11 +201,11 @@ func (c *Websocket) Send(recipients []string, data []byte) error {
 }
 
 // SendAsync send a message to given recipients with a callback to handle the server response
-func (c *Websocket) SendAsync(recipients []string, data []byte, callback func(err error)) {
+func (c *Websocket) SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(err error)) {
 	for _, r := range recipients {
 		id := uuid.New().String()
 
-		msg, err := c.enc.MarshalMessage(id, c.config.messagingID, r, data)
+		msg, err := c.enc.MarshalMessage(id, c.config.messagingID, r, mtype, priority, data)
 		if err != nil {
 			callback(err)
 			return
@@ -222,8 +222,8 @@ func (c *Websocket) SendAsync(recipients []string, data []byte, callback func(er
 }
 
 // SendAsync send a message with a given id to a single recipient, with a callback to handle the server response
-func (c *Websocket) SendAsyncWithID(id, recipient string, data []byte, callback func(err error)) {
-	msg, err := c.enc.MarshalMessage(id, c.config.messagingID, recipient, data)
+func (c *Websocket) SendAsyncWithID(id, recipient string, mtype string, priority int, data []byte, callback func(err error)) {
+	msg, err := c.enc.MarshalMessage(id, c.config.messagingID, recipient, mtype, priority, data)
 	if err != nil {
 		callback(err)
 		return

@@ -276,10 +276,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 			return err
 		}
 
-		err = s.messagingClient.Send(recs, body)
-		if err != nil {
-			return err
-		}
+		return s.messagingClient.Send(recs, req["typ"].(string), body)
 	} else {
 		for _, recipient := range recs {
 			r := strings.Split(recipient, ":")[0]
@@ -291,7 +288,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 				return err
 			}
 
-			err = s.messagingClient.Send([]string{recipient}, body)
+			err = s.messagingClient.Send([]string{recipient}, req["typ"].(string), body)
 			if err != nil {
 				return err
 			}

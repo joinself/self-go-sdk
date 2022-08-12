@@ -12,7 +12,7 @@ import (
 
 // messagingClient handles all interactions with self messaging and its users
 type messagingClient interface {
-	Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error)
+	Request(recipients []string, cid, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))
 }
 type pkiClient interface {

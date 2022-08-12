@@ -18,7 +18,7 @@ type messagingService interface {
 
 // messagingClient handles all interactions with self messaging and its users
 type messagingClient interface {
-	Send(recipients []string, data []byte) error
+	Send(recipients []string, mtype string, data []byte) error
 }
 
 // restTransport handles all interactions with the self api

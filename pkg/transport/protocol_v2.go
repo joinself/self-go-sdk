@@ -90,7 +90,7 @@ func (e *encoderV2) MarshalACL(id, command string, payload []byte) ([]byte, erro
 }
 
 // MarshalMessage creates a protocol v2 message
-func (e *encoderV2) MarshalMessage(id, sender, recipient string, ciphertext []byte) ([]byte, error) {
+func (e *encoderV2) MarshalMessage(id, sender, recipient, mtype string, priority int, ciphertext []byte) ([]byte, error) {
 	b := e.pool.Get().(*flatbuffers.Builder)
 
 	// reset the flatbuffer builder's internal buffer
@@ -113,6 +113,8 @@ func (e *encoderV2) MarshalMessage(id, sender, recipient string, ciphertext []by
 	))
 
 	msgprotov2.MessageAddCiphertext(b, mct)
+	msgprotov2.MessageAddPriority(b, uint32(priority))
+
 	msg := msgprotov2.MessageEnd(b)
 
 	b.Finish(msg)

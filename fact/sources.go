@@ -27,7 +27,7 @@ const SourceTwitter = "twitter"
 const SourceUserSpecified = "user_specified"
 
 var spec = map[string][]string{
-	SourceDrivingLicense: []string{
+	SourceDrivingLicense: {
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -38,11 +38,11 @@ var spec = map[string][]string{
 		FactIssuingAuthority,
 		FactPlaceOfBirth,
 	},
-	SourceFacebook: []string{
+	SourceFacebook: {
 		FactAccountId,
 		FactNickname,
 	},
-	SourceIdentityCard: []string{
+	SourceIdentityCard: {
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -52,14 +52,14 @@ var spec = map[string][]string{
 		FactNationality,
 		FactCountryOfIssuance,
 	},
-	SourceLinkedin: []string{
+	SourceLinkedin: {
 		FactAccountId,
 		FactNickname,
 	},
-	SourceLive: []string{
+	SourceLive: {
 		FactSelfieVerification,
 	},
-	SourcePassport: []string{
+	SourcePassport: {
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -69,11 +69,11 @@ var spec = map[string][]string{
 		FactNationality,
 		FactCountryOfIssuance,
 	},
-	SourceTwitter: []string{
+	SourceTwitter: {
 		FactAccountId,
 		FactNickname,
 	},
-	SourceUserSpecified: []string{
+	SourceUserSpecified: {
 		FactDocumentNumber,
 		FactEmailAddress,
 		FactPhoneNumber,

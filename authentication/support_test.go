@@ -52,7 +52,7 @@ type testResponder struct {
 	responder      func(req map[string]interface{}) (string, []byte, error)
 }
 
-func (c *testResponder) Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error) {
+func (c *testResponder) Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	var req map[string]interface{}
 
 	jws, err := jose.ParseSigned(string(data))
@@ -80,7 +80,7 @@ type testRestTransport struct {
 	payload []byte
 }
 
-func (c *testResponder) Send(recipients []string, plaintext []byte) error {
+func (c *testResponder) Send(recipients []string, mtype string, plaintext []byte) error {
 	return nil
 }
 

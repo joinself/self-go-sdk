@@ -28,7 +28,7 @@ type RestTransport interface {
 // WebsocketTransport defines the interface required for the sdk to perform
 // operations against self's websocket services
 type WebsocketTransport interface {
-	Send(recipients []string, data []byte) error
+	Send(recipients []string, mtype string, priority int, data []byte) error
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
@@ -37,8 +37,8 @@ type WebsocketTransport interface {
 // MessagingClient defines the interface required for the sdk to perform
 // operations against self's messaging service
 type MessagingClient interface {
-	Send(recipients []string, plaintext []byte) error
-	Request(recipients []string, cid string, data []byte, timeout time.Duration) (string, []byte, error)
+	Send(recipients []string, mtype string, plaintext []byte) error
+	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Register(cid string)
 	Wait(cid string, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))

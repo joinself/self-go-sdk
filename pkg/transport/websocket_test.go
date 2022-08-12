@@ -94,7 +94,7 @@ func TestWebsocketSend(t *testing.T) {
 	require.Nil(t, err)
 	defer c.Close()
 
-	err = c.Send([]string{"alice:1"}, []byte("test"))
+	err = c.Send([]string{"alice:1"}, "test.message", 1, []byte("test"))
 	require.Nil(t, err)
 
 	msg, err := wait(s.in)

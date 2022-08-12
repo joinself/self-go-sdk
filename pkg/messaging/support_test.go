@@ -26,7 +26,7 @@ func newTestWebsocket() *testWebsocket {
 	}
 }
 
-func (c *testWebsocket) Send(recipients []string, data []byte) error {
+func (c *testWebsocket) Send(recipients []string, mtype string, priority int, data []byte) error {
 	for _, r := range recipients {
 		if r == "non-existent" {
 			return errors.New("recipient does not exist")

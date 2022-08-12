@@ -24,7 +24,7 @@ func TestMessagingSend(t *testing.T) {
 	c, err := New(cfg)
 	require.Nil(t, err)
 
-	err = c.Send([]string{"alice:1"}, []byte("test"))
+	err = c.Send([]string{"alice:1"}, "test.message", []byte("test"))
 	require.Nil(t, err)
 
 	e := <-ws.out
@@ -32,7 +32,7 @@ func TestMessagingSend(t *testing.T) {
 	assert.Equal(t, "alice:1", e.recipient)
 	assert.Equal(t, []byte("dGVzdA"), e.data)
 
-	err = c.Send([]string{"alice:1", "bob:1", "charlie:1"}, []byte("test"))
+	err = c.Send([]string{"alice:1", "bob:1", "charlie:1"}, "test.message", []byte("test"))
 	require.Nil(t, err)
 
 	for _, r := range []string{"alice:1", "bob:1", "charlie:1"} {
@@ -63,7 +63,7 @@ func TestMessagingRequest(t *testing.T) {
 		ws.in <- &testEvent{sender: "alice:1", data: []byte(decoder.EncodeToString(resp))}
 	}()
 
-	_, response, err := c.Request([]string{"alice:1"}, "1", []byte(`{"payload":"eyJjaWQiOiAiMSJ9"}`), 0)
+	_, response, err := c.Request([]string{"alice:1"}, "1", "test.message", []byte(`{"payload":"eyJjaWQiOiAiMSJ9"}`), 0)
 	require.Nil(t, err)
 	assert.NotNil(t, response)
 }

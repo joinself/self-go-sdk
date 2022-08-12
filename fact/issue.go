@@ -120,5 +120,5 @@ func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []
 		return err
 	}
 
-	return s.messaging.Send(recipients, jws)
+	return s.messaging.Send(recipients, req["type"].(string), jws)
 }
