@@ -152,7 +152,7 @@ func (c *Client) Send(recipients []string, mtype string, plaintext []byte) error
 		return err
 	}
 
-	return c.transport.Send(recipients, mtype, int(priorities[mtype]), ciphertext)
+	return c.transport.Send(recipients, mtype, int(selectPriority(mtype)), ciphertext)
 }
 
 // Request sends a request to a specified identity and blocks until response is received
@@ -367,4 +367,13 @@ func (c *Client) permit(selfID string) {
 
 		runtime.Gosched()
 	}
+}
+
+func selectPriority(mtype string) priority {
+       p, ok := priorities[mtype]
+       if ok {
+               return p
+       }
+
+       return priorityVisible
 }
