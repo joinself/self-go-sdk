@@ -99,6 +99,7 @@ func (e *encoderV2) MarshalMessage(id, sender, recipient, mtype string, priority
 	mid := b.CreateString(id)
 	msd := b.CreateString(sender)
 	mrp := b.CreateString(recipient)
+	mtp := b.CreateByteVector([]byte(mtype))
 	mct := b.CreateByteVector(ciphertext)
 
 	msgprotov2.MessageStart(b)
@@ -113,6 +114,7 @@ func (e *encoderV2) MarshalMessage(id, sender, recipient, mtype string, priority
 	))
 
 	msgprotov2.MessageAddCiphertext(b, mct)
+	msgprotov2.MessageAddMessageType(b, mtp)
 	msgprotov2.MessageAddPriority(b, uint32(priority))
 
 	msg := msgprotov2.MessageEnd(b)
