@@ -21,7 +21,7 @@ before_script:
 
 license-compliance:
   stage: checks
-  image: licensefinder/license_finder
+  image: joinself/license-finder:go
   script:
     - ${SCRIPTS_DIR}/license-check
 
