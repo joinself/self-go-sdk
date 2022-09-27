@@ -102,7 +102,7 @@ func (c Config) validate() error {
 func (c *Config) load() error {
 	if strings.Contains(c.SelfAppDeviceSecret, "_") {
 		keyParts := strings.Split(c.SelfAppDeviceSecret, "_")
-		if keyParts[0] != "sk_" {
+		if keyParts[0] != "sk" {
 			return errors.New("the device secret key provided is not valid")
 		}
 		c.SelfAppDeviceSecret = keyParts[1]
