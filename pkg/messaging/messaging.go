@@ -306,6 +306,12 @@ func (c *Client) reader() {
 			go fn.(func(sender string, plaintext []byte))(sender, plaintext)
 			continue
 		}
+
+		fn, ok = c.subscriptions.Load("*")
+		if ok {
+			go fn.(func(sender string, plaintext []byte))(sender, plaintext)
+			continue
+		}
 	}
 }
 
@@ -370,10 +376,10 @@ func (c *Client) permit(selfID string) {
 }
 
 func selectPriority(mtype string) priority {
-       p, ok := priorities[mtype]
-       if ok {
-               return p
-       }
+	p, ok := priorities[mtype]
+	if ok {
+		return p
+	}
 
-       return priorityVisible
+	return priorityVisible
 }
