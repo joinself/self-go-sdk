@@ -13,6 +13,7 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/joinself/self-go-sdk/pkg/object"
+	"github.com/joinself/self-go-sdk/voice"
 )
 
 // RestTransport defines the interface required for the sdk to perform
@@ -182,6 +183,19 @@ func (c *Client) DocsService() *documents.Service {
 	}
 
 	return documents.NewService(cfg)
+}
+
+func (c *Client) VoiceService() *voice.Service {
+	cfg := voice.Config{
+		SelfID:           c.config.SelfAppID,
+		DeviceID:         c.config.DeviceID,
+		PrivateKey:       c.config.sk,
+		KeyID:            c.config.kid,
+		Rest:             c.connectors.Rest,
+		MessagingService: c.MessagingService(),
+		MessagingClient:  c.connectors.Messaging,
+	}
+	return voice.NewService(cfg)
 }
 
 // Close gracefully closes the self client
