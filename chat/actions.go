@@ -263,7 +263,7 @@ func (s *Service) send(recipients []string, req map[string]interface{}) error {
 
 	req["jti"] = uuid.New().String()
 	req["iss"] = s.selfID
-	req["iat"] = ntp.TimeFunc().Format(time.RFC3339)
+	req["iat"] = ntp.TimeFunc().Format("2006-01-02T15:04:05.000Z07:00")
 	req["exp"] = ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339)
 	req["device_id"] = s.deviceID
 
