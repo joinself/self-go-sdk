@@ -200,8 +200,8 @@ func (c *Client) VoiceService() *voice.Service {
 }
 
 // Rest provides access to the rest client to interact used by the sdk.
-func (c *Client) Rest() *RestTransport {
-	return &c.config.Connectors.Rest
+func (c *Client) Rest() RestTransport {
+	return c.config.Connectors.Rest
 }
 
 // Close gracefully closes the self client
