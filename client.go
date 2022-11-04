@@ -185,6 +185,7 @@ func (c *Client) DocsService() *documents.Service {
 	return documents.NewService(cfg)
 }
 
+// VoiceService returns a client for managing voice call negotiation.
 func (c *Client) VoiceService() *voice.Service {
 	cfg := voice.Config{
 		SelfID:           c.config.SelfAppID,
@@ -196,6 +197,11 @@ func (c *Client) VoiceService() *voice.Service {
 		MessagingClient:  c.connectors.Messaging,
 	}
 	return voice.NewService(cfg)
+}
+
+// Rest provides access to the rest client to interact used by the sdk.
+func (c *Client) Rest() *RestTransport {
+	return &c.config.Connectors.Rest
 }
 
 // Close gracefully closes the self client
