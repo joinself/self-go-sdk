@@ -20,11 +20,12 @@ type FactGroup struct {
 }
 
 type FactToIssue struct {
-	Key    string     `json:"key"`
-	Value  string     `json:"value"`
-	Source string     `json:"-"`
-	Group  *FactGroup `json:"group,omitempty"`
-	Type   string     `json:"type,omitempty"`
+	Key        string         `json:"key"`
+	Value      string         `json:"value"`
+	Source     string         `json:"-"`
+	Group      *FactGroup     `json:"group,omitempty"`
+	Type       string         `json:"type,omitempty"`
+	ExpTimeout *time.Duration `json:"-"`
 }
 
 func (f *FactToIssue) validate() error {
@@ -106,11 +107,15 @@ func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []
 
 	attestations := make([]json.RawMessage, len(facts))
 	for i, f := range facts {
+		exp := defaultRequestTimeout
+		if f.ExpTimeout != nil {
+			exp = *f.ExpTimeout
+		}
 		payload, err := json.Marshal(map[string]interface{}{
 			"sub":      selfID,
 			"iss":      s.selfID,
 			"iat":      ntp.TimeFunc().Format(time.RFC3339),
-			"exp":      ntp.TimeFunc().Add(defaultRequestTimeout).Format(time.RFC3339),
+			"exp":      ntp.TimeFunc().Add(exp).Format(time.RFC3339),
 			"source":   f.Source,
 			"verified": true,
 			"facts":    []FactToIssue{f},
