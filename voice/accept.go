@@ -23,8 +23,8 @@ func (s *Service) OnAccept(callback func(iss, cid, callID, peerInfo string, data
 			callback(
 				payload["iss"].(string),
 				payload["cid"].(string),
-				payload["callID"].(string),
-				payload["peerInfo"].(string),
+				payload["call_id"].(string),
+				payload["peer_info"].(string),
 				payload["data"],
 			)
 		}
