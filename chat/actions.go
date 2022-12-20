@@ -4,6 +4,7 @@ package chat
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
 	"time"
 
@@ -214,14 +215,21 @@ func (s *Service) GenerateConnectionDeepLink(config ConnectionConfig) (string, e
 		return "", err
 	}
 
-	url := "https://links.joinself.com/?link=" + callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload)
-	if s.environment == "" {
-		return url + "&apn=com.joinself.app", nil
-	} else if s.environment == "development" {
-		return url + "&apn=com.joinself.app.dev", nil
+	body := base64.RawStdEncoding.EncodeToString(payload)
+	baseURL := fmt.Sprintf("https://%s.links.joinself.com", s.environment)
+	portalURL := fmt.Sprintf("https://developer.%s.joinself.com", s.environment)
+	apn := fmt.Sprintf("com.joinself.app.%s", s.environment)
+
+	if s.environment == "" || s.environment == "development" {
+		baseURL = "https://links.joinself.com"
+		portalURL = "https://developer.joinself.com"
+		apn = "com.joinself.app"
+		if s.environment == "development" {
+			apn = "com.joinself.com.dev"
+		}
 	}
 
-	return "https://" + s.environment + ".links.joinself.com/?link=" + callback + "%3Fqr=" + base64.RawStdEncoding.EncodeToString(payload) + "&apn=com.joinself.app." + s.environment, nil
+	return fmt.Sprintf("%s?link=%s/callback/%s%%3Fqr=%s&apn=%s", baseURL, portalURL, callback, body, apn), nil
 }
 
 func (s *Service) buildConnectionRequest(exp time.Duration) ([]byte, error) {

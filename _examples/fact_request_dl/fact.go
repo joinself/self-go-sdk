@@ -39,10 +39,14 @@ func main() {
 
 	log.Println("requesting user information")
 
+	// You can manage your redirection codes on your app management on the
+	// developer portal
+	redirectionCode := "90d017d1"
+
 	req := fact.DeepLinkFactRequest{
 		ConversationID: cid,
 		Description:    "info",
-		Callback:       "https://www.joinself.com",
+		Callback:       redirectionCode,
 		Facts: []fact.Fact{
 			{
 				Fact:    fact.FactPhoneNumber,

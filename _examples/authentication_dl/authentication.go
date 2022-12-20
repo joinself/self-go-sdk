@@ -35,9 +35,13 @@ func main() {
 	authService := client.AuthenticationService()
 	cid := uuid.New().String()
 
+	// You can manage your redirection codes on your app management on the
+	// developer portal
+	redirectionCode := "90d017d1"
+
 	req := authentication.DeepLinkAuthenticationRequest{
 		ConversationID: cid,
-		Callback:       "https://www.joinself.com",
+		Callback:       redirectionCode,
 		Expiry:         time.Minute * 5,
 	}
 
