@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	client.Start()
 
 	err = client.MessagingService().PermitConnection("*")
 	if err != nil {

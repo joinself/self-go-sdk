@@ -87,6 +87,7 @@ func main() {
     }
 
     client, err := selfsdk.New(cfg)
+    client.Start()
 }
 ```
 
@@ -126,6 +127,7 @@ import (
 
 func main() {
     client, err := selfsdk.New(cfg)
+    client.Start()
     ...
 
     svc := client.Facts()
@@ -156,6 +158,7 @@ import (
 
 func main() {
     client, err := selfsdk.New("appID", "privateKey")
+    client.Start()
     ...
 
     svc := client.Authentication()

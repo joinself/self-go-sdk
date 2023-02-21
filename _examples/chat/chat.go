@@ -90,6 +90,9 @@ func main() {
 		delete(groups, gid)
 	})
 
+	// Start the client
+	client.Start()
+
 	// Public object
 	obj := chat.MessageObject{
 		Name: "Hello",

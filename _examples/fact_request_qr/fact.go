@@ -32,6 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	client.Start()
 
 	s := server{
 		cid:  uuid.New().String(),
