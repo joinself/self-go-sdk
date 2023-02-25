@@ -26,6 +26,6 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 // indirect
-	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
