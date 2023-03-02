@@ -23,6 +23,7 @@ func TestMessagingSend(t *testing.T) {
 
 	c, err := New(cfg)
 	require.Nil(t, err)
+	c.Start()
 
 	err = c.Send([]string{"alice:1"}, "test.message", []byte("test"))
 	require.Nil(t, err)
@@ -56,6 +57,7 @@ func TestMessagingRequest(t *testing.T) {
 
 	c, err := New(cfg)
 	require.Nil(t, err)
+	c.Start()
 
 	go func() {
 		<-ws.out
@@ -81,6 +83,7 @@ func TestMessagingRegisterWait(t *testing.T) {
 
 	c, err := New(cfg)
 	require.Nil(t, err)
+	c.Start()
 
 	_, _, err = c.Wait("1", time.Millisecond)
 	require.NotNil(t, err)
@@ -122,6 +125,7 @@ func TestMessagingSubscribe(t *testing.T) {
 
 	c, err := New(cfg)
 	require.Nil(t, err)
+	c.Start()
 
 	resp := make(chan *testEvent, 1)
 
@@ -152,6 +156,7 @@ func TestMessagingClose(t *testing.T) {
 
 	c, err := New(cfg)
 	require.Nil(t, err)
+	c.Start()
 
 	time.Sleep(time.Millisecond * 100)
 

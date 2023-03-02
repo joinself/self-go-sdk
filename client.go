@@ -38,6 +38,7 @@ type WebsocketTransport interface {
 // MessagingClient defines the interface required for the sdk to perform
 // operations against self's messaging service
 type MessagingClient interface {
+	Start()
 	Send(recipients []string, mtype string, plaintext []byte) error
 	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Register(cid string)
@@ -105,6 +106,10 @@ func New(cfg Config) (*Client, error) {
 	time.Local = utcZone
 
 	return client, nil
+}
+
+func (c *Client) Start() {
+	c.MessagingService().Start()
 }
 
 // FactService returns a client for working with facts

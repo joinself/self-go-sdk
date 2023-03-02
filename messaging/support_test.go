@@ -27,6 +27,11 @@ type testMessaging struct {
 	out       map[string][]byte
 	responder func(r map[string]string) (string, []byte, error)
 	sendError error
+	started   bool
+}
+
+func (c *testMessaging) Start() {
+	c.started = true
 }
 
 func (c *testMessaging) Send(recipients []string, mtype string, data []byte) error {

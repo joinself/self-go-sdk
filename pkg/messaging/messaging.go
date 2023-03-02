@@ -89,6 +89,7 @@ type Client struct {
 	acl           *unsafe.Pointer
 	closing       chan struct{}
 	closed        chan struct{}
+	started       bool
 }
 
 // New create a new messaging client
@@ -131,9 +132,8 @@ func New(config Config) (*Client, error) {
 		acl:       &emptyACL,
 		closing:   make(chan struct{}, 1),
 		closed:    make(chan struct{}, 1),
+		started:   false,
 	}
-
-	go c.reader()
 
 	conns, err := c.ListConnections()
 	if err != nil {
@@ -143,6 +143,16 @@ func New(config Config) (*Client, error) {
 	atomic.StorePointer(c.acl, unsafe.Pointer(&conns))
 
 	return &c, nil
+}
+
+// Start starts the connection with self network.
+func (c *Client) Start() {
+	if c.started {
+		return
+	}
+
+	go c.reader()
+	c.started = true
 }
 
 // Send sends an encypted message to recipients

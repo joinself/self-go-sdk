@@ -48,6 +48,10 @@ type infoNotification struct {
 	Description  string    `json:"description"`
 }
 
+func (s *Service) Start() {
+	s.messaging.Start()
+}
+
 // Subscribe subscribe to messages of a given type
 func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 	s.messaging.Subscribe(messageType, func(sender string, payload []byte) {
