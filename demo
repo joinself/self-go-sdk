@@ -1,22 +1,22 @@
 up() {
-	docker run --name self-go-sdk -t -d --env-file _examples/.env -v $PWD:/sdk -w /sdk ghcr.io/joinself/self-go-sdk
-	docker exec self-go-sdk go get
+  docker run --name self-go-sdk -t -d --env-file _examples/.env -v $PWD:/sdk -w /sdk ghcr.io/joinself/self-go-sdk
+  docker exec self-go-sdk go get
 }
 
 run(){
-    echo "..."
-    echo $2
-    echo $3
-    echo "..."
-    docker exec -it -w /sdk/_examples/ self-go-sdk go run $2/$2.go $3
+  echo "..."
+  echo $2
+  echo $3
+  echo "..."
+  docker exec -it -w /sdk/_examples/ self-go-sdk go run $2/$2.go $3
 }
 
 down() {
-    docker rm $(docker stop $(docker ps -a -q --filter ancestor=ghcr.io/joinself/self-go-sdk --format="{{.ID}}"))
+  docker rm $(docker stop $(docker ps -a -q --filter ancestor=ghcr.io/joinself/self-go-sdk --format="{{.ID}}"))
 }
 
 install() {
-    docker exec self-go-sdk bundle install
+  docker exec self-go-sdk bundle install
 }
 
 main() {
