@@ -1,6 +1,5 @@
 up() {
-	docker build --platform linux/amd64 -t self-go-sdk .
-	docker run --platform linux/amd64 --name self-go-sdk -t -d --env-file _examples/.env -v $PWD:/sdk -w /sdk self-go-sdk
+	docker run --name self-go-sdk -t -d --env-file _examples/.env -v $PWD:/sdk -w /sdk ghcr.io/joinself/self-go-sdk
 	docker exec self-go-sdk go get
 }
 
