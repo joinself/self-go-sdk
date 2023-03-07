@@ -6,6 +6,7 @@ const FactCountryOfIssuance = "country_of_issuance"
 const FactDateOfBirth = "date_of_birth"
 const FactDateOfExpiration = "date_of_expiration"
 const FactDateOfIssuance = "date_of_issuance"
+const FactDisplayName = "display_name"
 const FactDocumentNumber = "document_number"
 const FactEmailAddress = "email_address"
 const FactGivenNames = "given_names"
@@ -13,6 +14,7 @@ const FactIssuingAuthority = "issuing_authority"
 const FactNationality = "nationality"
 const FactNickname = "nickname"
 const FactPhoneNumber = "phone_number"
+const FactPhoto = "photo"
 const FactPlaceOfBirth = "place_of_birth"
 const FactSelfieVerification = "selfie_verification"
 const FactSex = "sex"
@@ -27,7 +29,7 @@ const SourceTwitter = "twitter"
 const SourceUserSpecified = "user_specified"
 
 var spec = map[string][]string{
-	SourceDrivingLicense: {
+	SourceDrivingLicense: []string{
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -38,11 +40,11 @@ var spec = map[string][]string{
 		FactIssuingAuthority,
 		FactPlaceOfBirth,
 	},
-	SourceFacebook: {
+	SourceFacebook: []string{
 		FactAccountId,
 		FactNickname,
 	},
-	SourceIdentityCard: {
+	SourceIdentityCard: []string{
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -52,14 +54,15 @@ var spec = map[string][]string{
 		FactNationality,
 		FactCountryOfIssuance,
 	},
-	SourceLinkedin: {
+	SourceLinkedin: []string{
 		FactAccountId,
 		FactNickname,
 	},
-	SourceLive: {
+	SourceLive: []string{
 		FactSelfieVerification,
 	},
-	SourcePassport: {
+	SourcePassport: []string{
+		FactPhoto,
 		FactDocumentNumber,
 		FactSurname,
 		FactGivenNames,
@@ -69,12 +72,13 @@ var spec = map[string][]string{
 		FactNationality,
 		FactCountryOfIssuance,
 	},
-	SourceTwitter: {
+	SourceTwitter: []string{
 		FactAccountId,
 		FactNickname,
 	},
-	SourceUserSpecified: {
+	SourceUserSpecified: []string{
 		FactDocumentNumber,
+		FactDisplayName,
 		FactEmailAddress,
 		FactPhoneNumber,
 	},
