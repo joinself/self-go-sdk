@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Secrets check
         run: |
-          curl -sSLo /tmp/gitleaks.toml https://static.joinself.com/gitleaks/gitleaks.toml
+          wget -O /tmp/gitleaks.toml https://static.joinself.com/gitleaks/gitleaks.toml
           gitleaks -c /tmp/gitleaks.toml detect
   test:
     runs-on: ubuntu-latest
