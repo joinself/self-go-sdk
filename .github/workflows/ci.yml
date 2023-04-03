@@ -8,6 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  license-compliance:
+    runs-on: ubuntu-latest
+    container:
+      image: joinself/license-finder:go
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        run: |
+          apt-get update
+          apt-get -y install libsodium-dev
+          curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
+          curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
+          apt-get -y install /tmp/olm.deb /tmp/omemo.deb
+      - name: License check
+        run: |
+          curl -Lo /tmp/dependency_decisions.yml https://static.joinself.com/license-finder/dependency_decisions.yml
+          license_finder --decisions_file /tmp/dependency_decisions.yml
   test:
     runs-on: ubuntu-latest
     container:
@@ -16,6 +33,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup environment
         run: |
+          exit 1
           apt-get update
           apt-get -y install curl libsodium-dev
           curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o /tmp/libself-olm_0.1.17_amd64.deb
