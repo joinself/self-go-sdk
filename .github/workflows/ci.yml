@@ -7,6 +7,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   license-compliance:
     runs-on: ubuntu-latest
@@ -18,19 +22,30 @@ jobs:
         run: |
           apt-get update
           apt-get -y install libsodium-dev
-          curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-          curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
+          curl -sSLo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
+          curl -sSLo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
           apt-get -y install /tmp/olm.deb /tmp/omemo.deb
       - name: License check
         run: |
           curl -Lo /tmp/dependency_decisions.yml https://static.joinself.com/license-finder/dependency_decisions.yml
           license_finder --decisions_file /tmp/dependency_decisions.yml
+  secret-scan:
+    runs-on: ubuntu-latest
+    container:
+      image: zricethezav/gitleaks:v8.16.2
+      options: "--user root"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Secrets check
+        run: |
+          curl -sSLo /tmp/gitleaks.toml https://static.joinself.com/gitleaks/gitleaks.toml
+          gitleaks -c /tmp/gitleaks.toml detect
   test:
     runs-on: ubuntu-latest
     container:
       image: golang:1.18.2
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: |
           exit 1
