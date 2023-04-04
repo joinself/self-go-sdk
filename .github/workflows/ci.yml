@@ -84,8 +84,8 @@ jobs:
         run: |
           chown root:root .
           # setup git
-          #git config --global user.name ci
-          #git config --global user.email ops@joinself.com
+          git config --global user.name ci
+          git config --global user.email ops@joinself.com
 
           # get new version
           branch=$(git branch --show-current)
