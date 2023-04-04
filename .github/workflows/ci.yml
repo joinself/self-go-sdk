@@ -20,12 +20,13 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup environment
         run: |
-          exit 0
-          apt-get update
-          apt-get -y install libsodium-dev
-          curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-          curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
-          apt-get -y install /tmp/olm.deb /tmp/omemo.deb
+          echo "hello"
+          #exit 0
+          #apt-get update
+          #apt-get -y install libsodium-dev
+          #curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
+          #curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
+          #apt-get -y install /tmp/olm.deb /tmp/omemo.deb
       - name: License check
         run: |
           curl -Lo /tmp/dependency_decisions.yml https://static.joinself.com/license-finder/dependency_decisions.yml
@@ -52,6 +53,5 @@ jobs:
         run: go test -v ./...
   publish:
     #if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
-    needs: license-compliance
+    needs: [license-compliance, secret-scan, test]
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
-
