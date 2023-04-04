@@ -42,4 +42,3 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
-
