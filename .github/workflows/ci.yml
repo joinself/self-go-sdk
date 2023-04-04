@@ -15,6 +15,7 @@ jobs:
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     with:
       continue-on-error: true
+    secrets: inherit
   test:
     needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
@@ -39,7 +40,13 @@ jobs:
           apt-get -y install /tmp/olm.deb /tmp/omemo.deb
       - name: Test
         run: go test -v ./...
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
   publish:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
+    secrets: inherit
