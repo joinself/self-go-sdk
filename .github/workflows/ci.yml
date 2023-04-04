@@ -63,6 +63,7 @@ jobs:
   publish:
     #if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    #needs: []
     container:
       image: joinself/tools
     steps:
@@ -81,6 +82,7 @@ jobs:
 
       - name: Publish
         run: |
+          chown root:root .
           # setup git
           #git config --global user.name ci
           #git config --global user.email ops@joinself.com
