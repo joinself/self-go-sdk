@@ -13,37 +13,21 @@ defaults:
 
 jobs:
   license-compliance:
-    runs-on: ubuntu-latest
-    container:
-      image: joinself/license-finder:go
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup environment
-        run: |
-          echo "hello"
-          #exit 0
-          #apt-get update
-          #apt-get -y install libsodium-dev
-          #curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-          #curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
-          #apt-get -y install /tmp/olm.deb /tmp/omemo.deb
-      - name: License check
-        run: |
-          curl -Lo /tmp/dependency_decisions.yml https://static.joinself.com/license-finder/dependency_decisions.yml
-          license_finder --decisions_file /tmp/dependency_decisions.yml
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
   secret-scan:
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     with:
       continue-on-error: true
   test:
+    needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
-      image: golang:1.18.2
+      image: golang:1.18.2-buster
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
       - name: Setup environment
         run: |
-          exit 0
           apt-get update
           apt-get -y install libsodium-dev
           curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
@@ -53,5 +37,5 @@ jobs:
         run: go test -v ./...
   publish:
     #if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
-    needs: [license-compliance, secret-scan, test]
+    needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
