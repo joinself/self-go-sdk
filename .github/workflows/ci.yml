@@ -21,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: golang:1.18.2-buster
-      env:
-        TESTSEC: ${{ secrets.TESTSEC }}
     steps:
       - name: Setup job
         uses: joinself/github-actions-public/setup-job@main
@@ -43,8 +41,7 @@ jobs:
         with:
           slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
   publish:
-    #if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
     secrets: inherit
-
