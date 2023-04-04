@@ -47,3 +47,4 @@ jobs:
     needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
     secrets: inherit
+
