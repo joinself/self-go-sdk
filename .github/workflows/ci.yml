@@ -24,15 +24,11 @@ jobs:
       env:
         TESTSEC: ${{ secrets.TESTSEC }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
       - name: Setup environment
         shell: bash
         run: |
-          env
-          echo "I am ${TESTSEC}"
-          echo ${TESTSEC} > /tmp/foo
-          cat /tmp/foo
           apt-get update
           apt-get -y install libsodium-dev
           curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
