@@ -66,6 +66,8 @@ jobs:
     #needs: []
     container:
       image: joinself/tools
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
 
       - if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
@@ -107,6 +109,8 @@ jobs:
                 ;;
             esac
           fi
+
+          env
 
           # create git tag
           git tag -a ${version} -m "${version}"
