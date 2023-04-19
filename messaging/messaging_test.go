@@ -832,3 +832,48 @@ func TestMessagingRespond(t *testing.T) {
 	assert.Equal(t, "sender", r["iss"])
 	assert.Equal(t, "test", r["aud"])
 }
+
+func TestMessagingBuildRequest(t *testing.T) {
+	apk, ask, err := ed25519.GenerateKey(rand.Reader)
+	require.Nil(t, err)
+
+	m, p := setup(t)
+
+	cfg := Config{
+		SelfID:     "test",
+		PrivateKey: ask,
+		PKI:        p,
+		Messaging:  m,
+	}
+
+	payload := map[string]interface{}{
+		"typ": "test",
+		"jti": "12345",
+		"iss": "sender",
+		"aud": "test",
+		"sub": "sender",
+		"cid": "conversation",
+		"exp": time.Now().Add(time.Minute).Format(time.RFC3339),
+		"iat": time.Now().Format(time.RFC3339),
+	}
+
+	s := NewService(cfg)
+
+	res, err := s.BuildRequest(payload)
+	require.Nil(t, err)
+
+	jws, err := jose.ParseSigned(string(res))
+	require.Nil(t, err)
+
+	rp, err := jws.Verify(apk)
+	require.Nil(t, err)
+
+	var r map[string]string
+
+	err = json.Unmarshal(rp, &r)
+	require.Nil(t, err)
+
+	assert.Equal(t, "conversation", r["cid"])
+	assert.Equal(t, "sender", r["iss"])
+	assert.Equal(t, "test", r["aud"])
+}
