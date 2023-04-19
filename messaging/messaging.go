@@ -196,6 +196,50 @@ func (s *Service) Send(recipients []string, conversationID string, body []byte) 
 	return s.messaging.Send(recipients, gjson.GetBytes(body, "typ").String(), []byte(plaintext))
 }
 
+// BuildRequest creates a request payload with the given payload, and returns
+// the payload as a byte array. It generates a new request ID, JWT ID, and
+// timestamps for the request. If the payload does not contain a "typ" key, it
+// returns an empty byte array and an error. If the payload contains a "sub"
+// key but not an "aud" key, it sets the "aud" key to the value of "sub". It
+// then calls the PrepareJWS function to prepare a JWS token with the request
+// payload, and returns the JWS token as a byte array.
+//
+// Parameters:
+//   - payload: A map of string keys to interface{} values representing the
+//     payload of the request.
+//
+// Returns:
+//   - []byte: A byte array representing the prepared JWS token.
+//   - error: An error that is non-nil if the payload does not contain a "typ"
+//     key.
+func (s *Service) BuildRequest(payload map[string]interface{}) ([]byte, error) {
+	req := map[string]interface{}{
+		"cid":       uuid.New().String(),
+		"jti":       uuid.New().String(),
+		"iss":       s.selfID,
+		"iat":       ntp.TimeFunc().Format(time.RFC3339),
+		"exp":       ntp.TimeFunc().Add(time.Minute * 15).Format(time.RFC3339),
+		"device_id": s.deviceID,
+	}
+
+	for key, value := range payload {
+		req[key] = value
+	}
+
+	if _, ok := req["typ"]; !ok {
+		return []byte{}, errors.New("missing typ")
+	}
+
+	if _, ok := req["sub"]; ok {
+		if _, ok := req["aud"]; !ok {
+			req["aud"] = req["sub"]
+		}
+	}
+
+	body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
+	return body, err
+}
+
 // Notify sends a notification to a given self ID
 func (s *Service) Notify(selfID, content string) error {
 	cid := uuid.New().String()
