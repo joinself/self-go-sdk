@@ -131,7 +131,10 @@ func (s *Service) serializeRequest(request []byte, cid string) (string, error) {
 
 // Request make a request to an identity
 func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
-	cid := uuid.New().String()
+	cid := gjson.GetBytes(req, "cid").String()
+	if len(cid) == 0 {
+		cid = uuid.New().String()
+	}
 
 	plaintext, err := s.serializeRequest(req, cid)
 	if err != nil {
@@ -196,7 +199,7 @@ func (s *Service) Send(recipients []string, conversationID string, body []byte) 
 	return s.messaging.Send(recipients, gjson.GetBytes(body, "typ").String(), []byte(plaintext))
 }
 
-// BuildRequest creates a request payload with the given payload, and returns
+// BuildSignedRequest creates a request payload with the given payload, and returns
 // the payload as a byte array. It generates a new request ID, JWT ID, and
 // timestamps for the request. If the payload does not contain a "typ" key, it
 // returns an empty byte array and an error. If the payload contains a "sub"
@@ -212,7 +215,23 @@ func (s *Service) Send(recipients []string, conversationID string, body []byte) 
 //   - []byte: A byte array representing the prepared JWS token.
 //   - error: An error that is non-nil if the payload does not contain a "typ"
 //     key.
-func (s *Service) BuildRequest(payload map[string]interface{}) ([]byte, error) {
+func (s *Service) BuildSignedRequest(payload map[string]interface{}) ([]byte, error) {
+	req, err := s.BuildRequest(payload)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
+}
+
+/*
+BuildRequest constructs a request map based on the given payload and returns it along with an error.
+- payload (map[string]interface{}): the payload to include in the request
+Returns:
+- (map[string]interface{}): the constructed request map
+- (error): an error if the "typ" key is not present in the request map
+*/
+func (s *Service) BuildRequest(payload map[string]interface{}) (map[string]interface{}, error) {
 	req := map[string]interface{}{
 		"cid":       uuid.New().String(),
 		"jti":       uuid.New().String(),
@@ -227,7 +246,7 @@ func (s *Service) BuildRequest(payload map[string]interface{}) ([]byte, error) {
 	}
 
 	if _, ok := req["typ"]; !ok {
-		return []byte{}, errors.New("missing typ")
+		return req, errors.New("missing typ")
 	}
 
 	if _, ok := req["sub"]; ok {
@@ -235,9 +254,7 @@ func (s *Service) BuildRequest(payload map[string]interface{}) ([]byte, error) {
 			req["aud"] = req["sub"]
 		}
 	}
-
-	body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
-	return body, err
+	return req, nil
 }
 
 // Notify sends a notification to a given self ID

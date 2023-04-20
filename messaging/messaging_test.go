@@ -859,7 +859,7 @@ func TestMessagingBuildRequest(t *testing.T) {
 
 	s := NewService(cfg)
 
-	res, err := s.BuildRequest(payload)
+	res, err := s.BuildSignedRequest(payload)
 	require.Nil(t, err)
 
 	jws, err := jose.ParseSigned(string(res))
