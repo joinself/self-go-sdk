@@ -131,7 +131,10 @@ func (s *Service) serializeRequest(request []byte, cid string) (string, error) {
 
 // Request make a request to an identity
 func (s *Service) Request(recipients []string, req []byte) ([]byte, error) {
-	cid := uuid.New().String()
+	cid := gjson.GetBytes(req, "cid").String()
+	if len(cid) == 0 {
+		cid = uuid.New().String()
+	}
 
 	plaintext, err := s.serializeRequest(req, cid)
 	if err != nil {
@@ -218,8 +221,7 @@ func (s *Service) BuildSignedRequest(payload map[string]interface{}) ([]byte, er
 		return []byte(""), err
 	}
 
-	body, err := helpers.PrepareJWS(req, s.keyID, s.sk)
-	return body, err
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
 }
 
 /*
