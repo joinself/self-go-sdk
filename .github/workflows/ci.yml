@@ -41,7 +41,7 @@ jobs:
         with:
           slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
   publish:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: test
     uses: joinself/github-workflows-public/.github/workflows/publish.yml@main
     secrets: inherit
