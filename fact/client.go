@@ -42,17 +42,15 @@ type device struct {
 
 // Service handles all fact operations
 type Service struct {
-	selfID           string
-	deviceID         string
-	keyID            string
-	environment      string
-	sk               ed25519.PrivateKey
-	api              restTransport
-	pki              pkiClient
-	messaging        messagingClient
-	fileInteractor   *object.RemoteFileInteractor
-	authSubscription func(sender string, res *StandardResponse)
-	factSubscription func(sender string, res *StandardResponse)
+	selfID         string
+	deviceID       string
+	keyID          string
+	environment    string
+	sk             ed25519.PrivateKey
+	api            restTransport
+	pki            pkiClient
+	messaging      messagingClient
+	fileInteractor *object.RemoteFileInteractor
 }
 
 // Config stores all configuration needed by the fact service

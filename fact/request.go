@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -386,26 +387,16 @@ func (s Service) WaitForResponse(cid string, exp time.Duration) (*QRFactResponse
 
 // Subscribe subscribes to fact request responses
 func (s Service) Subscribe(auth bool, sub func(sender string, res *StandardResponse)) {
-	if auth {
-		s.authSubscription = sub
-	} else {
-		s.factSubscription = sub
-	}
-
 	s.messaging.Subscribe(ResponseInformation, func(sender string, payload []byte) {
 		selfID := strings.Split(sender, ":")[0]
 
-		resp, err := s.parseFactResponse(selfID, selfID, payload)
+		resp, err := s.factResponse(selfID, selfID, payload)
 		if err != nil {
+			log.Println("fact response error:", err.Error())
 			return
 		}
 
-		if resp.Auth {
-			s.authSubscription(selfID, resp)
-
-		} else {
-			s.factSubscription(selfID, resp)
-		}
+		sub(selfID, resp)
 	})
 }
 
