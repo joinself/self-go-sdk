@@ -392,8 +392,10 @@ func (s Service) Subscribe(auth bool, sub func(sender string, res *StandardRespo
 
 		resp, err := s.factResponse(selfID, selfID, payload)
 		if err != nil {
-			log.Println("fact response error:", err.Error())
-			return
+			if !errors.Is(err, ErrStatusRejected) {
+				log.Println("fact response error:", err.Error())
+				return
+			}
 		}
 
 		sub(selfID, resp)
