@@ -304,7 +304,7 @@ func (c *Client) reader() {
 
 		cid := gjson.GetBytes(payload, "cid").String()
 
-		ch, ok := c.responses.Load(cid)
+		ch, ok := c.responses.LoadAndDelete(cid)
 		if ok {
 			ch.(chan response) <- response{sender, plaintext}
 			continue
