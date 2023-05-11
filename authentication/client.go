@@ -28,6 +28,8 @@ type Config struct {
 	Requester *fact.Service
 }
 
+type QRConfig = fact.QRConfig
+
 // NewService creates a new client for interacting with facts
 func NewService(cfg Config) *Service {
 	return &Service{

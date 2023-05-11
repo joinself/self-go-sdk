@@ -34,6 +34,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+	err = client.MessagingService().PermitConnection("*")
+	if err != nil {
+		log.Fatal("permitting connection returned with: ", err)
+	}
 
 	s := server{
 		cid:  uuid.New().String(),
@@ -60,7 +70,6 @@ func main() {
 	openbrowser("http://localhost:9999/qr.png")
 
 	log.Println("waiting for response")
-
 	client.AuthenticationService().Subscribe(func(sender, cid string, authenticated bool) {
 		log.Println("cid: " + cid)
 		if authenticated {
@@ -69,12 +78,9 @@ func main() {
 			log.Println("authentication rejected by " + sender)
 		}
 	})
+	println("Hit control+C to exit")
 	WaitForCtrlC()
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+	os.Exit(0)
 }
 
 type server struct {
