@@ -7,6 +7,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   license-compliance:
     uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
@@ -18,28 +22,8 @@ jobs:
     secrets: inherit
   test:
     needs: [license-compliance, secret-scan]
-    runs-on: ubuntu-latest
-    container:
-      image: golang:1.18.2-buster
-    steps:
-      - name: Setup job
-        uses: joinself/github-actions-public/setup-job@main
-      - name: Setup environment
-        shell: bash
-        run: |
-          . ${GITHUB_WORKSPACE}/.ci/env
-          apt-get update
-          apt-get -y install libsodium-dev
-          curl -Lo /tmp/olm.deb https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-          curl -Lo /tmp/omemo.deb https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb
-          apt-get -y install /tmp/olm.deb /tmp/omemo.deb
-      - name: Test
-        run: go test -v ./...
-      - name: Failure notification
-        if: ${{ github.ref == 'refs/heads/main' && failure() }}
-        uses: joinself/github-actions-public/failure-notification@main
-        with:
-          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
   publish:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: test
