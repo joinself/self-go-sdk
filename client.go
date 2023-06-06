@@ -218,3 +218,8 @@ func (c *Client) Close() error {
 
 	return c.connectors.Messaging.Close()
 }
+
+// SelfAppID returns the current SelfAppID for this app.
+func (c *Client) SelfAppID() string {
+	return c.config.SelfAppID
+}
