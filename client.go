@@ -30,6 +30,7 @@ type RestTransport interface {
 // operations against self's websocket services
 type WebsocketTransport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
+	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error))
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
@@ -40,6 +41,7 @@ type WebsocketTransport interface {
 type MessagingClient interface {
 	Start()
 	Send(recipients []string, mtype string, plaintext []byte) error
+	SendAsync(recipients []string, mtype string, plaintext []byte, callback func(error))
 	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Register(cid string)
 	Wait(cid string, timeout time.Duration) (string, []byte, error)

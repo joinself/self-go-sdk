@@ -18,6 +18,7 @@ type restTransport interface {
 type messagingClient interface {
 	Start()
 	Send(recipients []string, mtype string, data []byte) error
+	SendAsync(recipients []string, mtype string, data []byte, callback func(error))
 	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))
 	Command(command, selfID string, payload []byte) ([]byte, error)

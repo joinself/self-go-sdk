@@ -39,6 +39,11 @@ func (c *testMessaging) Send(recipients []string, mtype string, data []byte) err
 	return c.sendError
 }
 
+func (c *testMessaging) SendAsync(recipients []string, mtype string, data []byte, callback func(error)) {
+	c.in = data
+	callback(c.sendError)
+}
+
 func (c *testMessaging) Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	if c.responder == nil {
 		return "", nil, errors.New("request timeout")

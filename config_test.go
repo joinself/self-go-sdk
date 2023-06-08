@@ -23,6 +23,10 @@ func (t *testWebsocketTransport) Send(recipients []string, mtype string, priorit
 	return nil
 }
 
+func (t *testWebsocketTransport) SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error)) {
+	callback(nil)
+}
+
 func (t *testWebsocketTransport) Receive() (string, []byte, error) {
 	time.Sleep(time.Minute)
 	return "test:1", []byte("{}"), nil

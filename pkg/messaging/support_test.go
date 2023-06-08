@@ -36,6 +36,17 @@ func (c *testWebsocket) Send(recipients []string, mtype string, priority int, da
 	return nil
 }
 
+func (c *testWebsocket) SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error)) {
+	for _, r := range recipients {
+		if r == "non-existent" {
+			callback(errors.New("recipient does not exist"))
+			return
+		}
+		c.out <- &testEvent{recipient: r, data: data}
+	}
+	callback(nil)
+}
+
 func (c *testWebsocket) Receive() (string, []byte, error) {
 	e, ok := <-c.in
 	if !ok {
