@@ -170,7 +170,7 @@ func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 		enc:       enc,
 	}
 
-	return &c, c.connect()
+	return &c, nil
 }
 
 // Send send a message to given recipients. recipient is a combination of "selfID:deviceID"
@@ -299,7 +299,7 @@ func (c *Websocket) pingHandler(string) error {
 	return c.ws.SetReadDeadline(deadline)
 }
 
-func (c *Websocket) connect() error {
+func (c *Websocket) Connect() error {
 	if !atomic.CompareAndSwapInt32(&c.closed, 1, 0) {
 		return errors.New("could not connect")
 	}
@@ -541,7 +541,7 @@ func (c *Websocket) reconnect(err error) {
 
 		time.Sleep(c.config.TCPDeadline)
 
-		err := c.connect()
+		err := c.Connect()
 		if err == nil {
 			return
 		}

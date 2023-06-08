@@ -147,13 +147,15 @@ func New(config Config) (*Client, error) {
 }
 
 // Start starts the connection with self network.
-func (c *Client) Start() {
+func (c *Client) Start() bool {
 	if c.started {
-		return
+		return false
 	}
 
 	go c.reader()
 	c.started = true
+
+	return true
 }
 
 // Send sends an encypted message to recipients

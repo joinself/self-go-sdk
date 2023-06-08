@@ -48,8 +48,8 @@ type infoNotification struct {
 	Description  string    `json:"description"`
 }
 
-func (s *Service) Start() {
-	s.messaging.Start()
+func (s *Service) Start() bool {
+	return s.messaging.Start()
 }
 
 // Subscribe subscribe to messages of a given type

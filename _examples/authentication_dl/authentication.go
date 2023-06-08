@@ -29,7 +29,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	log.Println("authenticating user")
 
@@ -63,9 +74,4 @@ func main() {
 	}
 
 	log.Println("authentication succeeded:", resp.SelfID)
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 }

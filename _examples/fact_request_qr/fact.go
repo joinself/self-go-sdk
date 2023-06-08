@@ -32,7 +32,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	s := server{
 		cid:  uuid.New().String(),
@@ -67,11 +78,6 @@ func main() {
 
 	for _, f := range resp.Facts {
 		log.Println(f.Fact, ":", f.AttestedValues())
-	}
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
 	}
 }
 

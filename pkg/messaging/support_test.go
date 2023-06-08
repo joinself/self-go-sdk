@@ -63,6 +63,10 @@ func (c *testWebsocket) Command(command string, payload []byte) ([]byte, error) 
 	return []byte(`["*"]`), nil
 }
 
+func (c *testWebsocket) Connect() error {
+	return nil
+}
+
 func (c *testWebsocket) Close() error {
 	return nil
 }

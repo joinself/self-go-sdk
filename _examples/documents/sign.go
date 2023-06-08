@@ -30,7 +30,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	client.Start()
+
+	defer client.Close()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	if len(os.Args) < 2 {
 		panic("you must specify a self id as an argument")

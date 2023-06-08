@@ -30,8 +30,9 @@ type testMessaging struct {
 	started   bool
 }
 
-func (c *testMessaging) Start() {
+func (c *testMessaging) Start() bool {
 	c.started = true
+	return true
 }
 
 func (c *testMessaging) Send(recipients []string, mtype string, data []byte) error {

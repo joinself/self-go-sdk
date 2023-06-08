@@ -33,13 +33,14 @@ type WebsocketTransport interface {
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error))
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
+	Connect() error
 	Close() error
 }
 
 // MessagingClient defines the interface required for the sdk to perform
 // operations against self's messaging service
 type MessagingClient interface {
-	Start()
+	Start() bool
 	Send(recipients []string, mtype string, plaintext []byte) error
 	SendAsync(recipients []string, mtype string, plaintext []byte, callback func(error))
 	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
@@ -110,8 +111,12 @@ func New(cfg Config) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) Start() {
-	c.MessagingService().Start()
+func (c *Client) Start() error {
+	if !c.MessagingService().Start() {
+		return nil
+	}
+
+	return c.connectors.Websocket.Connect()
 }
 
 // FactService returns a client for working with facts

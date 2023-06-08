@@ -36,6 +36,10 @@ func (t *testWebsocketTransport) Command(command string, payload []byte) ([]byte
 	return []byte(`["*"]`), nil
 }
 
+func (t *testWebsocketTransport) Connect() error {
+	return nil
+}
+
 func (t *testWebsocketTransport) Close() error {
 	return nil
 }
