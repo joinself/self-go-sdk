@@ -136,13 +136,6 @@ func New(config Config) (*Client, error) {
 		started:   false,
 	}
 
-	conns, err := c.ListConnections()
-	if err != nil {
-		return nil, err
-	}
-
-	atomic.StorePointer(c.acl, unsafe.Pointer(&conns))
-
 	return &c, nil
 }
 
@@ -256,22 +249,23 @@ func (c *Client) ListConnections() ([]string, error) {
 		return nil, err
 	}
 
+	atomic.StorePointer(c.acl, unsafe.Pointer(&rules))
+
 	return rules, nil
 }
 
 // IsPermittingConnectionsFrom checks if the current connection is permitting connections from
 func (c *Client) IsPermittingConnectionsFrom(selfid string) bool {
-	conns := (*[]string)(atomic.LoadPointer(c.acl))
-
-	if len(*conns) == 0 {
+	conns := *(*[]string)(atomic.LoadPointer(c.acl))
+	if len(conns) == 0 {
 		return false
 	}
 
-	if (*conns)[0] == "*" {
+	if (conns)[0] == "*" {
 		return true
 	}
 
-	for _, c := range *conns {
+	for _, c := range conns {
 		if c == selfid {
 			return true
 		}

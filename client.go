@@ -116,7 +116,13 @@ func (c *Client) Start() error {
 		return nil
 	}
 
-	return c.connectors.Websocket.Connect()
+	err := c.connectors.Websocket.Connect()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.MessagingService().ListConnections()
+	return err
 }
 
 // FactService returns a client for working with facts
