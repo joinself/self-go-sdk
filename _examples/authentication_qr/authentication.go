@@ -33,7 +33,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	s := server{
 		cid:  uuid.New().String(),
@@ -71,11 +82,6 @@ func main() {
 	}
 
 	log.Println("authentication succeeded:", resp.SelfID)
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 type server struct {

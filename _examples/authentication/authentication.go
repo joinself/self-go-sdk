@@ -27,7 +27,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	if len(os.Args) < 2 {
 		panic("you must specify a self id as an argument")
@@ -43,9 +54,4 @@ func main() {
 	}
 
 	log.Println("authentication succeeded")
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 }

@@ -48,8 +48,8 @@ type infoNotification struct {
 	Description  string    `json:"description"`
 }
 
-func (s *Service) Start() {
-	s.messaging.Start()
+func (s *Service) Start() bool {
+	return s.messaging.Start()
 }
 
 // Subscribe subscribe to messages of a given type
@@ -197,6 +197,17 @@ func (s *Service) Send(recipients []string, conversationID string, body []byte) 
 	}
 
 	return s.messaging.Send(recipients, gjson.GetBytes(body, "typ").String(), []byte(plaintext))
+}
+
+// Send sends a message to the given recipient
+func (s *Service) SendAsync(recipients []string, conversationID string, body []byte, callback func(err error)) {
+	plaintext, err := s.serializeRequest(body, conversationID)
+	if err != nil {
+		callback(err)
+		return
+	}
+
+	s.messaging.SendAsync(recipients, gjson.GetBytes(body, "typ").String(), []byte(plaintext), callback)
 }
 
 // BuildSignedRequest creates a request payload with the given payload, and returns

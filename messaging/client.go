@@ -16,8 +16,9 @@ type restTransport interface {
 
 // messagingClient handles all interactions with self messaging and its users
 type messagingClient interface {
-	Start()
+	Start() bool
 	Send(recipients []string, mtype string, data []byte) error
+	SendAsync(recipients []string, mtype string, data []byte, callback func(error))
 	Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))
 	Command(command, selfID string, payload []byte) ([]byte, error)

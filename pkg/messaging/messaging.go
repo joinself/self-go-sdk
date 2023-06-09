@@ -57,6 +57,7 @@ type response struct {
 // Transport the stateful connection used to send and receive messages
 type Transport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
+	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(err error))
 	Receive() (string, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
@@ -135,24 +136,19 @@ func New(config Config) (*Client, error) {
 		started:   false,
 	}
 
-	conns, err := c.ListConnections()
-	if err != nil {
-		return nil, err
-	}
-
-	atomic.StorePointer(c.acl, unsafe.Pointer(&conns))
-
 	return &c, nil
 }
 
 // Start starts the connection with self network.
-func (c *Client) Start() {
+func (c *Client) Start() bool {
 	if c.started {
-		return
+		return false
 	}
 
 	go c.reader()
 	c.started = true
+
+	return true
 }
 
 // Send sends an encypted message to recipients
@@ -163,6 +159,17 @@ func (c *Client) Send(recipients []string, mtype string, plaintext []byte) error
 	}
 
 	return c.transport.Send(recipients, mtype, int(selectPriority(mtype)), ciphertext)
+}
+
+// SendAsync sends an encypted message to recipients asynchromously, returning the servers response via the provided callback
+func (c *Client) SendAsync(recipients []string, mtype string, plaintext []byte, callback func(error)) {
+	ciphertext, err := c.crypto.Encrypt(recipients, plaintext)
+	if err != nil {
+		callback(err)
+		return
+	}
+
+	c.transport.SendAsync(recipients, mtype, int(selectPriority(mtype)), ciphertext, callback)
 }
 
 // Request sends a request to a specified identity and blocks until response is received
@@ -242,22 +249,23 @@ func (c *Client) ListConnections() ([]string, error) {
 		return nil, err
 	}
 
+	atomic.StorePointer(c.acl, unsafe.Pointer(&rules))
+
 	return rules, nil
 }
 
 // IsPermittingConnectionsFrom checks if the current connection is permitting connections from
 func (c *Client) IsPermittingConnectionsFrom(selfid string) bool {
-	conns := (*[]string)(atomic.LoadPointer(c.acl))
-
-	if len(*conns) == 0 {
+	conns := *(*[]string)(atomic.LoadPointer(c.acl))
+	if len(conns) == 0 {
 		return false
 	}
 
-	if (*conns)[0] == "*" {
+	if (conns)[0] == "*" {
 		return true
 	}
 
-	for _, c := range *conns {
+	for _, c := range conns {
 		if c == selfid {
 			return true
 		}

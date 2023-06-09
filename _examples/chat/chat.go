@@ -91,7 +91,17 @@ func main() {
 	})
 
 	// Start the client
-	client.Start()
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	// Public object
 	obj := chat.MessageObject{

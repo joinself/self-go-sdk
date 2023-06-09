@@ -30,13 +30,19 @@ type testMessaging struct {
 	started   bool
 }
 
-func (c *testMessaging) Start() {
+func (c *testMessaging) Start() bool {
 	c.started = true
+	return true
 }
 
 func (c *testMessaging) Send(recipients []string, mtype string, data []byte) error {
 	c.in = data
 	return c.sendError
+}
+
+func (c *testMessaging) SendAsync(recipients []string, mtype string, data []byte, callback func(error)) {
+	c.in = data
+	callback(c.sendError)
 }
 
 func (c *testMessaging) Request(recipients []string, cid string, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {

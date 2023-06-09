@@ -31,7 +31,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	err = client.MessagingService().PermitConnection("*")
 	if err != nil {
@@ -73,10 +84,5 @@ func main() {
 
 	for _, f := range resp.Facts {
 		log.Println(f.Fact, ":", f.AttestedValues())
-	}
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
 	}
 }

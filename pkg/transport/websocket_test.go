@@ -32,6 +32,8 @@ func TestWebsocketConnect(t *testing.T) {
 
 	c, err := NewWebsocket(cfg)
 	require.Nil(t, err)
+	err = c.Connect()
+	require.Nil(t, err)
 	require.Nil(t, c.Close())
 }
 
@@ -60,6 +62,8 @@ func TestWebsocketReconnect(t *testing.T) {
 	}
 
 	c, err := NewWebsocket(cfg)
+	require.Nil(t, err)
+	err = c.Connect()
 	require.Nil(t, err)
 	defer c.Close()
 
@@ -92,6 +96,8 @@ func TestWebsocketSend(t *testing.T) {
 
 	c, err := NewWebsocket(cfg)
 	require.Nil(t, err)
+	err = c.Connect()
+	require.Nil(t, err)
 	defer c.Close()
 
 	err = c.Send([]string{"alice:1"}, "test.message", 1, []byte("test"))
@@ -122,6 +128,8 @@ func TestWebsocketReceive(t *testing.T) {
 	}
 
 	c, err := NewWebsocket(cfg)
+	require.Nil(t, err)
+	err = c.Connect()
 	require.Nil(t, err)
 	defer c.Close()
 
@@ -185,6 +193,8 @@ func TestOffsetFileConversion(t *testing.T) {
 
 	c, err := NewWebsocket(cfg)
 	require.Nil(t, err)
+	err = c.Connect()
+	require.Nil(t, err)
 	defer c.Close()
 
 	// check the offset has been loaded correctly
@@ -207,6 +217,8 @@ func TestWebsocketClose(t *testing.T) {
 	}
 
 	c, err := NewWebsocket(cfg)
+	require.Nil(t, err)
+	err = c.Connect()
 	require.Nil(t, err)
 
 	// handle received messages
@@ -283,7 +295,9 @@ func TestWebsocketCleanup(t *testing.T) {
 	goroutines := runtime.NumGoroutine()
 
 	for i := 0; i < 5; i++ {
-		_, err := NewWebsocket(cfg)
+		cc, err := NewWebsocket(cfg)
+		require.Nil(t, err)
+		err = cc.Connect()
 		require.NotNil(t, err)
 
 		time.Sleep(time.Millisecond * 100)
@@ -297,6 +311,8 @@ func TestWebsocketCleanup(t *testing.T) {
 	cfg.MessagingURL = rs.endpoint
 
 	c, err := NewWebsocket(cfg)
+	require.Nil(t, err)
+	err = c.Connect()
 	require.Nil(t, err)
 
 	assert.NotEqual(t, goroutines, runtime.NumGoroutine())

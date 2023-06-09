@@ -30,7 +30,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	client.Start()
+
+	defer func() {
+		err = client.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = client.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	err = client.MessagingService().PermitConnection("*")
 	if err != nil {
@@ -101,10 +112,5 @@ func main() {
 		}
 
 		log.Println(f.Fact, ":", returnedCert)
-	}
-
-	err = client.Close()
-	if err != nil {
-		log.Fatal(err)
 	}
 }
