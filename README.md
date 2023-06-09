@@ -81,7 +81,7 @@ Before the SDK can be used you must first register an application on the Self De
 
 Self provides two isolated networks:
 
-[Developer Portal (production network)](https://developer.joinself.com) - Suitable for production services
+[Developer Portal (production network)](https://developer.joinself.com) - Suitable for production services  
 [Developer Portal (sandbox network)](https://developer.sandbox.joinself.com) - Suitable for testing and experimentation
 
 Register your application using one of the links above ([further information](https://docs.joinself.com/quickstart/app-setup/)).
