@@ -75,7 +75,7 @@ sudo mkdir /usr/local/lib
 
 ## Quick Start
 
-#### Register Application
+### Register Application
 
 Before the SDK can be used you must first register an application on the Self Developer Portal. Once registered, the portal will generate credentials for the application that the SDK will use to authenticate against the Self network.
 
@@ -86,7 +86,7 @@ Self provides two isolated networks:
 
 Register your application using one of the links above ([further information](https://docs.joinself.com/quickstart/app-setup/)).
 
-#### Usage
+### Usage
 
 Install the Self SDK:
 ```bash
