@@ -129,7 +129,7 @@ func (r recipient) createInboundGroupSesson(t *testing.T, from string, gm *selfc
 	cas, err := selfcrypto.CreateInboundSession(r.account, from, gm.Recipients[r.id])
 	require.Nil(t, err)
 
-	gs, err := selfcrypto.CreateGroupSession(r.account, []*selfcrypto.Session{cas})
+	gs, err := selfcrypto.CreateGroupSession(r.id, []*selfcrypto.Session{cas})
 	require.Nil(t, err)
 
 	return gs

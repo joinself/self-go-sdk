@@ -20,7 +20,7 @@ func TestCryptoClientPublishDeviceKeys(t *testing.T) {
 	require.Nil(t, err)
 
 	cfg := Config{
-		SelfID:     "test",
+		SelfID:     "alice",
 		DeviceID:   "1",
 		PrivateKey: sk,
 		StorageKey: "my-secret-key",
@@ -31,7 +31,7 @@ func TestCryptoClientPublishDeviceKeys(t *testing.T) {
 	_, err = New(cfg)
 	require.Nil(t, err)
 
-	assert.NotNil(t, pki.dkeys["test:1"])
+	assert.NotNil(t, pki.dkeys["alice:1"])
 }
 
 func TestCryptoClientEncrypt(t *testing.T) {
@@ -41,7 +41,7 @@ func TestCryptoClientEncrypt(t *testing.T) {
 	require.Nil(t, err)
 
 	cfg := Config{
-		SelfID:     "test",
+		SelfID:     "alice",
 		DeviceID:   "1",
 		PrivateKey: sk,
 		StorageKey: "my-secret-key",
@@ -68,9 +68,9 @@ func TestCryptoClientEncrypt(t *testing.T) {
 
 	recip := rcps[recips[0]]
 
-	gs := recip.createInboundGroupSesson(t, "test:1", &gm)
+	gs := recip.createInboundGroupSesson(t, "alice:1", &gm)
 
-	plaintext, err := gs.Decrypt("test:1", ciphertext)
+	plaintext, err := gs.Decrypt("alice:1", ciphertext)
 	require.Nil(t, err)
 	assert.Equal(t, []byte("hello"), plaintext)
 }
@@ -170,7 +170,7 @@ func TestCryptoClientEncryptMultipleRecipients(t *testing.T) {
 	require.Nil(t, err)
 
 	cfg := Config{
-		SelfID:     "test",
+		SelfID:     "alice",
 		DeviceID:   "1",
 		PrivateKey: sk,
 		StorageKey: "my-secret-key",
@@ -211,7 +211,7 @@ func TestCryptoClientEncryptExistingRecipient(t *testing.T) {
 	require.Nil(t, err)
 
 	cfg := Config{
-		SelfID:     "test",
+		SelfID:     "alice",
 		DeviceID:   "1",
 		PrivateKey: sk,
 		StorageKey: "my-secret-key",

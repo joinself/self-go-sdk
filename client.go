@@ -77,6 +77,13 @@ type CryptoStorage interface {
 	SetSession(recipient string, session []byte) error
 }
 
+// Storage the storage interface that is used to handle persistence across
+type Storage interface {
+	LatestOffset(inboxID string) (int64, error)
+	Encrypt(from string, to []string, plaintext []byte) ([]byte, error)
+	Decrypt(from, to string, offset int64, ciphertext []byte) ([]byte, error)
+}
+
 type remoteFile interface {
 	SetObject(data []byte) (*object.EncryptedObject, error)
 	GetObject(link, key string) ([]byte, error)

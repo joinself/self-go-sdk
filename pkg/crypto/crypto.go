@@ -158,7 +158,7 @@ func (c *Client) Encrypt(recipients []string, plaintext []byte) ([]byte, error) 
 		sessions[i] = s
 	}
 
-	gs, err := selfcrypto.CreateGroupSession(c.account, sessions)
+	gs, err := selfcrypto.CreateGroupSession(c.address, sessions)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (c *Client) Decrypt(sender string, ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	gs, err := selfcrypto.CreateGroupSession(c.account, []*selfcrypto.Session{s})
+	gs, err := selfcrypto.CreateGroupSession(c.address, []*selfcrypto.Session{s})
 	if err != nil {
 		return nil, err
 	}
