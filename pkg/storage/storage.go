@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -54,13 +56,17 @@ type Storage struct {
 }
 
 func New(cfg *Config) (*Storage, error) {
+	err := os.MkdirAll(cfg.StorageDir, 0744)
+	if err != nil {
+		return nil, err
+	}
+
 	db, err := sql.Open("sqlite3", filepath.Join(cfg.StorageDir, "self.db"))
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO handle signnals and graceful shutdown
-
 	s := &Storage{
 		db: db,
 		pk: cfg.PKI,
@@ -78,6 +84,11 @@ func New(cfg *Config) (*Storage, error) {
 	}
 
 	err = s.createSessionsTable()
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.migrateLegacyStorage(cfg.StorageDir)
 	if err != nil {
 		return nil, err
 	}
@@ -624,8 +635,155 @@ func (s *Storage) generateAndPublishOneTimeKeys(as string, account *selfcrypto.A
 	return s.pk.SetDeviceKeys(identifier, device, otkd)
 }
 
+func (s *Storage) migrateLegacyStorage(dir string) error {
+	basePath := filepath.Join(dir, "apps")
+
+	_, err := os.Stat(basePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// TODO rethink key revocation and consider not allowing a device to rotate keys
+	// in favour of revoking the device and creating a new one
+	accounts := make(map[string]*struct {
+		account  string
+		offset   int64
+		sessions []struct {
+			with    string
+			session string
+		}
+	})
+
+	// check for any files stored in the old structure and move them into the new database
+	err = filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		switch filepath.Ext(info.Name()) {
+		case ".offset":
+			fn := strings.TrimSuffix(info.Name(), ".offset")
+
+			od, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			offset, err := strconv.Atoi(string(od))
+			if err != nil {
+				return err
+			}
+
+			account, ok := accounts[fn]
+			if ok {
+				account.offset = int64(offset)
+				return nil
+			}
+
+			accounts[fn] = &struct {
+				account  string
+				offset   int64
+				sessions []struct {
+					with    string
+					session string
+				}
+			}{
+				offset: int64(offset),
+			}
+		case ".pickle":
+			fpe := strings.Split(path, string(filepath.Separator))
+			accountID := fmt.Sprintf("%s:%s", fpe[len(fpe)-6], fpe[len(fpe)-4])
+
+			fn := strings.TrimSuffix(info.Name(), ".pickle")
+
+			pd, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			if fn == "account" {
+				account, ok := accounts[accountID]
+				if ok {
+					account.account = string(pd)
+					return nil
+				}
+
+				accounts[accountID] = &struct {
+					account  string
+					offset   int64
+					sessions []struct {
+						with    string
+						session string
+					}
+				}{
+					account: string(pd),
+				}
+			} else {
+				account, ok := accounts[accountID]
+				if ok {
+					account.sessions = append(account.sessions, struct {
+						with    string
+						session string
+					}{
+						with:    fn,
+						session: string(pd),
+					})
+					return nil
+				}
+
+				accounts[accountID] = &struct {
+					account  string
+					offset   int64
+					sessions []struct {
+						with    string
+						session string
+					}
+				}{
+					account: string(pd),
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	txn, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	for inboxID, account := range accounts {
+		_, err = txn.Exec("INSERT INTO accounts (as_identifier, offset, olm_account) VALUES (?, ?, ?);", inboxID, account.offset, account.account)
+		if err != nil {
+			txn.Rollback()
+			return err
+		}
+
+		for _, session := range account.sessions {
+			_, err = txn.Exec("INSERT INTO sessions (as_identifier, with_identifier, olm_session) VALUES (?, ?, ?);", inboxID, session.with, session.session)
+			if err != nil {
+				txn.Rollback()
+				return err
+			}
+		}
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(basePath, basePath+"-depreciated")
+}
+
 func idsplit(id string) (string, string) {
 	i := strings.Index(id, ":")
-
 	return id[:i], id[i+1:]
 }
