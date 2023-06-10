@@ -3,8 +3,6 @@
 package transport
 
 import (
-	"encoding/binary"
-	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -16,8 +14,6 @@ import (
 )
 
 func TestWebsocketConnect(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
 	s := newTestMessagingServer(t)
 	defer s.s.Close()
 
@@ -38,8 +34,6 @@ func TestWebsocketConnect(t *testing.T) {
 }
 
 func TestWebsocketReconnect(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
 	s := newTestMessagingServer(t)
 	defer s.s.Close()
 
@@ -80,8 +74,6 @@ func TestWebsocketReconnect(t *testing.T) {
 }
 
 func TestWebsocketSend(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
 	s := newTestMessagingServer(t)
 	defer s.s.Close()
 
@@ -113,8 +105,6 @@ func TestWebsocketSend(t *testing.T) {
 }
 
 func TestWebsocketReceive(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
 	s := newTestMessagingServer(t)
 	defer s.s.Close()
 
@@ -158,52 +148,14 @@ func TestWebsocketReceive(t *testing.T) {
 
 	s.out <- b.FinishedBytes()
 
-	sender, m, err := c.Receive()
+	sender, _, m, err := c.Receive()
 	require.Nil(t, err)
 
 	assert.Equal(t, "alice:1", sender)
 	assert.Equal(t, []byte("test"), m)
 }
 
-func TestOffsetFileConversion(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
-	s := newTestMessagingServer(t)
-	defer s.s.Close()
-
-	// write the old offset format
-	fd, err := os.Create("test:1.offset")
-	require.Nil(t, err)
-
-	offsetData := make([]byte, 8)
-
-	binary.LittleEndian.PutUint64(offsetData, uint64(4719))
-
-	_, err = fd.WriteAt(offsetData, 0)
-	require.Nil(t, err)
-
-	cfg := WebsocketConfig{
-		SelfID:       "test",
-		DeviceID:     "1",
-		PrivateKey:   sk,
-		MessagingURL: s.endpoint,
-		TCPDeadline:  time.Millisecond * 100,
-		InboxSize:    128,
-	}
-
-	c, err := NewWebsocket(cfg)
-	require.Nil(t, err)
-	err = c.Connect()
-	require.Nil(t, err)
-	defer c.Close()
-
-	// check the offset has been loaded correctly
-	assert.Equal(t, int64(4719), c.offset)
-}
-
 func TestWebsocketClose(t *testing.T) {
-	defer os.Remove("test:1.offset")
-
 	s := newTestMessagingServer(t)
 	defer s.s.Close()
 
@@ -277,8 +229,6 @@ func TestWebsocketClose(t *testing.T) {
 
 func TestWebsocketCleanup(t *testing.T) {
 	time.Sleep(time.Second)
-
-	defer os.Remove("test:1.offset")
 
 	s := newTestMessagingServerUnresponsive(t)
 	defer s.s.Close()

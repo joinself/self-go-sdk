@@ -18,3 +18,8 @@ _support/sources
 
 vendor/
 _examples/.env
+
+
+self.db
+self.db-shm
+self.db-wal

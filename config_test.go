@@ -5,14 +5,11 @@ package selfsdk
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,9 +24,9 @@ func (t *testWebsocketTransport) SendAsync(recipients []string, mtype string, pr
 	callback(nil)
 }
 
-func (t *testWebsocketTransport) Receive() (string, []byte, error) {
+func (t *testWebsocketTransport) Receive() (string, int64, []byte, error) {
 	time.Sleep(time.Minute)
-	return "test:1", []byte("{}"), nil
+	return "test:1", 0, []byte("{}"), nil
 }
 
 func (t *testWebsocketTransport) Command(command string, payload []byte) ([]byte, error) {
@@ -118,7 +115,7 @@ func TestConfigLoad(t *testing.T) {
 	assert.Equal(t, &trt, cfg.Connectors.Rest)
 	assert.Equal(t, &twt, cfg.Connectors.Websocket)
 	assert.NotNil(t, cfg.Connectors.PKI)
-	assert.NotNil(t, cfg.Connectors.Crypto)
+	assert.NotNil(t, cfg.Connectors.Storage)
 	assert.NotNil(t, cfg.Connectors.Storage)
 	assert.NotNil(t, cfg.Connectors.Messaging)
 	assert.Equal(t, cfg.APIURL, "https://api.joinself.com")
@@ -141,7 +138,6 @@ func TestConfigLoadWithEnvironment(t *testing.T) {
 		Connectors: &Connectors{
 			Rest:      &trt,
 			Websocket: &twt,
-			Crypto:    &debugCryptoClient{},
 		},
 	}
 
@@ -150,105 +146,4 @@ func TestConfigLoadWithEnvironment(t *testing.T) {
 
 	assert.Equal(t, cfg.APIURL, "https://api.sandbox.joinself.com")
 	assert.Equal(t, cfg.MessagingURL, "wss://messaging.sandbox.joinself.com/v2/messaging")
-}
-
-func TestConfigStorageMigration(t *testing.T) {
-	testPath := filepath.Join("/tmp", uuid.New().String())
-
-	err := os.Mkdir(testPath, 0755)
-	require.Nil(t, err)
-
-	defer os.RemoveAll(testPath)
-
-	// create some test files that need to be moved to the new layout
-	for _, f := range []string{"test:1.offset", "account.pickle", "app:1-session.pickle", "app:2-session.pickle", "app:3-session.pickle"} {
-		_, err = os.Create(filepath.Join(testPath, f))
-		require.Nil(t, err)
-	}
-
-	cfg := Config{
-		SelfAppID:           "self-id",
-		SelfAppDeviceSecret: "4:MY-DEVICE-KEY",
-		StorageKey:          "super-secret-encryption-key",
-		StorageDir:          testPath,
-		DeviceID:            "1",
-		kid:                 "4",
-	}
-
-	err = cfg.migrateStorage()
-	require.Nil(t, err)
-
-	// check files have been moved
-	_, err = os.Stat(filepath.Join(testPath, "apps/self-id/devices/1/test:1.offset"))
-	assert.Nil(t, err)
-
-	_, err = os.Stat(filepath.Join(testPath, "apps/self-id/devices/1/keys/4/account.pickle"))
-	assert.Nil(t, err)
-
-	_, err = os.Stat(filepath.Join(testPath, "apps/self-id/devices/1/keys/4/app:1-session.pickle"))
-	assert.Nil(t, err)
-
-	_, err = os.Stat(filepath.Join(testPath, "apps/self-id/devices/1/keys/4/app:2-session.pickle"))
-	assert.Nil(t, err)
-
-	_, err = os.Stat(filepath.Join(testPath, "apps/self-id/devices/1/keys/4/app:3-session.pickle"))
-	assert.Nil(t, err)
-
-	// test second migration
-	err = cfg.migrateStorage()
-	require.Nil(t, err)
-}
-
-func TestConfigStorageMultipleApps(t *testing.T) {
-	testPath := filepath.Join("/tmp", uuid.New().String())
-
-	err := os.Mkdir(testPath, 0755)
-	require.Nil(t, err)
-
-	defer os.RemoveAll(testPath)
-
-	// create some test files that need to be moved to the new layout
-	files := []string{
-		"apps/self-id-1/devices/1/self-id-1:1.offset",
-		"apps/self-id-1/devices/1/keys/3/account.pickle",
-		"apps/self-id-1/devices/1/keys/3/app:1-session.pickle",
-		"apps/self-id-1/devices/1/keys/3/app:2-session.pickle",
-		"apps/self-id-1/devices/1/keys/3/app:3-session.pickle",
-		"apps/self-id-1/devices/1/keys/4/account.pickle",
-		"apps/self-id-1/devices/1/keys/4/app:1-session.pickle",
-		"apps/self-id-1/devices/1/keys/4/app:2-session.pickle",
-		"apps/self-id-1/devices/1/keys/4/app:3-session.pickle",
-		"apps/self-id-1/devices/2/self-id-1:2.offset",
-		"apps/self-id-1/devices/2/keys/5/account.pickle",
-		"apps/self-id-1/devices/2/keys/5/app:1-session.pickle",
-		"apps/self-id-1/devices/2/keys/5/app:2-session.pickle",
-		"apps/self-id-1/devices/2/keys/5/app:3-session.pickle",
-		"apps/self-id-2/devices/1/self-id-2:1.offset",
-		"apps/self-id-2/devices/1/keys/4/account.pickle",
-		"apps/self-id-2/devices/1/keys/4/app:1-session.pickle",
-		"apps/self-id-2/devices/1/keys/4/app:2-session.pickle",
-		"apps/self-id-2/devices/1/keys/4/app:3-session.pickle",
-	}
-
-	for _, f := range files {
-		fp := filepath.Join(testPath, f)
-
-		err = os.MkdirAll(filepath.Dir(fp), 0777)
-		require.Nil(t, err)
-
-		_, err = os.Create(fp)
-		require.Nil(t, err)
-	}
-
-	cfg := Config{
-		SelfAppID:           "self-id",
-		SelfAppDeviceSecret: "4:MY-DEVICE-KEY",
-		StorageKey:          "super-secret-encryption-key",
-		StorageDir:          testPath,
-		DeviceID:            "1",
-		kid:                 "4",
-	}
-
-	err = cfg.migrateStorage()
-	require.Nil(t, err)
 }

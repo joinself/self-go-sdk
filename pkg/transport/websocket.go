@@ -3,15 +3,11 @@
 package transport
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -40,13 +36,18 @@ type (
 	sigpong  bool
 )
 
+type msg struct {
+	msg    Message
+	offset int64
+}
+
 // WebsocketConfig configuration for connecting to a websocket
 type WebsocketConfig struct {
 	MessagingURL string
-	StorageDir   string
 	SelfID       string
 	DeviceID     string
 	KeyID        string
+	Offset       int64
 	PrivateKey   ed25519.PrivateKey
 	TCPDeadline  time.Duration
 	InboxSize    int
@@ -69,10 +70,9 @@ type Websocket struct {
 	config    WebsocketConfig
 	ws        *websocket.Conn
 	queue     *pqueue.Queue
-	inbox     chan Message
+	inbox     chan msg
 	responses sync.Map
 	offset    int64
-	ofd       *os.File
 	closed    int32
 	shutdown  int32
 	enc       Encoder
@@ -89,68 +89,6 @@ type event struct {
 func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 	config.load()
 
-	if config.StorageDir != "" {
-		err := os.MkdirAll(config.StorageDir, os.ModePerm)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	offsetFile := filepath.Join(config.StorageDir, config.SelfID+":"+config.DeviceID+".offset")
-	fd, err := os.OpenFile(offsetFile, os.O_CREATE|os.O_RDWR, 0766)
-	if err != nil {
-		return nil, err
-	}
-
-	stats, err := fd.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	var offset int64
-
-	switch stats.Size() {
-	case 0:
-		err = fd.Truncate(19)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = fd.WriteAt([]byte("0000000000000000000"), 0)
-		if err != nil {
-			return nil, err
-		}
-	case 8:
-		// convert the old offset format
-		offsetData := make([]byte, 8)
-
-		_, err = fd.Read(offsetData)
-		if err != nil {
-			return nil, err
-		}
-
-		err = fd.Truncate(19)
-		if err != nil {
-			return nil, err
-		}
-
-		offset = int64(binary.LittleEndian.Uint64(offsetData))
-	case 19:
-		offsetData := make([]byte, 19)
-
-		_, err = fd.Read(offsetData)
-		if err != nil {
-			return nil, err
-		}
-
-		off, err := strconv.Atoi(string(offsetData))
-		if err != nil {
-			return nil, err
-		}
-
-		offset = int64(off)
-	}
-
 	var enc Encoder
 
 	if strings.Contains(config.MessagingURL, "/v1/messaging") {
@@ -162,10 +100,9 @@ func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 	c := Websocket{
 		config:    config,
 		queue:     pqueue.New(5, config.InboxSize),
-		inbox:     make(chan Message, config.InboxSize),
+		inbox:     make(chan msg, config.InboxSize),
 		responses: sync.Map{},
-		offset:    offset,
-		ofd:       fd,
+		offset:    config.Offset,
 		closed:    1,
 		enc:       enc,
 	}
@@ -239,13 +176,13 @@ func (c *Websocket) SendAsyncWithID(id, recipient string, mtype string, priority
 }
 
 // Receive receive a message
-func (c *Websocket) Receive() (string, []byte, error) {
+func (c *Websocket) Receive() (string, int64, []byte, error) {
 	m, ok := <-c.inbox
 	if !ok {
-		return "", nil, ErrChannelClosed
+		return "", -1, nil, ErrChannelClosed
 	}
 
-	return string(m.Sender()), m.CiphertextBytes(), nil
+	return string(m.msg.Sender()), m.offset, m.msg.CiphertextBytes(), nil
 }
 
 // Command sends a command to the messaging server to be fulfilled
@@ -279,12 +216,7 @@ func (c *Websocket) Close() error {
 		time.Sleep(time.Millisecond)
 	}
 
-	err := c.ofd.Sync()
-	if err != nil {
-		return err
-	}
-
-	return c.ofd.Close()
+	return nil
 }
 
 func (c *Websocket) pingHandler(string) error {
@@ -469,15 +401,7 @@ func (c *Websocket) reader() {
 
 			c.offset = offset
 
-			offsetData := []byte(fmt.Sprintf("%019d", c.offset))
-
-			// TODO : flush this to disk every n seconds?
-			_, err = c.ofd.WriteAt(offsetData, 0)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			c.inbox <- m
+			c.inbox <- msg{msg: m, offset: offset}
 		}
 	}
 }

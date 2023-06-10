@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"crypto/ed25519"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -36,6 +37,13 @@ type PKI interface {
 	SetDeviceKeys(selfID, deviceID string, pkb []byte) error
 }
 
+// Config messaging configuration for connecting to self messaging
+type Config struct {
+	StorageDir    string
+	EncryptionKey string
+	PKI           PKI
+}
+
 // Stoprage the default storage implementation
 // based on sqlite
 type Storage struct {
@@ -45,8 +53,8 @@ type Storage struct {
 	ec string
 }
 
-func New(path, encryptionKey string, pki PKI) (*Storage, error) {
-	db, err := sql.Open("sqlite3", filepath.Join(path, "self.db"))
+func New(cfg *Config) (*Storage, error) {
+	db, err := sql.Open("sqlite3", filepath.Join(cfg.StorageDir, "self.db"))
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +63,8 @@ func New(path, encryptionKey string, pki PKI) (*Storage, error) {
 
 	s := &Storage{
 		db: db,
-		pk: pki,
-		ec: encryptionKey,
+		pk: cfg.PKI,
+		ec: cfg.EncryptionKey,
 	}
 
 	err = s.setPragmas()
@@ -96,7 +104,7 @@ func (s *Storage) createAccountsTable() error {
 			offset INTEGER NOT NULL,
 			olm_account BLOB NOT NULL
 		);
-		CREATE UNIQUE INDEX idx_accounts_as_identifier
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_as_identifier
 		ON accounts (as_identifier);
 	`
 	_, err := s.db.Exec(sessionTableStatement)
@@ -115,7 +123,7 @@ func (s *Storage) createSessionsTable() error {
 			with_identifier INTEGER NOT NULL,
 			olm_session BLOB NOT NULL
 		);
-		CREATE UNIQUE INDEX idx_sessions_with_identifier
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_with_identifier
 		ON sessions (as_identifier, with_identifier);
 	`
 	_, err := s.db.Exec(sessionTableStatement)
@@ -123,19 +131,50 @@ func (s *Storage) createSessionsTable() error {
 	return err
 }
 
-func (s *Storage) AccountCreate(inboxID string, account *selfcrypto.Account) error {
+func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) error {
 	txn, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 
-	accountPickle, err := account.Pickle(s.ec)
+	// check the account does not already exist
+	row := txn.QueryRow("SELECT olm_account FROM accounts WHERE as_identifier = ?;", inboxID)
+	if row.Err() != nil {
+		txn.Rollback()
+		return row.Err()
+	}
+
+	var accountPickle string
+
+	err = row.Scan(&accountPickle)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		txn.Rollback()
+		return err
+	}
+
+	account, err := selfcrypto.AccountFromSeed(inboxID, secretKey.Seed())
 	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	// TODO split this so we're not publishing prekeys before we have committed them
+	// this will cause one time keys that the account to be recognised by other senders
+	s.generateAndPublishOneTimeKeys(inboxID, account)
+
+	accountPickle, err = account.Pickle(s.ec)
+	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
 	_, err = txn.Exec("INSERT INTO accounts (as_identifier, offset, olm_account) VALUES (?, ?, ?);", inboxID, 0, accountPickle)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
@@ -161,26 +200,31 @@ func (s *Storage) AccountExecute(inboxID string, action func(account *selfcrypto
 
 	err = row.Scan(&accountPickle)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
 	account, err := selfcrypto.AccountFromPickle(inboxID, s.ec, accountPickle)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
 	err = action(account)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
 	accountPickle, err = account.Pickle(s.ec)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
 	_, err = txn.Exec("UPDATE accounts SET olm_account = ? WHERE as_identifier = ?", accountPickle, inboxID)
 	if err != nil {
+		txn.Rollback()
 		return err
 	}
 
@@ -198,18 +242,20 @@ func (s *Storage) AccountOffset(inboxID string) (int64, error) {
 
 	row := txn.QueryRow("SELECT offset FROM accounts WHERE as_identifier = ?;", inboxID)
 	if row.Err() != nil {
+		txn.Rollback()
 		return offset, row.Err()
 	}
 
 	err = row.Scan(&offset)
 	if err != nil {
+		txn.Rollback()
 		return offset, err
 	}
 
 	return offset, txn.Commit()
 }
 
-func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, error) {
+func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, error) {
 	sessions := make([]*selfcrypto.Session, len(to))
 
 	s.mu.Lock()
@@ -217,6 +263,7 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 
 	txn, err := s.db.Begin()
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
@@ -225,8 +272,14 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 		strings.Repeat(",?", len(to)-1),
 	)
 
-	rows, err := txn.Query(statement, to...)
+	recipients := make([]any, len(to))
+	for i := range to {
+		recipients[i] = to[i]
+	}
+
+	rows, err := txn.Query(statement, recipients...)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
@@ -238,11 +291,13 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 
 		err := rows.Scan(&with, &sessionPickle)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 
 		session, err := selfcrypto.SessionFromPickle(with, s.ec, sessionPickle)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 
@@ -250,14 +305,16 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 	}
 
 	if rows.Err() != nil {
+		txn.Rollback()
 		return nil, rows.Err()
 	}
 
 	for i := range to {
-		session, ok := foundSessions[to[i].(string)]
+		session, ok := foundSessions[to[i]]
 		if !ok {
-			session, err = s.createOutboundSession(txn, from, to[i].(string))
+			session, err = s.createOutboundSession(txn, from, to[i])
 			if err != nil {
+				txn.Rollback()
 				return nil, err
 			}
 		}
@@ -267,21 +324,24 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 
 	group, err := selfcrypto.CreateGroupSession(from, sessions)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	ciphertext, err := group.Encrypt(plaintext)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	for i := range sessions {
 		sessionPickle, err := sessions[i].Pickle(s.ec)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 
-		_, ok := foundSessions[to[i].(string)]
+		_, ok := foundSessions[to[i]]
 		if ok {
 			_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
 		} else {
@@ -289,6 +349,7 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 		}
 
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 	}
@@ -319,6 +380,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 
 	row := txn.QueryRow("SELECT olm_session FROM sessions WHERE as_identifier = ? AND with_identifier = ?", to, from)
 	if row.Err() != nil {
+		txn.Rollback()
 		return nil, row.Err()
 	}
 
@@ -328,21 +390,25 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	err = row.Scan(&sessionPickle)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
+			txn.Rollback()
 			return nil, err
 		}
 
 		session, err = s.createInboundSession(txn, from, to, otkm)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 	} else {
 		session, err = selfcrypto.SessionFromPickle(from, s.ec, sessionPickle)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 
 		matches, err := session.MatchesInboundSession(otkm)
 		if err != nil {
+			txn.Rollback()
 			return nil, err
 		}
 
@@ -352,6 +418,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		if otkm.Type == 0 && !matches {
 			session, err = s.createInboundSession(txn, from, to, otkm)
 			if err != nil {
+				txn.Rollback()
 				return nil, err
 			}
 		}
@@ -359,26 +426,31 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 
 	gs, err := selfcrypto.CreateGroupSession(to, []*selfcrypto.Session{session})
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	plaintext, err := gs.Decrypt(from, ciphertext)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	sessionPickle, err = session.Pickle(s.ec)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 
 	_, err = txn.Exec("UPDATE accounts SET offset = ? WHERE as_identifier = ?;", offset, to)
 	if err != nil {
+		txn.Rollback()
 		return nil, err
 	}
 

@@ -3,6 +3,7 @@
 package selfsdk
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
 	"time"
 
@@ -31,7 +32,7 @@ type RestTransport interface {
 type WebsocketTransport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error))
-	Receive() (string, []byte, error)
+	Receive() (string, int64, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Connect() error
 	Close() error
@@ -61,25 +62,10 @@ type PKIClient interface {
 	SetDeviceKeys(selfID, deviceID string, pkb []byte) error
 }
 
-// CryptoClient defines the interface required for the sdk to perform
-// cryptographic operations like encrypting and decrypting messages
-type CryptoClient interface {
-	Encrypt(recipients []string, plaintext []byte) ([]byte, error)
-	Decrypt(sender string, ciphertext []byte) ([]byte, error)
-}
-
-// CryptoStorage defines the interface required for the sdk to store and
-// retrieve end to end ecryption session and account state
-type CryptoStorage interface {
-	GetAccount() ([]byte, error)
-	SetAccount(account []byte) error
-	GetSession(recipient string) ([]byte, error)
-	SetSession(recipient string, session []byte) error
-}
-
 // Storage the storage interface that is used to handle persistence across
 type Storage interface {
-	LatestOffset(inboxID string) (int64, error)
+	AccountCreate(inboxID string, secretKey ed25519.PrivateKey) error
+	AccountOffset(inboxID string) (int64, error)
 	Encrypt(from string, to []string, plaintext []byte) ([]byte, error)
 	Decrypt(from, to string, offset int64, ciphertext []byte) ([]byte, error)
 }

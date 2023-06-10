@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	selfcrypto "github.com/joinself/self-crypto-go"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/square/go-jose"
 	"github.com/stretchr/testify/require"
@@ -89,40 +88,16 @@ func (p *testPKI) addpk(selfID string, sk ed25519.PrivateKey, pk ed25519.PublicK
 	}
 }
 
-func registerUser(t testing.TB, pki *testPKI, id string) *selfcrypto.Account {
+func registerUser(t testing.TB, pki *testPKI, id string) ed25519.PrivateKey {
 	// generate an identity keypair
 	pk, sk, err := ed25519.GenerateKey(rand.Reader)
 	require.Nil(t, err)
 
-	// create an selfcrypto account from the private key
-	a, err := selfcrypto.AccountFromSeed(id, sk.Seed())
-	require.Nil(t, err)
-
-	// generate and store the accounts one time keys
-	err = a.GenerateOneTimeKeys(10)
-	require.Nil(t, err)
-
-	otks, err := a.OneTimeKeys()
-	require.Nil(t, err)
-
-	var otkb oneTimeKeys
-
-	for k, v := range otks.Curve25519 {
-		otkb = append(otkb, oneTimeKey{ID: k, Key: v})
-	}
-
-	otkd, err := json.Marshal(otkb)
-	require.Nil(t, err)
-
-	identifier, device := idsplit(id)
-
-	pki.SetDeviceKeys(identifier, device, otkd)
-
-	a.MarkKeysAsPublished()
+	identifier, _ := idsplit(id)
 
 	pki.addpk(identifier, sk, pk)
 
-	return a
+	return sk
 }
 
 func testop(sk ed25519.PrivateKey, kid string, op *siggraph.Operation) json.RawMessage {
