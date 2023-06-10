@@ -1,6 +1,6 @@
 module github.com/joinself/self-go-sdk
 
-go 1.17
+go 1.18
 
 require (
 	github.com/beevik/ntp v0.2.0

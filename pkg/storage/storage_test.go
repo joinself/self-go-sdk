@@ -66,19 +66,29 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 	s1, err := New(t.TempDir(), "key", pki)
 	require.Nil(t, err)
 
-	account, err := selfcrypto.NewAccount("alice")
-	require.Nil(t, err)
-
-	err = s1.AccountCreate("alice", account)
+	err = s1.AccountCreate("alice:1", registerUser(t, pki, "alice:1"))
 	require.Nil(t, err)
 
 	s2, err := New(t.TempDir(), "key", pki)
 	require.Nil(t, err)
 
-	account, err = selfcrypto.NewAccount("bob")
+	err = s2.AccountCreate("bob:1", registerUser(t, pki, "bob:1"))
 	require.Nil(t, err)
 
-	err = s2.AccountCreate("bob", account)
+	s3, err := New(t.TempDir(), "key", pki)
 	require.Nil(t, err)
 
+	err = s3.AccountCreate("carol:1", registerUser(t, pki, "carol:1"))
+	require.Nil(t, err)
+
+	ciphertext, err := s1.Encrypt("alice:1", []any{"bob:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err := s2.Decrypt("alice:1", "bob:1", 1, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	offset, err := s2.AccountOffset("bob:1")
+	require.Nil(t, err)
+	assert.Equal(t, int64(1), offset)
 }

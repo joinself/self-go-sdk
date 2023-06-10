@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"sync"
 
 	selfcrypto "github.com/joinself/self-crypto-go"
+	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,9 +22,9 @@ var (
 	ErrInvalidGroupMessageRecipient = errors.New("group message does not contain a recipient header for this identity")
 )
 
-type prekeys []prekey
+type oneTimeKeys []oneTimeKey
 
-type prekey struct {
+type oneTimeKey struct {
 	ID  string `json:"id"`
 	Key string `json:"key"`
 }
@@ -122,12 +124,12 @@ func (s *Storage) createSessionsTable() error {
 }
 
 func (s *Storage) AccountCreate(inboxID string, account *selfcrypto.Account) error {
-	accountPickle, err := account.Pickle(s.ec)
+	txn, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 
-	txn, err := s.db.Begin()
+	accountPickle, err := account.Pickle(s.ec)
 	if err != nil {
 		return err
 	}
@@ -207,7 +209,7 @@ func (s *Storage) AccountOffset(inboxID string) (int64, error) {
 	return offset, txn.Commit()
 }
 
-func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, error) {
+func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, error) {
 	sessions := make([]*selfcrypto.Session, len(to))
 
 	s.mu.Lock()
@@ -219,37 +221,53 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 	}
 
 	statement := fmt.Sprintf(
-		"SELECT olm_session FROM sessions WHERE with_identifier IN(?%s)",
+		"SELECT with_identifier, olm_session FROM sessions WHERE with_identifier IN(?%s)",
 		strings.Repeat(",?", len(to)-1),
 	)
 
-	rows, err := txn.Query(statement, to)
+	rows, err := txn.Query(statement, to...)
 	if err != nil {
 		return nil, err
 	}
 
-	var i int
+	foundSessions := make(map[string]*selfcrypto.Session)
 
 	for rows.Next() {
+		var with string
 		var sessionPickle string
 
-		err := rows.Scan(&sessionPickle)
+		err := rows.Scan(&with)
 		if err != nil {
 			return nil, err
 		}
 
-		session, err := selfcrypto.SessionFromPickle(to[i], s.ec, sessionPickle)
+		err = rows.Scan(&sessionPickle)
 		if err != nil {
 			return nil, err
 		}
 
-		sessions[i] = session
+		session, err := selfcrypto.SessionFromPickle(with, s.ec, sessionPickle)
+		if err != nil {
+			return nil, err
+		}
 
-		i++
+		foundSessions[with] = session
 	}
 
 	if rows.Err() != nil {
 		return nil, rows.Err()
+	}
+
+	for i := range to {
+		session, ok := foundSessions[to[i].(string)]
+		if !ok {
+			session, err = s.createOutboundSession(txn, from, to[i].(string))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		sessions[i] = session
 	}
 
 	group, err := selfcrypto.CreateGroupSession(from, sessions)
@@ -262,13 +280,13 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 		return nil, err
 	}
 
-	for x := range sessions {
-		sessionPickle, err := sessions[x].Pickle(s.ec)
+	for i := range sessions {
+		sessionPickle, err := sessions[i].Pickle(s.ec)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[x])
+		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
 		if err != nil {
 			return nil, err
 		}
@@ -285,6 +303,8 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		return nil, err
 	}
 
+	fmt.Println(gm.Recipients, to)
+
 	otkm, ok := gm.Recipients[to]
 	if !ok {
 		return nil, ErrInvalidGroupMessageRecipient
@@ -298,7 +318,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		return nil, err
 	}
 
-	row := txn.QueryRow("SEELCT olm_session FROM sessions WHERE as_identifier = ? AND with_identifier = ?", to, from)
+	row := txn.QueryRow("SELECT olm_session FROM sessions WHERE as_identifier = ? AND with_identifier = ?", to, from)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -358,6 +378,11 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		return nil, err
 	}
 
+	_, err = txn.Exec("UPDATE accounts SET offset = ? WHERE as_identifier = ?;", offset, to)
+	if err != nil {
+		return nil, err
+	}
+
 	return plaintext, txn.Commit()
 }
 
@@ -395,7 +420,7 @@ func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfc
 	}
 
 	if len(otks.Curve25519) < 10 {
-		err = s.generateAndPublishOneTimeKeys(txn, to, account)
+		err = s.generateAndPublishOneTimeKeys(to, account)
 		if err != nil {
 			return nil, err
 		}
@@ -414,8 +439,80 @@ func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfc
 	return session, nil
 }
 
-func (s *Storage) generateAndPublishOneTimeKeys(txn *sql.Tx, as string, account *selfcrypto.Account) error {
-	var pkb prekeys
+func (s *Storage) createOutboundSession(txn *sql.Tx, from, to string) (*selfcrypto.Session, error) {
+	identifier, device := idsplit(to)
+
+	var otk oneTimeKey
+
+	otkd, err := s.pk.GetDeviceKey(identifier, device)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(otkd, &otk)
+	if err != nil {
+		return nil, err
+	}
+
+	history, err := s.pk.GetHistory(identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	sg, err := siggraph.New(history)
+	if err != nil {
+		return nil, err
+	}
+
+	pkd, err := sg.ActiveDevice(device)
+	if err != nil {
+		return nil, err
+	}
+
+	pkr, err := selfcrypto.Ed25519PKToCurve25519(pkd)
+	if err != nil {
+		return nil, err
+	}
+
+	pk := base64.RawStdEncoding.EncodeToString(pkr)
+
+	row := txn.QueryRow("SELECT olm_account FROM accounts WHERE as_identifier = ?;", from)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	var accountPickle string
+
+	err = row.Scan(&accountPickle)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := selfcrypto.AccountFromPickle(to, s.ec, accountPickle)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := selfcrypto.CreateOutboundSession(account, to, pk, otk.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	accountPickle, err = account.Pickle(s.ec)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = txn.Exec("UPDATE accounts SET olm_account = ? WHERE as_identifier = ?", accountPickle, to)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func (s *Storage) generateAndPublishOneTimeKeys(as string, account *selfcrypto.Account) error {
+	var otkb oneTimeKeys
 
 	potks, err := account.OneTimeKeys()
 	if err != nil {
@@ -438,15 +535,21 @@ func (s *Storage) generateAndPublishOneTimeKeys(txn *sql.Tx, as string, account 
 		if ok {
 			continue
 		}
-		pkb = append(pkb, prekey{ID: k, Key: v})
+		otkb = append(otkb, oneTimeKey{ID: k, Key: v})
 	}
 
-	pkbd, err := json.Marshal(pkb)
+	otkd, err := json.Marshal(otkb)
 	if err != nil {
 		return err
 	}
 
-	parts := strings.Split(as, ":")
+	identifier, device := idsplit(as)
 
-	return s.pk.SetDeviceKeys(parts[0], parts[1], pkbd)
+	return s.pk.SetDeviceKeys(identifier, device, otkd)
+}
+
+func idsplit(id string) (string, string) {
+	i := strings.Index(id, ":")
+
+	return id[:i], id[i+1:]
 }
