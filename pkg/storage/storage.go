@@ -236,12 +236,7 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 		var with string
 		var sessionPickle string
 
-		err := rows.Scan(&with)
-		if err != nil {
-			return nil, err
-		}
-
-		err = rows.Scan(&sessionPickle)
+		err := rows.Scan(&with, &sessionPickle)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +281,13 @@ func (s *Storage) Encrypt(from string, to []any, plaintext []byte) ([]byte, erro
 			return nil, err
 		}
 
-		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
+		_, ok := foundSessions[to[i].(string)]
+		if ok {
+			_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
+		} else {
+			_, err = txn.Exec("INSERT INTO sessions (as_identifier, with_identifier, olm_session) VALUES (?, ?, ?);", from, to[i], sessionPickle)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -302,8 +303,6 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(gm.Recipients, to)
 
 	otkm, ok := gm.Recipients[to]
 	if !ok {

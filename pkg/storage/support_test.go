@@ -21,7 +21,7 @@ type testPKI struct {
 	history map[string][]json.RawMessage
 }
 
-func newTestPKI(t *testing.T) *testPKI {
+func newTestPKI(t testing.TB) *testPKI {
 	return &testPKI{
 		dkoff:   make(map[string]int),
 		dkeys:   make(map[string][]byte),
@@ -89,7 +89,7 @@ func (p *testPKI) addpk(selfID string, sk ed25519.PrivateKey, pk ed25519.PublicK
 	}
 }
 
-func registerUser(t *testing.T, pki *testPKI, id string) *selfcrypto.Account {
+func registerUser(t testing.TB, pki *testPKI, id string) *selfcrypto.Account {
 	// generate an identity keypair
 	pk, sk, err := ed25519.GenerateKey(rand.Reader)
 	require.Nil(t, err)

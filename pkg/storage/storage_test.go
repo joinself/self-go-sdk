@@ -92,3 +92,26 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, int64(1), offset)
 }
+
+func BenchmarkEncrypt(b *testing.B) {
+	pki := newTestPKI(b)
+
+	s1, err := New(b.TempDir(), "key", pki)
+	require.Nil(b, err)
+
+	err = s1.AccountCreate("alice:1", registerUser(b, pki, "alice:1"))
+	require.Nil(b, err)
+
+	s2, err := New(b.TempDir(), "key", pki)
+	require.Nil(b, err)
+
+	err = s2.AccountCreate("bob:1", registerUser(b, pki, "bob:1"))
+	require.Nil(b, err)
+
+	for i := 0; i < b.N; i++ {
+		_, err = s1.Encrypt("alice:1", []any{"bob:1"}, []byte("hello"))
+		if err != nil {
+			require.Nil(b, err)
+		}
+	}
+}
