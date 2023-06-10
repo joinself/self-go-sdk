@@ -457,6 +457,11 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	return plaintext, txn.Commit()
 }
 
+// Close closes the storage connection
+func (s *Storage) Close() error {
+	return s.db.Close()
+}
+
 func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfcrypto.Message) (*selfcrypto.Session, error) {
 	row := txn.QueryRow("SELECT olm_account FROM accounts WHERE as_identifier = ?;", to)
 	if row.Err() != nil {

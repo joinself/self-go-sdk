@@ -68,6 +68,7 @@ type Storage interface {
 	AccountOffset(inboxID string) (int64, error)
 	Encrypt(from string, to []string, plaintext []byte) ([]byte, error)
 	Decrypt(from, to string, offset int64, ciphertext []byte) ([]byte, error)
+	Close() error
 }
 
 type remoteFile interface {
@@ -222,7 +223,12 @@ func (c *Client) Close() error {
 		return err
 	}
 
-	return c.connectors.Messaging.Close()
+	err = c.connectors.Messaging.Close()
+	if err != nil {
+		return err
+	}
+
+	return c.connectors.Storage.Close()
 }
 
 // SelfAppID returns the current SelfAppID for this app.

@@ -56,20 +56,8 @@ type Config struct {
 	TCPDeadline          time.Duration
 	RequestTimeout       time.Duration
 	Connectors           *Connectors
-	offsetStorageDir     string
-	cryptoStorageDir     string
 	kid                  string
 	sk                   ed25519.PrivateKey
-}
-
-type debugCryptoClient struct{}
-
-func (d *debugCryptoClient) Encrypt(recipients []string, plaintext []byte) ([]byte, error) {
-	return plaintext, nil
-}
-
-func (d *debugCryptoClient) Decrypt(sender string, ciphertext []byte) ([]byte, error) {
-	return ciphertext, nil
 }
 
 func (c Config) validate() error {
@@ -249,7 +237,7 @@ func (c Config) loadStorageConnector() error {
 	}
 
 	cfg := storage.Config{
-		StorageDir:    c.cryptoStorageDir,
+		StorageDir:    c.StorageDir,
 		EncryptionKey: c.StorageKey,
 	}
 

@@ -102,7 +102,7 @@ func TestConfigLoad(t *testing.T) {
 		DeviceID:            "device-id",
 		SelfAppDeviceSecret: "1:" + base64.RawStdEncoding.EncodeToString(sk.Seed()),
 		StorageKey:          "super-secret-encryption-key",
-		StorageDir:          "/tmp/test",
+		StorageDir:          t.TempDir(),
 		Connectors: &Connectors{
 			Rest:      &trt,
 			Websocket: &twt,
@@ -133,7 +133,7 @@ func TestConfigLoadWithEnvironment(t *testing.T) {
 		SelfAppID:           "self-id",
 		SelfAppDeviceSecret: "1:" + base64.RawStdEncoding.EncodeToString(sk.Seed()),
 		StorageKey:          "super-secret-encryption-key",
-		StorageDir:          "/tmp/test",
+		StorageDir:          t.TempDir(),
 		Environment:         "sandbox",
 		Connectors: &Connectors{
 			Rest:      &trt,
