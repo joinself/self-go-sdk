@@ -294,7 +294,3 @@ func (c Config) loadMessagingConnector() error {
 
 	return nil
 }
-
-func (c Config) privateKey() ed25519.PrivateKey {
-	return c.sk
-}

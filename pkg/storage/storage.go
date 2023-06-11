@@ -175,7 +175,11 @@ func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) er
 
 	// TODO split this so we're not publishing prekeys before we have committed them
 	// this will cause one time keys that the account to be recognised by other senders
-	s.generateAndPublishOneTimeKeys(inboxID, account)
+	err = s.generateAndPublishOneTimeKeys(inboxID, account)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
 
 	accountPickle, err = account.Pickle(s.ec)
 	if err != nil {
@@ -672,7 +676,7 @@ func (s *Storage) migrateLegacyStorage(dir string) error {
 				return err
 			}
 
-			offset, err := strconv.Atoi(string(od))
+			offset, err := strconv.Atoi(string(od[:19]))
 			if err != nil {
 				return err
 			}
