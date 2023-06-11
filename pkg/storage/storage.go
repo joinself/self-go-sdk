@@ -401,6 +401,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 
 	var session *selfcrypto.Session
 	var sessionPickle string
+	var sessionExisting bool
 
 	err = row.Scan(&sessionPickle)
 	if err != nil {
@@ -415,6 +416,8 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 			return nil, err
 		}
 	} else {
+		sessionExisting = true
+
 		session, err = selfcrypto.SessionFromPickle(from, s.ec, sessionPickle)
 		if err != nil {
 			txn.Rollback()
@@ -457,7 +460,12 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		return nil, err
 	}
 
-	_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
+	if sessionExisting {
+		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
+	} else {
+		_, err = txn.Exec("INSERT INTO sessions (as_identifier, with_identifier, olm_session) VALUES (?, ?, ?);", to, from, sessionPickle)
+	}
+
 	if err != nil {
 		txn.Rollback()
 		return nil, err
