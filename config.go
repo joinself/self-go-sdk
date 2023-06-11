@@ -152,12 +152,12 @@ func (c *Config) load() error {
 		return err
 	}
 
-	err = c.loadStorageConnector()
+	err = c.loadPKIConnector()
 	if err != nil {
 		return err
 	}
 
-	err = c.loadPKIConnector()
+	err = c.loadStorageConnector()
 	if err != nil {
 		return err
 	}
@@ -239,6 +239,7 @@ func (c Config) loadStorageConnector() error {
 	cfg := storage.Config{
 		StorageDir:    c.StorageDir,
 		EncryptionKey: c.StorageKey,
+		PKI:           c.Connectors.PKI,
 	}
 
 	storage, err := storage.New(&cfg)

@@ -728,7 +728,7 @@ func (s *Storage) migrateLegacyStorage(dir string) error {
 						with    string
 						session string
 					}{
-						with:    fn,
+						with:    strings.TrimSuffix(fn, "-session"),
 						session: string(pd),
 					})
 					return nil
