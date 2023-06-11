@@ -280,6 +280,8 @@ func (c Config) loadMessagingConnector() error {
 	}
 
 	cfg := messaging.Config{
+		SelfID:     c.SelfAppID,
+		DeviceID:   c.DeviceID,
 		PrivateKey: c.sk,
 		Storage:    c.Connectors.Storage,
 		Transport:  c.Connectors.Websocket,

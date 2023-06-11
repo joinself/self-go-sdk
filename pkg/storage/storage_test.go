@@ -79,6 +79,7 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 	err = s3.AccountCreate("carol:1", registerUser(t, pki, "carol:1"))
 	require.Nil(t, err)
 
+	// encrypt a message from alice to bob
 	ciphertext, err := s1.Encrypt("alice:1", []string{"bob:1"}, []byte("hello"))
 	require.Nil(t, err)
 
@@ -87,6 +88,26 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 	assert.Equal(t, []byte("hello"), plaintext)
 
 	offset, err := s2.AccountOffset("bob:1")
+	require.Nil(t, err)
+	assert.Equal(t, int64(1), offset)
+
+	// encrypt a messagea from alice to bob and carol
+	ciphertext, err = s1.Encrypt("alice:1", []string{"bob:1", "carol:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err = s2.Decrypt("alice:1", "bob:1", 2, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	offset, err = s2.AccountOffset("bob:1")
+	require.Nil(t, err)
+	assert.Equal(t, int64(2), offset)
+
+	plaintext, err = s3.Decrypt("alice:1", "carol:1", 1, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	offset, err = s3.AccountOffset("carol:1")
 	require.Nil(t, err)
 	assert.Equal(t, int64(1), offset)
 }
