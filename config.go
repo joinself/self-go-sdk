@@ -5,6 +5,7 @@ package selfsdk
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -147,17 +148,17 @@ func (c *Config) load() error {
 		return err
 	}
 
-	err = c.loadWebsocketConnector()
-	if err != nil {
-		return err
-	}
-
 	err = c.loadPKIConnector()
 	if err != nil {
 		return err
 	}
 
 	err = c.loadStorageConnector()
+	if err != nil {
+		return err
+	}
+
+	err = c.loadWebsocketConnector()
 	if err != nil {
 		return err
 	}
@@ -208,6 +209,13 @@ func (c Config) loadWebsocketConnector() error {
 		return nil
 	}
 
+	inboxID := fmt.Sprintf("%s:%s", c.SelfAppID, c.DeviceID)
+
+	offset, err := c.Connectors.Storage.AccountOffset(inboxID)
+	if err != nil {
+		return err
+	}
+
 	cfg := transport.WebsocketConfig{
 		MessagingURL: c.MessagingURL,
 		SelfID:       c.SelfAppID,
@@ -219,6 +227,7 @@ func (c Config) loadWebsocketConnector() error {
 		OnConnect:    c.OnConnect,
 		OnDisconnect: c.OnDisconnect,
 		OnPing:       c.OnPing,
+		Offset:       offset,
 	}
 
 	ws, err := transport.NewWebsocket(cfg)
@@ -232,8 +241,10 @@ func (c Config) loadWebsocketConnector() error {
 }
 
 func (c Config) loadStorageConnector() error {
+	inboxID := fmt.Sprintf("%s:%s", c.SelfAppID, c.DeviceID)
+
 	if c.Connectors.Storage != nil {
-		return nil
+		return c.Connectors.Storage.AccountCreate(inboxID, c.sk)
 	}
 
 	cfg := storage.Config{
@@ -249,7 +260,7 @@ func (c Config) loadStorageConnector() error {
 
 	c.Connectors.Storage = storage
 
-	return nil
+	return c.Connectors.Storage.AccountCreate(inboxID, c.sk)
 }
 
 func (c Config) loadPKIConnector() error {
