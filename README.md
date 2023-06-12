@@ -6,9 +6,6 @@
 
 The official Self SDK for Go.
 
-## Overview
-
-
 This SDK provides access to the following self services:
 
 - **Authentication**: For authenticating users
@@ -16,14 +13,15 @@ This SDK provides access to the following self services:
 - **Fact**: For requesting information from identities or intemediaries
 - **Messaging**: For building services to interact with other entities
 
-## Requirements
+## Installation
 
-- [Go 1.13 or higher](https://go.dev)
+### Dependencies
+
+- [Go](https://go.dev) 1.12 or later
 - [Self OLM](https://github.com/joinself/self-olm)
 - [Self OMEMO](https://github.com/joinself/self-omemo)
 
-
-#### Debian/Ubuntu
+##### Debian/Ubuntu
 ```bash
 apt install -y libsodium-dev
 curl -O https://download.joinself.com/olm/libself-olm_0.1.39_amd64.deb
@@ -31,27 +29,27 @@ curl -O https://download.joinself.com/omemo/libself-omemo_0.1.23_amd64.deb
 apt install -y ./libself-olm_0.1.39_amd64.deb ./libself-omemo_0.1.23_amd64.deb
 ```
 
-#### CentOS/RedHat
+##### CentOS/RedHat
 ```bash
 yum install -y libsodium
 rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
 rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
 ```
 
-#### Fedora
+##### Fedora
 ```bash
 dnf install -y libsodium
 dnf install -y https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
 dnf install -y https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
 ```
 
-#### MacOS - AMD64
+##### MacOS - AMD64
 ```bash
 brew tap joinself/crypto
 brew install libself-olm libself-omemo
 ```
 
-#### MacOS - ARM64
+##### MacOS - ARM64
 Brew on M1 macs currently lacks environment variables needed for the SDK to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
 
 In your `~/.zshrc`, add:
@@ -73,7 +71,14 @@ Note, you may also need to create `/usr/local/lib` if it does not exist:
 sudo mkdir /usr/local/lib
 ```
 
-## Quick Start
+### Install
+
+Install the Self SDK:
+```bash
+go get github.com/joinself/self-go-sdk
+```
+
+## Usage
 
 ### Register Application
 
@@ -86,14 +91,9 @@ Self provides two isolated networks:
 
 Register your application using one of the links above ([further information](https://docs.joinself.com/quickstart/app-setup/)).
 
-### Usage
+### Examples
 
-Install the Self SDK:
-```bash
-go get github.com/joinself/self-go-sdk
-```
-
-Client setup:
+#### Client setup
 
 ```go
 import "github.com/joinself/self-go-sdk"
@@ -112,7 +112,7 @@ func main() {
 }
 ```
 
-## Identities
+#### Identities
 
 The identities service provides functionality for looking up identities, devices and public keys.
 
@@ -129,7 +129,7 @@ func main() {
 }
 ```
 
-## Facts
+#### Facts
 
 The fact service can be used to ask for specific attested facts from an identity. These requests can be sent to the identity directly, or via an intermediary if you would prefer not to see the users personal information directly, but would like to know it satisfies a given criteria.
 
@@ -158,7 +158,7 @@ func main() {
 }
 ```
 
-## Authentication
+#### Authentication
 
 The authentication service can be used to send an authentication challenge to a users device. The response the user sends will be signed by their identity and can be validated. You can authenticate a client by two means; If you know the self id of the user you wish to authenticate, you can do it directly. Alternatively, if you do not know the identity of the user, you can generate and display a qr code that can be read by the users device.
 
@@ -181,11 +181,18 @@ func main() {
 }
 ```
 
+## Documentation
+
+- [Documentation](https://docs.joinself.com/)
+
+## Support
+
+Looking for help? Reach out to us at [support@joinself.zendesk.com](support@joinself.zendesk.com)
+
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/joinself/self-go-sdk.
-
+See [Contributing](CONTRIBUTING).
 
 ## License
 
-The SDK is available as open source under the terms of the [MIT License](LICENSE).
+See [License](LICENSE).
