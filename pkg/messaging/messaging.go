@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"runtime"
 	"sort"
@@ -14,7 +15,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/pkg/crypto"
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/ed25519"
@@ -58,15 +58,16 @@ type response struct {
 type Transport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(err error))
-	Receive() (string, []byte, error)
+	Receive() (string, int64, []byte, error)
 	Command(command string, payload []byte) ([]byte, error)
 	Close() error
 }
 
-// Crypto the crytographic provider used to encrypt and decrypt messages
-type Crypto interface {
-	Encrypt(recipients []string, plaintext []byte) ([]byte, error)
-	Decrypt(sender string, ciphertext []byte) ([]byte, error)
+// Storage the storage provider used to encrypt and decrypt messages
+type Storage interface {
+	AccountOffset(inboxID string) (int64, error)
+	Encrypt(from string, to []string, plaintext []byte) ([]byte, error)
+	Decrypt(from, to string, offset int64, ciphertext []byte) ([]byte, error)
 }
 
 // Config messaging configuration for connecting to self messaging
@@ -77,16 +78,17 @@ type Config struct {
 	MessagingURL string
 	APIURL       string
 	Transport    Transport
-	Crypto       Crypto
+	Storage      Storage
 }
 
 // Client default implementation of a messaging client
 type Client struct {
 	config        Config
-	crypto        Crypto
+	storage       Storage
 	transport     Transport
 	responses     sync.Map
 	subscriptions sync.Map
+	inboxID       string
 	acl           *unsafe.Pointer
 	closing       chan struct{}
 	closed        chan struct{}
@@ -95,12 +97,24 @@ type Client struct {
 
 // New create a new messaging client
 func New(config Config) (*Client, error) {
+	if config.Storage == nil {
+		return nil, errors.New("no storage implementation provided")
+	}
+
+	inboxID := fmt.Sprintf("%s:%s", config.SelfID, config.DeviceID)
+
 	if config.Transport == nil {
+		offset, err := config.Storage.AccountOffset(inboxID)
+		if err != nil {
+			return nil, err
+		}
+
 		cfg := transport.WebsocketConfig{
 			SelfID:       config.SelfID,
 			DeviceID:     config.DeviceID,
 			PrivateKey:   config.PrivateKey,
 			MessagingURL: config.MessagingURL,
+			Offset:       offset,
 		}
 
 		ws, err := transport.NewWebsocket(cfg)
@@ -111,25 +125,12 @@ func New(config Config) (*Client, error) {
 		config.Transport = ws
 	}
 
-	if config.Crypto == nil {
-		cfg := crypto.Config{
-			SelfID:     config.SelfID,
-			PrivateKey: config.PrivateKey,
-		}
-
-		cr, err := crypto.New(cfg)
-		if err != nil {
-			return nil, err
-		}
-
-		config.Crypto = cr
-	}
-
 	c := Client{
 		config:    config,
 		responses: sync.Map{},
 		transport: config.Transport,
-		crypto:    config.Crypto,
+		storage:   config.Storage,
+		inboxID:   inboxID,
 		acl:       &emptyACL,
 		closing:   make(chan struct{}, 1),
 		closed:    make(chan struct{}, 1),
@@ -153,7 +154,7 @@ func (c *Client) Start() bool {
 
 // Send sends an encypted message to recipients
 func (c *Client) Send(recipients []string, mtype string, plaintext []byte) error {
-	ciphertext, err := c.crypto.Encrypt(recipients, plaintext)
+	ciphertext, err := c.storage.Encrypt(c.inboxID, recipients, plaintext)
 	if err != nil {
 		return err
 	}
@@ -163,7 +164,7 @@ func (c *Client) Send(recipients []string, mtype string, plaintext []byte) error
 
 // SendAsync sends an encypted message to recipients asynchromously, returning the servers response via the provided callback
 func (c *Client) SendAsync(recipients []string, mtype string, plaintext []byte, callback func(error)) {
-	ciphertext, err := c.crypto.Encrypt(recipients, plaintext)
+	ciphertext, err := c.storage.Encrypt(c.inboxID, recipients, plaintext)
 	if err != nil {
 		callback(err)
 		return
@@ -284,7 +285,7 @@ func (c *Client) reader() {
 		default:
 		}
 
-		sender, ciphertext, err := c.transport.Receive()
+		sender, offset, ciphertext, err := c.transport.Receive()
 		if err != nil {
 			if !errors.Is(err, transport.ErrChannelClosed) {
 				log.Println("messaging:", err)
@@ -292,7 +293,7 @@ func (c *Client) reader() {
 			continue
 		}
 
-		plaintext, err := c.crypto.Decrypt(sender, ciphertext)
+		plaintext, err := c.storage.Decrypt(sender, c.inboxID, offset, ciphertext)
 		if err != nil {
 			log.Println("messaging:", err)
 			continue

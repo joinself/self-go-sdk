@@ -12,13 +12,13 @@ import (
 
 func TestMessagingSend(t *testing.T) {
 	ws := newTestWebsocket()
-	cr := newTestCrypto()
+	st := newTestStorage()
 
 	cfg := Config{
 		SelfID:    "test",
 		DeviceID:  "1",
 		Transport: ws,
-		Crypto:    cr,
+		Storage:   st,
 	}
 
 	c, err := New(cfg)
@@ -46,13 +46,13 @@ func TestMessagingSend(t *testing.T) {
 
 func TestMessagingRequest(t *testing.T) {
 	ws := newTestWebsocket()
-	cr := newTestCrypto()
+	st := newTestStorage()
 
 	cfg := Config{
 		SelfID:    "test",
 		DeviceID:  "1",
 		Transport: ws,
-		Crypto:    cr,
+		Storage:   st,
 	}
 
 	c, err := New(cfg)
@@ -72,13 +72,13 @@ func TestMessagingRequest(t *testing.T) {
 
 func TestMessagingRegisterWait(t *testing.T) {
 	ws := newTestWebsocket()
-	cr := newTestCrypto()
+	st := newTestStorage()
 
 	cfg := Config{
 		SelfID:    "test",
 		DeviceID:  "1",
 		Transport: ws,
-		Crypto:    cr,
+		Storage:   st,
 	}
 
 	c, err := New(cfg)
@@ -114,13 +114,13 @@ func TestMessagingRegisterWait(t *testing.T) {
 
 func TestMessagingSubscribe(t *testing.T) {
 	ws := newTestWebsocket()
-	cr := newTestCrypto()
+	st := newTestStorage()
 
 	cfg := Config{
 		SelfID:    "test",
 		DeviceID:  "1",
 		Transport: ws,
-		Crypto:    cr,
+		Storage:   st,
 	}
 
 	c, err := New(cfg)
@@ -145,13 +145,13 @@ func TestMessagingSubscribe(t *testing.T) {
 
 func TestMessagingClose(t *testing.T) {
 	ws := newTestWebsocket()
-	cr := newTestCrypto()
+	st := newTestStorage()
 
 	cfg := Config{
 		SelfID:    "test",
 		DeviceID:  "1",
 		Transport: ws,
-		Crypto:    cr,
+		Storage:   st,
 	}
 
 	c, err := New(cfg)
