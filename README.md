@@ -183,6 +183,7 @@ func main() {
 ## Documentation
 
 - [Documentation](https://docs.joinself.com/)
+- [Examples](_examples)
 
 ## Support
 
