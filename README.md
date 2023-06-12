@@ -1,15 +1,15 @@
 # Self Go SDK
 
-[![CI](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/joinself/self-go-sdk.svg)](https://pkg.go.dev/github.com/joinself/self-go-sdk)
+[![CI](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/joinself/self-go-sdk/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joinself/self-go-sdk)](https://goreportcard.com/report/github.com/joinself/self-go-sdk)
 
-The official self sdk for golang.
+The official Self SDK for Go.
 
 ## Overview
 
 
-This sdk provides access to the following self services:
+This SDK provides access to the following self services:
 
 - **Authentication**: For authenticating users
 - **Identity**: For looking up identities, apps, devices, public keys
@@ -18,72 +18,93 @@ This sdk provides access to the following self services:
 
 ## Requirements
 
-- [libself_olm](github.com/joinself/olm)
-- [libself_omemo](github.com/joinself/omemo)
-- [go 1.13 or higher](golang.org)
+- [Go 1.13 or higher](https://go.dev)
+- [Self OLM](https://github.com/joinself/self-olm)
+- [Self OMEMO](https://github.com/joinself/self-omemo)
 
 
 #### Debian/Ubuntu
-```sh
-$ curl -O https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb
-$ curl -O https://download.joinself.com/omemo/libself-omemo_0.1.2_amd64.deb
-$ apt install libsodium-dev
-$ apt install ./libself-olm_0.1.17_amd64.deb ./libself-omemo_0.1.2_amd64.deb
+```bash
+apt install -y libsodium-dev
+curl -O https://download.joinself.com/olm/libself-olm_0.1.39_amd64.deb
+curl -O https://download.joinself.com/omemo/libself-omemo_0.1.23_amd64.deb
+apt install -y ./libself-olm_0.1.39_amd64.deb ./libself-omemo_0.1.23_amd64.deb
 ```
 
-#### Redhat/Centos
-```sh
-$ rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.14-1.x86_64.rpm
-$ rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.2-1.x86_64.rpm
+#### CentOS/RedHat
+```bash
+yum install -y libsodium
+rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
+rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
 ```
 
-#### Mac (x86_64)
-```sh
-$ brew tap joinself/crypto
-$ brew install libself-olm libself-omemo
+#### Fedora
+```bash
+dnf install -y libsodium
+dnf install -y https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
+dnf install -y https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
 ```
 
-#### Mac (m1/arm64)
-Brew on M1 macs currently lacks environment variables needed for the sdk to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
+#### MacOS - AMD64
+```bash
+brew tap joinself/crypto
+brew install libself-olm libself-omemo
+```
+
+#### MacOS - ARM64
+Brew on M1 macs currently lacks environment variables needed for the SDK to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
 
 In your `~/.zshrc`, add:
-```sh
+```bash
 export C_INCLUDE_PATH=/opt/homebrew/include/
 export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/lib
 ```
 
 You should then be able to run:
 
-```sh
-$ source ~/.zshrc
-$ brew tap joinself/crypto
-$ brew install --build-from-source libself-olm libself-omemo
+```bash
+source ~/.zshrc
+brew tap joinself/crypto
+brew install --build-from-source libself-olm libself-omemo
 ```
 
 Note, you may also need to create `/usr/local/lib` if it does not exist:
-```sh
-$ sudo mkdir /usr/local/lib
+```bash
+sudo mkdir /usr/local/lib
 ```
 
 ## Quick Start
 
-To install the go sdk:
-```sh
-$ go get github.com/joinself/self-go-sdk
+### Register Application
+
+Before the SDK can be used you must first register an application on the Self Developer Portal. Once registered, the portal will generate credentials for the application that the SDK will use to authenticate against the Self network.
+
+Self provides two isolated networks:
+
+[Developer Portal (production network)](https://developer.joinself.com) - Suitable for production services  
+[Developer Portal (sandbox network)](https://developer.sandbox.joinself.com) - Suitable for testing and experimentation
+
+Register your application using one of the links above ([further information](https://docs.joinself.com/quickstart/app-setup/)).
+
+### Usage
+
+Install the Self SDK:
+```bash
+go get github.com/joinself/self-go-sdk
 ```
 
-
-Using the credentials obtained from the [developer portal](developer.joinself.com), you can configure a new self client as follows:
+Client setup:
 
 ```go
 import "github.com/joinself/self-go-sdk"
 
 func main() {
     cfg := selfsdk.Config{
-        SelfAppID:           os.Getenv("SELF_APP_ID"),
-        SelfAppDeviceSecret: os.Getenv("SELF_APP_DEVICE_SECRET"),
-        StorageDir:          "/opt/self/crypto",
-        StorageKey:          "my-secret-crypto-storage-key",
+        SelfAppID:           "<application-id>",
+        SelfAppDeviceSecret: "<application-secret-key>",
+        StorageDir:          "/data",
+        StorageKey:          "secret",
+        Environment:         "sandbox",  // optional (defaults to production)
     }
 
     client, err := selfsdk.New(cfg)
@@ -126,10 +147,6 @@ import (
 )
 
 func main() {
-    client, err := selfsdk.New(cfg)
-    client.Start()
-    ...
-
     svc := client.Facts()
 
     req := fact.FactRequest{
@@ -157,10 +174,6 @@ import (
 )
 
 func main() {
-    client, err := selfsdk.New("appID", "privateKey")
-    client.Start()
-    ...
-
     svc := client.Authentication()
 
     err = svc.Request("selfID")
@@ -175,4 +188,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/joinse
 
 ## License
 
-The sdk is available as open source under the terms of the [MIT License](LICENSE).
+The SDK is available as open source under the terms of the [MIT License](LICENSE).
