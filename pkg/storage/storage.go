@@ -173,9 +173,7 @@ func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) er
 		return err
 	}
 
-	// TODO split this so we're not publishing prekeys before we have committed them
-	// this will cause one time keys that the account to be recognised by other senders
-	err = s.generateAndPublishOneTimeKeys(inboxID, account)
+	otks, err := s.generateOneTimeKeys(inboxID, account)
 	if err != nil {
 		txn.Rollback()
 		return err
@@ -193,7 +191,15 @@ func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) er
 		return err
 	}
 
-	return txn.Commit()
+	err = txn.Commit()
+	if err != nil {
+		return err
+	}
+
+	// publish the keys after they have been successfuly saved to the db
+	// to avoid a situation where keys are published to the network, but
+	// forgotten by the account
+	return s.publishOneTimeKeys(inboxID, otks)
 }
 
 // AccountExecute executes an action on an account
@@ -402,6 +408,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	var session *selfcrypto.Session
 	var sessionPickle string
 	var sessionExisting bool
+	var otks []byte
 
 	err = row.Scan(&sessionPickle)
 	if err != nil {
@@ -410,7 +417,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 			return nil, err
 		}
 
-		session, err = s.createInboundSession(txn, from, to, otkm)
+		session, otks, err = s.createInboundSession(txn, from, to, otkm)
 		if err != nil {
 			txn.Rollback()
 			return nil, err
@@ -434,7 +441,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		// so create a new inbound session as this is a
 		// one time key message
 		if otkm.Type == 0 && !matches {
-			session, err = s.createInboundSession(txn, from, to, otkm)
+			session, otks, err = s.createInboundSession(txn, from, to, otkm)
 			if err != nil {
 				txn.Rollback()
 				return nil, err
@@ -477,7 +484,12 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		return nil, err
 	}
 
-	return plaintext, txn.Commit()
+	err = txn.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, s.publishOneTimeKeys(to, otks)
 }
 
 // Close closes the storage connection
@@ -485,57 +497,59 @@ func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
-func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfcrypto.Message) (*selfcrypto.Session, error) {
+func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfcrypto.Message) (*selfcrypto.Session, []byte, error) {
 	row := txn.QueryRow("SELECT olm_account FROM accounts WHERE as_identifier = ?;", to)
 	if row.Err() != nil {
-		return nil, row.Err()
+		return nil, nil, row.Err()
 	}
 
 	var accountPickle string
 
 	err := row.Scan(&accountPickle)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	account, err := selfcrypto.AccountFromPickle(to, s.ec, accountPickle)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	session, err := selfcrypto.CreateInboundSession(account, from, otkm)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = account.RemoveOneTimeKeys(session)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	otks, err := account.OneTimeKeys()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	var otkd []byte
+
 	if len(otks.Curve25519) < 10 {
-		err = s.generateAndPublishOneTimeKeys(to, account)
+		otkd, err = s.generateOneTimeKeys(to, account)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	accountPickle, err = account.Pickle(s.ec)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	_, err = txn.Exec("UPDATE accounts SET olm_account = ? WHERE as_identifier = ?", accountPickle, to)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return session, nil
+	return session, otkd, nil
 }
 
 func (s *Storage) createOutboundSession(txn *sql.Tx, from, to string) (*selfcrypto.Session, error) {
@@ -610,23 +624,23 @@ func (s *Storage) createOutboundSession(txn *sql.Tx, from, to string) (*selfcryp
 	return session, nil
 }
 
-func (s *Storage) generateAndPublishOneTimeKeys(as string, account *selfcrypto.Account) error {
+func (s *Storage) generateOneTimeKeys(as string, account *selfcrypto.Account) ([]byte, error) {
 	var otkb oneTimeKeys
 
 	potks, err := account.OneTimeKeys()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// TODO configure this based on usecase
 	err = account.GenerateOneTimeKeys(100)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	otks, err := account.OneTimeKeys()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for k, v := range otks.Curve25519 {
@@ -637,14 +651,15 @@ func (s *Storage) generateAndPublishOneTimeKeys(as string, account *selfcrypto.A
 		otkb = append(otkb, oneTimeKey{ID: k, Key: v})
 	}
 
-	otkd, err := json.Marshal(otkb)
-	if err != nil {
-		return err
+	return json.Marshal(otkb)
+}
+
+func (s *Storage) publishOneTimeKeys(as string, otks []byte) error {
+	if len(otks) < 1 {
+		return nil
 	}
-
 	identifier, device := idsplit(as)
-
-	return s.pk.SetDeviceKeys(identifier, device, otkd)
+	return s.pk.SetDeviceKeys(identifier, device, otks)
 }
 
 func (s *Storage) migrateLegacyStorage(dir string) error {
