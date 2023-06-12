@@ -190,7 +190,7 @@ Looking for help? Reach out to us at [support@joinself.zendesk.com](mailto:suppo
 
 ## Contributing
 
-See [Contributing](CONTRIBUTING).
+See [Contributing](CONTRIBUTING.md).
 
 ## License
 

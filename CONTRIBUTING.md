@@ -2,9 +2,6 @@
 
 Thank you so much for contributing to Self. We appreciate your time and help. Here are some guidelines to help you get started.
 
-## Code of Conduct
-Be kind and respectful to the members of the community. Take time to educate others who are seeking help. Harassment of any kind will not be tolerated.
-
 ## Submitting Changes
 
 - With issues:
