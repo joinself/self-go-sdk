@@ -17,7 +17,7 @@ This SDK provides access to the following self services:
 
 ### Dependencies
 
-- [Go](https://go.dev) 1.12 or later
+- [Go](https://go.dev) 1.13 or later
 - [Self OLM](https://github.com/joinself/self-olm)
 - [Self OMEMO](https://github.com/joinself/self-omemo)
 
@@ -73,7 +73,6 @@ sudo mkdir /usr/local/lib
 
 ### Install
 
-Install the Self SDK:
 ```bash
 go get github.com/joinself/self-go-sdk
 ```
@@ -187,7 +186,7 @@ func main() {
 
 ## Support
 
-Looking for help? Reach out to us at [support@joinself.zendesk.com](support@joinself.zendesk.com)
+Looking for help? Reach out to us at [support@joinself.zendesk.com](mailto:support@joinself.zendesk.com)
 
 ## Contributing
 
