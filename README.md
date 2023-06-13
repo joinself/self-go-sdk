@@ -123,7 +123,7 @@ import "github.com/joinself/self-go-sdk"
 func main() {
     svc := client.Identities()
 
-    identity, err := svc.GetIdentity("selfID")
+    identity, err := svc.GetIdentity("<self-id>")
     ...
 }
 ```
@@ -175,7 +175,7 @@ import (
 func main() {
     svc := client.Authentication()
 
-    err = svc.Request("selfID")
+    err = svc.Request("<self-id>")
     ...
 }
 ```
