@@ -102,7 +102,7 @@ func main() {
         SelfAppID:           "<application-id>",
         SelfAppDeviceSecret: "<application-secret-key>",
         StorageDir:          "/data",
-        StorageKey:          "secret",
+        StorageKey:          "random-secret-string",
         Environment:         "sandbox",  // optional (defaults to production)
     }
 
