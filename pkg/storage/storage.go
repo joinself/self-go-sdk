@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -417,6 +418,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 			return nil, err
 		}
 
+		log.Printf("creating new inbound session from: %s to: %s", from, to)
 		session, otks, err = s.createInboundSession(txn, from, to, otkm)
 		if err != nil {
 			txn.Rollback()
@@ -424,6 +426,8 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		}
 	} else {
 		sessionExisting = true
+
+		log.Printf("loaded existing inbound session from: %s to: %s", from, to)
 
 		session, err = selfcrypto.SessionFromPickle(from, s.ec, sessionPickle)
 		if err != nil {
@@ -441,6 +445,8 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		// so create a new inbound session as this is a
 		// one time key message
 		if otkm.Type == 0 && !matches {
+			log.Printf("existing inbound session does not match, creating new one from: %s to: %s", from, to)
+
 			session, otks, err = s.createInboundSession(txn, from, to, otkm)
 			if err != nil {
 				txn.Rollback()
