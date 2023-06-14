@@ -4,11 +4,9 @@ import (
 	"crypto/ed25519"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -320,8 +318,6 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 
-		log.Printf("loaded session pickle (encrypt): %s with: %s", sessionPickle, with)
-
 		session, err := selfcrypto.SessionFromPickle(with, s.ec, sessionPickle)
 		if err != nil {
 			txn.Rollback()
@@ -368,8 +364,6 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 
-		log.Printf("storing session pickle (encrypt): %s", sessionPickle)
-
 		_, ok := foundSessions[to[i]]
 		if ok {
 			_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
@@ -382,8 +376,6 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 	}
-
-	log.Printf("ciphertext: %s", hex.EncodeToString(ciphertext))
 
 	return ciphertext, txn.Commit()
 }
@@ -427,7 +419,6 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 			return nil, err
 		}
 
-		log.Printf("creating new inbound session from: %s to: %s", from, to)
 		session, otks, err = s.createInboundSession(txn, from, to, otkm)
 		if err != nil {
 			txn.Rollback()
@@ -435,9 +426,6 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		}
 	} else {
 		sessionExisting = true
-
-		log.Printf("loaded existing inbound session from: %s to: %s", from, to)
-		log.Printf("loaded session pickle (decrypt): %s", sessionPickle)
 
 		session, err = selfcrypto.SessionFromPickle(from, s.ec, sessionPickle)
 		if err != nil {
@@ -455,8 +443,6 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		// so create a new inbound session as this is a
 		// one time key message
 		if otkm.Type == 0 && !matches {
-			log.Printf("existing inbound session does not match, creating new one from: %s to: %s", from, to)
-
 			session, otks, err = s.createInboundSession(txn, from, to, otkm)
 			if err != nil {
 				txn.Rollback()
@@ -482,8 +468,6 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		txn.Rollback()
 		return nil, err
 	}
-
-	log.Printf("storing session pickle (decrypt): %s", sessionPickle)
 
 	if sessionExisting {
 		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
