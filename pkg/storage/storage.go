@@ -312,13 +312,13 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 		var with string
 		var sessionPickle string
 
-		log.Printf("loaded session pickle (encrypt): %s", sessionPickle)
-
 		err := rows.Scan(&with, &sessionPickle)
 		if err != nil {
 			txn.Rollback()
 			return nil, err
 		}
+
+		log.Printf("loaded session pickle (encrypt): %s", sessionPickle)
 
 		session, err := selfcrypto.SessionFromPickle(with, s.ec, sessionPickle)
 		if err != nil {
