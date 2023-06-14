@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -311,6 +312,8 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 		var with string
 		var sessionPickle string
 
+		log.Printf("loaded session pickle (encrypt): %s", sessionPickle)
+
 		err := rows.Scan(&with, &sessionPickle)
 		if err != nil {
 			txn.Rollback()
@@ -363,6 +366,8 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 
+		log.Printf("storing session pickle (encrypt): %s", sessionPickle)
+
 		_, ok := foundSessions[to[i]]
 		if ok {
 			_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, from, to[i])
@@ -375,6 +380,8 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 	}
+
+	log.Printf("ciphertext: %s", hex.EncodeToString(ciphertext))
 
 	return ciphertext, txn.Commit()
 }
@@ -428,6 +435,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		sessionExisting = true
 
 		log.Printf("loaded existing inbound session from: %s to: %s", from, to)
+		log.Printf("loaded session pickle (decrypt): %s", sessionPickle)
 
 		session, err = selfcrypto.SessionFromPickle(from, s.ec, sessionPickle)
 		if err != nil {
@@ -472,6 +480,8 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		txn.Rollback()
 		return nil, err
 	}
+
+	log.Printf("storing session pickle (decrypt): %s", sessionPickle)
 
 	if sessionExisting {
 		_, err = txn.Exec("UPDATE sessions SET olm_session = ? WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
