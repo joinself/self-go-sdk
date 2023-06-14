@@ -291,7 +291,8 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 	}
 
 	statement := fmt.Sprintf(
-		"SELECT with_identifier, olm_session FROM sessions WHERE with_identifier IN(?%s)",
+		"SELECT with_identifier, olm_session FROM sessions WHERE as_identifier = %s with_identifier IN(?%s)",
+		from,
 		strings.Repeat(",?", len(to)-1),
 	)
 
