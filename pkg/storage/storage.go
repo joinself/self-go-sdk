@@ -318,7 +318,7 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 			return nil, err
 		}
 
-		log.Printf("loaded session pickle (encrypt): %s", sessionPickle)
+		log.Printf("loaded session pickle (encrypt): %s with: %s", sessionPickle, with)
 
 		session, err := selfcrypto.SessionFromPickle(with, s.ec, sessionPickle)
 		if err != nil {
