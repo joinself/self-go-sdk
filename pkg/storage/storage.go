@@ -291,17 +291,18 @@ func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, e
 	}
 
 	statement := fmt.Sprintf(
-		"SELECT with_identifier, olm_session FROM sessions WHERE as_identifier = %s with_identifier IN(?%s)",
-		from,
+		"SELECT with_identifier, olm_session FROM sessions WHERE as_identifier = ? AND with_identifier IN(?%s)",
 		strings.Repeat(",?", len(to)-1),
 	)
 
-	recipients := make([]any, len(to))
+	args := make([]any, len(to)+1)
+	args[0] = from
+
 	for i := range to {
-		recipients[i] = to[i]
+		args[i+1] = to[i]
 	}
 
-	rows, err := txn.Query(statement, recipients...)
+	rows, err := txn.Query(statement, args...)
 	if err != nil {
 		txn.Rollback()
 		return nil, err
