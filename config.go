@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -248,7 +249,7 @@ func (c Config) loadStorageConnector() error {
 	}
 
 	cfg := storage.Config{
-		StorageDir:    c.StorageDir,
+		StorageDir:    filepath.Join(c.StorageDir, "identities", c.SelfAppID, "devices", c.DeviceID),
 		EncryptionKey: c.StorageKey,
 		PKI:           c.Connectors.PKI,
 	}
