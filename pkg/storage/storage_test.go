@@ -12,14 +12,16 @@ import (
 func TestStorageNew(t *testing.T) {
 	pki := newTestPKI(t)
 
-	_, err := New(&Config{t.TempDir(), "key", pki})
+	_, err := New(&Config{"/home/tom/code/self/self-go-sdk/_examples/.storage/identities/dc8903c6-e8a2-49ce-a153-354b1358a1c4/devices/1", "key", "dc8903c6-e8a2-49ce-a153-354b1358a1c4:1", pki})
+
+	// _, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 }
 
 func TestStorageAccount(t *testing.T) {
 	pki := newTestPKI(t)
 
-	s, err := New(&Config{t.TempDir(), "key", pki})
+	s, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 
 	err = s.AccountCreate("alice:1", registerUser(t, pki, "alice:1"))
@@ -61,19 +63,19 @@ func TestStorageAccount(t *testing.T) {
 func TestStorageEncryptAndDecrypt(t *testing.T) {
 	pki := newTestPKI(t)
 
-	s1, err := New(&Config{t.TempDir(), "key", pki})
+	s1, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 
 	err = s1.AccountCreate("alice:1", registerUser(t, pki, "alice:1"))
 	require.Nil(t, err)
 
-	s2, err := New(&Config{t.TempDir(), "key", pki})
+	s2, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 
 	err = s2.AccountCreate("bob:1", registerUser(t, pki, "bob:1"))
 	require.Nil(t, err)
 
-	s3, err := New(&Config{t.TempDir(), "key", pki})
+	s3, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 
 	err = s3.AccountCreate("carol:1", registerUser(t, pki, "carol:1"))
@@ -115,13 +117,13 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 func BenchmarkEncrypt(b *testing.B) {
 	pki := newTestPKI(b)
 
-	s1, err := New(&Config{b.TempDir(), "key", pki})
+	s1, err := New(&Config{b.TempDir(), "key", "alice:1", pki})
 	require.Nil(b, err)
 
 	err = s1.AccountCreate("alice:1", registerUser(b, pki, "alice:1"))
 	require.Nil(b, err)
 
-	s2, err := New(&Config{b.TempDir(), "key", pki})
+	s2, err := New(&Config{b.TempDir(), "key", "alice:1", pki})
 	require.Nil(b, err)
 
 	err = s2.AccountCreate("bob:1", registerUser(b, pki, "bob:1"))

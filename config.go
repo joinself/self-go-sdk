@@ -251,6 +251,7 @@ func (c Config) loadStorageConnector() error {
 	cfg := storage.Config{
 		StorageDir:    filepath.Join(c.StorageDir, "identities", c.SelfAppID, "devices", c.DeviceID),
 		EncryptionKey: c.StorageKey,
+		AccountID:     fmt.Sprintf("%s:%s", c.SelfAppID, c.DeviceID),
 		PKI:           c.Connectors.PKI,
 	}
 
