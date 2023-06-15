@@ -12,9 +12,7 @@ import (
 func TestStorageNew(t *testing.T) {
 	pki := newTestPKI(t)
 
-	_, err := New(&Config{"/home/tom/code/self/self-go-sdk/_examples/.storage/identities/dc8903c6-e8a2-49ce-a153-354b1358a1c4/devices/1", "key", "dc8903c6-e8a2-49ce-a153-354b1358a1c4:1", pki})
-
-	// _, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	_, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
 	require.Nil(t, err)
 }
 
