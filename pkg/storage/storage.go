@@ -43,6 +43,7 @@ type PKI interface {
 type Config struct {
 	StorageDir    string
 	EncryptionKey string
+	AccountID     string
 	PKI           PKI
 }
 
@@ -88,7 +89,7 @@ func New(cfg *Config) (*Storage, error) {
 		return nil, err
 	}
 
-	err = s.migrateLegacyStorage(cfg.StorageDir)
+	err = s.migrateLegacyStorage(cfg.StorageDir, cfg.AccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -664,8 +665,8 @@ func (s *Storage) publishOneTimeKeys(as string, otks []byte) error {
 	return s.pk.SetDeviceKeys(identifier, device, otks)
 }
 
-func (s *Storage) migrateLegacyStorage(dir string) error {
-	basePath := filepath.Join(dir, "apps")
+func (s *Storage) migrateLegacyStorage(dir, accountID string) error {
+	basePath := strings.Replace(dir, "identities", "apps", 1)
 
 	_, err := os.Stat(basePath)
 	if err != nil {
@@ -723,9 +724,6 @@ func (s *Storage) migrateLegacyStorage(dir string) error {
 				offset: int64(offset),
 			}
 		case ".pickle":
-			fpe := strings.Split(path, string(filepath.Separator))
-			accountID := fmt.Sprintf("%s:%s", fpe[len(fpe)-6], fpe[len(fpe)-4])
-
 			fn := strings.TrimSuffix(info.Name(), ".pickle")
 
 			pd, err := os.ReadFile(path)
