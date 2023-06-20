@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	selfcrypto "github.com/joinself/self-crypto-go"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
@@ -199,8 +200,16 @@ func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) er
 
 	// publish the keys after they have been successfuly saved to the db
 	// to avoid a situation where keys are published to the network, but
-	// forgotten by the account
-	return s.publishOneTimeKeys(inboxID, otks)
+	// forgotten by the account. attempt to retry the upload if it fails
+	for i := 0; i < 60; i++ {
+		err = s.publishOneTimeKeys(inboxID, otks)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second * 5)
+	}
+
+	return err
 }
 
 // AccountExecute executes an action on an account
