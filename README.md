@@ -18,39 +18,32 @@ This SDK provides access to the following self services:
 ### Dependencies
 
 - [Go](https://go.dev) 1.13 or later
-- [Self OLM](https://github.com/joinself/self-olm)
 - [Self OMEMO](https://github.com/joinself/self-omemo)
 
 ##### Debian/Ubuntu
 ```bash
-apt install -y libsodium-dev
-curl -O https://download.joinself.com/olm/libself-olm_0.1.39_amd64.deb
-curl -O https://download.joinself.com/omemo/libself-omemo_0.1.23_amd64.deb
-apt install -y ./libself-olm_0.1.39_amd64.deb ./libself-omemo_0.1.23_amd64.deb
+curl -LO https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo_0.4.0_amd64.deb
+apt install -y ./self-omemo_0.4.0_amd64.deb
 ```
 
 ##### CentOS/RedHat
 ```bash
-yum install -y libsodium
-rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
-rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
+rpm -Uvh https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
 ```
 
 ##### Fedora
 ```bash
-dnf install -y libsodium
-dnf install -y https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
-dnf install -y https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
+dnf install -y https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
 ```
 
 ##### MacOS - AMD64
 ```bash
 brew tap joinself/crypto
-brew install libself-olm libself-omemo
+brew install libself-omemo
 ```
 
 ##### MacOS - ARM64
-Brew on M1 macs currently lacks environment variables needed for the SDK to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
+Brew on M1 macs currently lacks environment variables needed for the SDK to find the `omemo` library, so you will need to add some additional configuration to your system:
 
 In your `~/.zshrc`, add:
 ```bash
@@ -63,7 +56,7 @@ You should then be able to run:
 ```bash
 source ~/.zshrc
 brew tap joinself/crypto
-brew install --build-from-source libself-olm libself-omemo
+brew install --build-from-source libself-omemo
 ```
 
 Note, you may also need to create `/usr/local/lib` if it does not exist:
