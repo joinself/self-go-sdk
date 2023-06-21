@@ -7,7 +7,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.1
-	github.com/joinself/self-crypto-go v0.0.0-20230609175644-39d039746cb9
+	github.com/joinself/self-crypto-go v0.0.0-20230620152847-d5b4947a8e3c
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
