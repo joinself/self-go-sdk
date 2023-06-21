@@ -43,7 +43,7 @@ brew install libself-omemo
 ```
 
 ##### MacOS - ARM64
-Brew on M1 macs currently lacks environment variables needed for the SDK to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
+Brew on M1 macs currently lacks environment variables needed for the SDK to find the `omemo` library, so you will need to add some additional configuration to your system:
 
 In your `~/.zshrc`, add:
 ```bash
@@ -56,7 +56,7 @@ You should then be able to run:
 ```bash
 source ~/.zshrc
 brew tap joinself/crypto
-brew install --build-from-source libself-olm libself-omemo
+brew install --build-from-source libself-omemo
 ```
 
 Note, you may also need to create `/usr/local/lib` if it does not exist:
