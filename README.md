@@ -33,7 +33,7 @@ rpm -Uvh https://github.com/joinself/self-omemo/releases/download/0.4.0/self-ome
 
 ##### Fedora
 ```bash
-dnf install -y ttps://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
+dnf install -y https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
 ```
 
 ##### MacOS - AMD64
