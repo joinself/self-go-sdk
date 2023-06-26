@@ -26,14 +26,9 @@ curl -LO https://github.com/joinself/self-omemo/releases/download/0.4.0/self-ome
 apt install -y ./self-omemo_0.4.0_amd64.deb
 ```
 
-##### CentOS/RedHat
+##### CentOS/Fedora/RedHat
 ```bash
 rpm -Uvh https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
-```
-
-##### Fedora
-```bash
-dnf install -y https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
 ```
 
 ##### MacOS - AMD64
@@ -114,7 +109,7 @@ To query an identity:
 import "github.com/joinself/self-go-sdk"
 
 func main() {
-    svc := client.Identities()
+    svc := client.IdentityService()
 
     identity, err := svc.GetIdentity("<self-id>")
     ...
@@ -139,7 +134,7 @@ import (
 )
 
 func main() {
-    svc := client.Facts()
+    svc := client.FactService()
 
     req := fact.FactRequest{
         ...
@@ -166,7 +161,7 @@ import (
 )
 
 func main() {
-    svc := client.Authentication()
+    svc := client.AuthenticationService()
 
     err = svc.Request("<self-id>")
     ...
