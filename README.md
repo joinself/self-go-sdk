@@ -22,13 +22,14 @@ This SDK provides access to the following self services:
 
 ##### Debian/Ubuntu
 ```bash
-curl -LO https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo_0.4.0_amd64.deb
-apt install -y ./self-omemo_0.4.0_amd64.deb
+curl -LO https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
+apt install -y ./self-omemo_0.5.0_amd64.deb
 ```
 
 ##### CentOS/Fedora/RedHat
 ```bash
-rpm -Uvh https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo-0.4.0-1.x86_64.rpm
+yum install -y libstdc++-static
+rpm -Uvh https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-0.5.0-1.x86_64.rpm
 ```
 
 ##### MacOS - AMD64
