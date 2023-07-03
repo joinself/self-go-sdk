@@ -12,21 +12,7 @@ type MessagingServiceMock struct {
 	mock.Mock
 }
 
-// PermitConnection provides a mock function with given fields: selfID
-func (_m MessagingServiceMock) PermitConnection(selfID string) error {
-	ret := _m.Called(selfID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(selfID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Subscribe provides a mock function with given fields: msgType, h
-func (_m MessagingServiceMock) Subscribe(msgType string, h func(*messaging.Message)) {
+func (_m *MessagingServiceMock) Subscribe(msgType string, h func(*messaging.Message)) {
 	_m.Called(msgType, h)
 }

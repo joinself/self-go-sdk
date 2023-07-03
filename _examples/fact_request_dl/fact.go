@@ -44,11 +44,6 @@ func main() {
 		panic(err)
 	}
 
-	err = client.MessagingService().PermitConnection("*")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	log.Println("requesting user information")
 
 	// You can manage your redirection codes on your app management on the

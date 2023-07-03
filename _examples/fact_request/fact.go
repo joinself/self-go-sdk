@@ -41,11 +41,6 @@ func main() {
 		panic(err)
 	}
 
-	err = client.MessagingService().PermitConnection("*")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	if len(os.Args) < 2 {
 		panic("you must specify a self id as an argument")
 	}

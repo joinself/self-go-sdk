@@ -225,8 +225,6 @@ func TestJoin(t *testing.T) {
 	gid := "gid"
 
 	expectedDeviceURLs := []string{"/v1/identities/c/devices", "/v1/identities/a/devices", "/v1/identities/b/devices", "/v1/apps/" + config.SelfID + "/devices", "/v1/identities/c/devices"}
-	expectedRecipients := []string{"a", "b", "c"}
-	expectedPermissions := expectedRecipients
 	firstMessage := true
 
 	// MessagingClient mock
@@ -259,13 +257,7 @@ func TestJoin(t *testing.T) {
 	s.messagingClient = msgMock
 
 	// MessagingService mock
-	msgServiceMock := mocks.MessagingServiceMock{}
-	msgServiceMock.On("PermitConnection", mock.MatchedBy(func(input string) bool {
-		assert.Equal(t, expectedPermissions[0], input)
-		expectedPermissions = expectedPermissions[1:]
-		return true
-	})).Return(nil)
-	s.messagingService = msgServiceMock
+	s.messagingService = &mocks.MessagingServiceMock{}
 
 	// Mock API interactions
 	restMock := mocks.RestTransportMock{}

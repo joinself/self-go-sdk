@@ -40,10 +40,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	err = client.MessagingService().PermitConnection("*")
-	if err != nil {
-		log.Fatal("permitting connection returned with: ", err)
-	}
 
 	s := server{
 		cid:  uuid.New().String(),
