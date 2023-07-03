@@ -4,16 +4,11 @@ package messaging
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"runtime"
-	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
-	"unsafe"
 
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"github.com/tidwall/gjson"
@@ -28,8 +23,7 @@ const (
 )
 
 var (
-	decoder  = base64.RawURLEncoding
-	emptyACL = unsafe.Pointer(nil)
+	decoder = base64.RawURLEncoding
 
 	priorities = map[string]priority{
 		"chat.invite":                 priorityVisible,
@@ -59,7 +53,6 @@ type Transport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(err error))
 	Receive() (string, int64, []byte, error)
-	Command(command string, payload []byte) ([]byte, error)
 	Close() error
 }
 
@@ -89,7 +82,6 @@ type Client struct {
 	responses     sync.Map
 	subscriptions sync.Map
 	inboxID       string
-	acl           *unsafe.Pointer
 	closing       chan struct{}
 	closed        chan struct{}
 	started       bool
@@ -131,7 +123,6 @@ func New(config Config) (*Client, error) {
 		transport: config.Transport,
 		storage:   config.Storage,
 		inboxID:   inboxID,
-		acl:       &emptyACL,
 		closing:   make(chan struct{}, 1),
 		closed:    make(chan struct{}, 1),
 		started:   false,
@@ -212,67 +203,11 @@ func (c *Client) Subscribe(msgType string, sub func(sender string, payload []byt
 	c.subscriptions.Store(msgType, sub)
 }
 
-// Command sends a command to the messaging server to be fulfilled
-func (c *Client) Command(command, selfID string, payload []byte) ([]byte, error) {
-	resp, err := c.transport.Command(command, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	switch command {
-	case "acl.permit":
-		c.permit(selfID)
-	case "acl.revoke":
-		c.revoke(selfID)
-	}
-
-	return resp, nil
-}
-
 // Close gracefully closes down the messaging cient
 func (c *Client) Close() error {
 	c.closing <- struct{}{}
 	<-c.closed
 	return nil
-}
-
-// ListConnections lists all self IDs that are permitted to send messages
-func (c *Client) ListConnections() ([]string, error) {
-	var rules []string
-
-	resp, err := c.Command("acl.list", "", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(resp, &rules)
-	if err != nil {
-		return nil, err
-	}
-
-	atomic.StorePointer(c.acl, unsafe.Pointer(&rules))
-
-	return rules, nil
-}
-
-// IsPermittingConnectionsFrom checks if the current connection is permitting connections from
-func (c *Client) IsPermittingConnectionsFrom(selfid string) bool {
-	conns := *(*[]string)(atomic.LoadPointer(c.acl))
-	if len(conns) == 0 {
-		return false
-	}
-
-	if (conns)[0] == "*" {
-		return true
-	}
-
-	for _, c := range conns {
-		if c == selfid {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (c *Client) reader() {
@@ -331,66 +266,6 @@ func (c *Client) reader() {
 			go fn.(func(sender string, plaintext []byte))(sender, plaintext)
 			continue
 		}
-	}
-}
-
-func (c *Client) revoke(selfID string) {
-	for {
-		connsp := atomic.LoadPointer(c.acl)
-		conns := (*[]string)(connsp)
-
-		connsCopy := make([]string, len(*conns))
-		copy(connsCopy, *conns)
-
-		for i, c := range connsCopy {
-			if c == selfID {
-				connsCopy = append(connsCopy[:i], connsCopy[i+1:]...)
-			}
-		}
-
-		success := atomic.CompareAndSwapPointer(
-			c.acl,
-			connsp,
-			unsafe.Pointer(&connsCopy),
-		)
-		if success {
-			return
-		}
-
-		runtime.Gosched()
-	}
-}
-
-func (c *Client) permit(selfID string) {
-	for {
-		connsp := atomic.LoadPointer(c.acl)
-		conns := (*[]string)(connsp)
-
-		connsCopy := make([]string, len(*conns))
-		copy(connsCopy, *conns)
-
-		for _, c := range *conns {
-			if c == selfID {
-				// don't duplicate the entry
-				return
-			}
-		}
-
-		connsCopy = append(connsCopy, selfID)
-
-		sort.Strings(connsCopy)
-
-		success := atomic.CompareAndSwapPointer(
-			c.acl,
-			connsp,
-			unsafe.Pointer(&connsCopy),
-		)
-
-		if success {
-			return
-		}
-
-		runtime.Gosched()
 	}
 }
 

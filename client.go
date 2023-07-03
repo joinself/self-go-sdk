@@ -33,7 +33,6 @@ type WebsocketTransport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error))
 	Receive() (string, int64, []byte, error)
-	Command(command string, payload []byte) ([]byte, error)
 	Connect() error
 	Close() error
 }
@@ -48,9 +47,6 @@ type MessagingClient interface {
 	Register(cid string)
 	Wait(cid string, timeout time.Duration) (string, []byte, error)
 	Subscribe(msgType string, sub func(sender string, payload []byte))
-	Command(command, selfID string, payload []byte) ([]byte, error)
-	IsPermittingConnectionsFrom(selfid string) bool
-	ListConnections() ([]string, error)
 	Close() error
 }
 
@@ -110,13 +106,7 @@ func (c *Client) Start() error {
 		return nil
 	}
 
-	err := c.connectors.Websocket.Connect()
-	if err != nil {
-		return err
-	}
-
-	_, err = c.MessagingService().ListConnections()
-	return err
+	return c.connectors.Websocket.Connect()
 }
 
 // FactService returns a client for working with facts

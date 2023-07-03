@@ -169,10 +169,6 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, ErrNotEnoughCredits
 	}
 
-	if !s.messaging.IsPermittingConnectionsFrom(req.SelfID) {
-		return nil, ErrNotConnected
-	}
-
 	cid := uuid.New().String()
 
 	payload, err := s.factPayload(cid, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Auth, req.Callback)
@@ -221,10 +217,6 @@ func (s Service) RequestAsync(req *FactRequestAsync) error {
 
 	if !s.paidActions() {
 		return ErrNotEnoughCredits
-	}
-
-	if !s.messaging.IsPermittingConnectionsFrom(req.SelfID) {
-		return ErrNotConnected
 	}
 
 	payload, err := s.factPayload(req.CID, req.SelfID, req.SelfID, req.Description, req.Facts, nil, req.Expiry, &req.AllowedFor, req.Auth, req.Callback)

@@ -159,13 +159,6 @@ func (s *Service) Invite(gid string, name string, members []string, opts ...Invi
 
 // Join joins a group.
 func (s *Service) Join(gid string, members []string) {
-	// Allow incoming connections from the given members.
-	for _, m := range members {
-		if m != s.selfID {
-			s.messagingService.PermitConnection(m)
-		}
-	}
-
 	// Create missing sessions with group members.
 	s.createMissingSessions(members)
 
