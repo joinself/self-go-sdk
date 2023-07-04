@@ -71,10 +71,6 @@ func (c *testResponder) Send(recipients []string, mtype string, plaintext []byte
 
 func (c *testResponder) Subscribe(msgType string, sub func(sender string, payload []byte)) {}
 
-func (c *testResponder) IsPermittingConnectionsFrom(selfid string) bool {
-	return true
-}
-
 func (c *testResponder) Get(path string) ([]byte, error) {
 	val, ok := c.secondaryPaths[path]
 	if ok {

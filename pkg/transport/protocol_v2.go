@@ -53,42 +53,6 @@ func (e *encoderV2) MarshalAuth(device, token string, offset int64) ([]byte, err
 	return a, nil
 }
 
-// MarshalACL creates a protocol v2 acl command
-func (e *encoderV2) MarshalACL(id, command string, payload []byte) ([]byte, error) {
-	b := e.pool.Get().(*flatbuffers.Builder)
-	b.Reset()
-
-	aid := b.CreateByteString([]byte(id))
-	apl := b.CreateByteVector(payload)
-
-	msgprotov2.ACLStart(b)
-	msgprotov2.ACLAddMsgtype(b, msgprotov2.MsgTypeACL)
-	msgprotov2.ACLAddId(b, aid)
-
-	switch command {
-	case "acl.list":
-		msgprotov2.ACLAddCommand(b, msgprotov2.ACLCommandLIST)
-	case "acl.permit":
-		msgprotov2.ACLAddCommand(b, msgprotov2.ACLCommandPERMIT)
-		msgprotov2.ACLAddPayload(b, apl)
-	case "acl.revoke":
-		msgprotov2.ACLAddCommand(b, msgprotov2.ACLCommandREVOKE)
-		msgprotov2.ACLAddPayload(b, apl)
-	}
-
-	acl := msgprotov2.ACLEnd(b)
-
-	b.Finish(acl)
-
-	fb := b.FinishedBytes()
-	a := make([]byte, len(fb))
-	copy(a, fb)
-
-	e.pool.Put(b)
-
-	return a, nil
-}
-
 // MarshalMessage creates a protocol v2 message
 func (e *encoderV2) MarshalMessage(id, sender, recipient, mtype string, priority int, ciphertext []byte) ([]byte, error) {
 	b := e.pool.Get().(*flatbuffers.Builder)
@@ -150,9 +114,4 @@ func (e *encoderV2) UnmarshalMessage(data []byte) (Message, int64, int64, error)
 	}
 
 	return m, md.Timestamp(), md.Offset(), nil
-}
-
-// UnmarshalACL reads a protocol v2 acl event
-func (e *encoderV2) UnmarshalACL(data []byte) (ACL, error) {
-	return msgprotov2.GetRootAsACL(data, 0), nil
 }

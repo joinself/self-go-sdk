@@ -36,29 +36,6 @@ func (_m MessagingClient) Command(command string, selfID string, payload []byte)
 	return r0, r1
 }
 
-// ListConnections provides a mock function with given fields:
-func (_m MessagingClient) ListConnections() ([]string, error) {
-	ret := _m.Called()
-
-	var r0 []string
-	if rf, ok := ret.Get(0).(func() []string); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Request provides a mock function with given fields: recipients, cid, data, timeout
 func (_m MessagingClient) Request(recipients []string, cid, mtype string, data []byte, timeout time.Duration) (string, []byte, error) {
 	ret := _m.Called(recipients, cid, data, timeout)

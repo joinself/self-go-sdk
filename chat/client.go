@@ -13,7 +13,6 @@ import (
 // messagingService handles all interactions with the messaging service
 type messagingService interface {
 	Subscribe(msgType string, h func(m *messaging.Message))
-	PermitConnection(selfID string) error
 }
 
 // messagingClient handles all interactions with self messaging and its users

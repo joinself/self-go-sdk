@@ -77,12 +77,6 @@ func (c *testMessaging) Subscribe(msgType string, sub func(sender string, payloa
 	}
 }
 
-func (c *testMessaging) ListConnections() ([]string, error) {
-	var cs []string
-	json.Unmarshal(c.in, &cs)
-	return cs, nil
-}
-
 func (c *testMessaging) Command(command, selfID string, payload []byte) ([]byte, error) {
 	c.out[command] = payload
 	return c.in, c.sendError

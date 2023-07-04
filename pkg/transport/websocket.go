@@ -24,7 +24,6 @@ const (
 	priorityClose = iota
 	priorityPong
 	priorityNotification
-	priorityACL
 	priorityMessage
 )
 
@@ -99,7 +98,7 @@ func NewWebsocket(config WebsocketConfig) (*Websocket, error) {
 
 	c := Websocket{
 		config:    config,
-		queue:     pqueue.New(5, config.InboxSize),
+		queue:     pqueue.New(4, config.InboxSize),
 		inbox:     make(chan msg, config.InboxSize),
 		responses: sync.Map{},
 		offset:    config.Offset,
@@ -183,26 +182,6 @@ func (c *Websocket) Receive() (string, int64, []byte, error) {
 	}
 
 	return string(m.msg.Sender()), m.offset, m.msg.CiphertextBytes(), nil
-}
-
-// Command sends a command to the messaging server to be fulfilled
-func (c *Websocket) Command(command string, payload []byte) ([]byte, error) {
-	id := uuid.New().String()
-
-	acl, err := c.enc.MarshalACL(id, command, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	e := event{
-		id:   id,
-		data: acl,
-		err:  make(chan error, 1),
-	}
-
-	c.queue.Push(priorityNotification, &e)
-
-	return e.data, <-e.err
 }
 
 // Close closes the messaging clients persistent connection
@@ -373,24 +352,6 @@ func (c *Websocket) reader() {
 			} else {
 				rev.err <- rerr
 			}
-
-		case msgprotov2.MsgTypeACL:
-			a, err := c.enc.UnmarshalACL(data)
-			if err != nil {
-				log.Printf("[websocket] failed to unmarshal acl: %s", err.Error())
-				continue
-			}
-
-			pch, ok := c.responses.Load(string(a.Id()))
-			if !ok {
-				continue
-			}
-
-			c.responses.Delete(string(a.Id()))
-
-			ev := pch.(*event)
-			ev.data = a.PayloadBytes()
-			ev.err <- nil
 
 		case msgprotov2.MsgTypeMSG:
 			m, _, offset, err := c.enc.UnmarshalMessage(data)

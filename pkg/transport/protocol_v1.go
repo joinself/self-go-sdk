@@ -27,27 +27,6 @@ func (e *encoderV1) MarshalAuth(device, token string, offset int64) ([]byte, err
 	})
 }
 
-// MarshalACL creates a protocol v1 acl command
-func (e *encoderV1) MarshalACL(id, command string, payload []byte) ([]byte, error) {
-	var c msgprotov1.ACLCommand
-
-	switch command {
-	case "acl.list":
-		c = msgprotov1.ACLCommand_LIST
-	case "acl.permit":
-		c = msgprotov1.ACLCommand_PERMIT
-	case "acl.revoke":
-		c = msgprotov1.ACLCommand_REVOKE
-	}
-
-	return proto.Marshal(&msgprotov1.AccessControlList{
-		Id:      id,
-		Type:    msgprotov1.MsgType_ACL,
-		Command: c,
-		Payload: payload,
-	})
-}
-
 // MarshalMessage creates a protocol v1 message
 func (e *encoderV1) MarshalMessage(id, sender, recipient, mtype string, priority int, ciphertext []byte) ([]byte, error) {
 	return proto.Marshal(&msgprotov1.Message{
@@ -168,34 +147,4 @@ func (e *encoderV1) UnmarshalMessage(data []byte) (Message, int64, int64, error)
 		rt: []byte(m.Recipient),
 		ct: m.Ciphertext,
 	}, m.Timestamp.AsTime().Unix(), m.Offset, nil
-}
-
-type acl struct {
-	id []byte
-	pl []byte
-}
-
-// Id implements the id method for a access control list
-func (a *acl) Id() []byte {
-	return a.id
-}
-
-// PayloadBytes implements the payload method for a access control list
-func (a *acl) PayloadBytes() []byte {
-	return a.pl
-}
-
-// UnmarshalACL reads a protocol v1 acl event
-func (e *encoderV1) UnmarshalACL(data []byte) (ACL, error) {
-	var a msgprotov1.AccessControlList
-
-	err := proto.Unmarshal(data, &a)
-	if err != nil {
-		return nil, err
-	}
-
-	return &acl{
-		id: []byte(a.Id),
-		pl: a.Payload,
-	}, nil
 }
