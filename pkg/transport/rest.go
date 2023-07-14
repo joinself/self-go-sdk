@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -90,7 +90,7 @@ func (c *Rest) request(method, path string, data []byte, headers map[string]stri
 
 	switch resp.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 	default:
 		return nil, errored(resp)
 	}
@@ -104,7 +104,7 @@ type apiResponse struct {
 func errored(resp *http.Response) error {
 	var e apiResponse
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.New(resp.Status)
 	}

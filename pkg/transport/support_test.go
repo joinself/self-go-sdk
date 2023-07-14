@@ -108,7 +108,7 @@ func newTestMessagingServerWithInbox(t *testing.T, inboxSize int) *testmsgserver
 
 func newTestMessagingServerUnresponsive(t *testing.T) *testmsgserver {
 	s := testmsgserver{
-		in:   make(chan *msgprotov2.Message, 0),
+		in:   make(chan *msgprotov2.Message),
 		out:  make(chan []byte, 1024),
 		stop: make(chan bool, 1),
 	}
