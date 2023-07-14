@@ -4,7 +4,7 @@ package transport
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/stretchr/testify/assert"
@@ -110,7 +110,7 @@ func TestRestPostSuccess(t *testing.T) {
 	defer s.s.Close()
 
 	s.handler = func(w http.ResponseWriter, r *http.Request) {
-		payload, err := ioutil.ReadAll(r.Body)
+		payload, err := io.ReadAll(r.Body)
 		require.Nil(t, err)
 		assert.Equal(t, "encoding/json", r.Header.Get("Content-Type"))
 		assert.Equal(t, []byte(`{"test": "payload"}`), payload)
@@ -142,7 +142,7 @@ func TestRestPostFailure(t *testing.T) {
 			return
 		}
 
-		payload, err := ioutil.ReadAll(r.Body)
+		payload, err := io.ReadAll(r.Body)
 		require.Nil(t, err)
 
 		if !bytes.Equal(payload, []byte(`{"test": "payload"}`)) {
@@ -172,7 +172,7 @@ func TestRestPutSuccess(t *testing.T) {
 	defer s.s.Close()
 
 	s.handler = func(w http.ResponseWriter, r *http.Request) {
-		payload, err := ioutil.ReadAll(r.Body)
+		payload, err := io.ReadAll(r.Body)
 		require.Nil(t, err)
 		assert.Equal(t, "encoding/json", r.Header.Get("Content-Type"))
 		assert.Equal(t, []byte(`{"test": "payload"}`), payload)
@@ -204,7 +204,7 @@ func TestRestPutFailure(t *testing.T) {
 			return
 		}
 
-		payload, err := ioutil.ReadAll(r.Body)
+		payload, err := io.ReadAll(r.Body)
 		require.Nil(t, err)
 
 		if !bytes.Equal(payload, []byte(`{"test": "payload"}`)) {

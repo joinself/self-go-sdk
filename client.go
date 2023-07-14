@@ -102,10 +102,7 @@ func New(cfg Config) (*Client, error) {
 }
 
 func (c *Client) Start() error {
-	if !c.MessagingService().Start() {
-		return nil
-	}
-
+	c.MessagingService().Start()
 	return c.connectors.Websocket.Connect()
 }
 

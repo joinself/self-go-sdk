@@ -247,6 +247,7 @@ func TestWebsocketCleanup(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		cc, err := NewWebsocket(cfg)
 		require.Nil(t, err)
+
 		err = cc.Connect()
 		require.NotNil(t, err)
 
