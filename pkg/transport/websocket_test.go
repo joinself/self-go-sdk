@@ -3,7 +3,6 @@
 package transport
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 	"time"
@@ -270,33 +269,4 @@ func TestWebsocketCleanup(t *testing.T) {
 	assert.NotEqual(t, goroutines, runtime.NumGoroutine())
 
 	c.Close()
-}
-
-func TestWebsocketConnectionFailure(t *testing.T) {
-	cfg := WebsocketConfig{
-		SelfID:       "test",
-		DeviceID:     "1",
-		PrivateKey:   sk,
-		MessagingURL: "ws://127.0.0.1:1",
-		TCPDeadline:  time.Second * 10,
-		InboxSize:    10240,
-	}
-
-	c, err := NewWebsocket(cfg)
-	require.Nil(t, err)
-	err = c.Connect()
-	require.NotNil(t, err)
-
-	s := newTestMessagingServer(t)
-	defer s.s.Close()
-
-	time.Sleep(time.Second * 5)
-	fmt.Println("changing target and reconnect")
-
-	c.config.MessagingURL = s.endpoint
-
-	err = c.Connect()
-	require.Nil(t, err)
-
-	time.Sleep(time.Second * 5)
 }

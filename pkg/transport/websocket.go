@@ -215,36 +215,34 @@ func (c *Websocket) Connect() error {
 		return errors.New("could not connect")
 	}
 
-	err := c.connect()
-	if err == nil {
-		return nil
-	}
+	var ws *websocket.Conn
+	var connected bool
 
-	// if it failed to reconnect, set the connection status to closed
-	atomic.CompareAndSwapInt32(&c.closed, 0, 1)
+	defer func(success *bool) {
+		if !(*success) {
+			// if it failed to reconnect, set the connection status to closed
+			atomic.CompareAndSwapInt32(&c.closed, 0, 1)
 
-	// close the connection
-	if c.ws == nil {
-		return err
-	}
+			// close the connection
+			if ws == nil {
+				return
+			}
 
-	log.Println("[websocket] closing errored connection", err)
+			log.Println("[websocket] closing errored connection")
 
-	closeErr := c.ws.Close()
-	if closeErr != nil {
-		log.Println("[websocket] socket close failed with", closeErr)
-	}
+			err := ws.Close()
+			if err != nil {
+				log.Println("[websocket]", err)
+			}
+		}
+	}(&connected)
 
-	return err
-}
-
-func (c *Websocket) connect() error {
 	token, err := GenerateToken(c.config.SelfID, c.config.KeyID, c.config.PrivateKey)
 	if err != nil {
 		return err
 	}
 
-	ws, _, err := websocket.DefaultDialer.Dial(c.config.MessagingURL, nil)
+	ws, _, err = websocket.DefaultDialer.Dial(c.config.MessagingURL, nil)
 	if err != nil {
 		return err
 	}
@@ -283,6 +281,8 @@ func (c *Websocket) connect() error {
 		return errors.New("unknown authentication response")
 	}
 
+	connected = true
+
 	go c.reader()
 	go c.writer()
 
@@ -309,7 +309,6 @@ func (c *Websocket) reader() {
 			if c.isShutdown() {
 				close(c.inbox)
 			} else {
-				fmt.Println("here 1", err)
 				c.reconnect(err)
 			}
 			return
@@ -320,7 +319,6 @@ func (c *Websocket) reader() {
 			if c.isShutdown() {
 				close(c.inbox)
 			} else {
-				fmt.Println("here 2")
 				c.reconnect(err)
 			}
 			return

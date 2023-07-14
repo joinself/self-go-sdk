@@ -137,8 +137,8 @@ func (c *Client) Start() bool {
 		return false
 	}
 
-	go c.reader()
 	c.started = true
+	go c.reader()
 
 	return true
 }
