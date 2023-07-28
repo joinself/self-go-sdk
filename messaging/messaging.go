@@ -77,9 +77,11 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 			return
 		}
 
-		if mp.Audience != s.selfID {
-			log.Println("messaging:", ErrMessageBadAudience.Error())
-			return
+		if messageType != "chat.invite" && messageType != "chat.join" && messageType != "chat.leave" {
+			if mp.Audience != s.selfID {
+				log.Println("messaging:", ErrMessageBadAudience.Error())
+				return
+			}
 		}
 
 		if mp.Issuer != selfID {
