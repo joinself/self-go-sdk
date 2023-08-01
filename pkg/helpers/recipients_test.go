@@ -1,9 +1,9 @@
 package helpers
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,14 +17,17 @@ func (m *mockRest) Get(path string) ([]byte, error) {
 }
 
 func TestPrepareRecipients(t *testing.T) {
-	var m mockRest
+	m := mockRest{
+		body: []byte(`[]`),
+	}
 
 	_, err := PrepareRecipients([]string{"alice", "bob"}, nil, &m)
 	require.NotNil(t, err)
 
-	recipients, err := PrepareRecipients([]string{"alice", "bob"}, nil, &m)
+	m.body = []byte(`["1"]`)
+
+	recipeints, err := PrepareRecipients([]string{"alice", "bob"}, nil, &m)
 	require.Nil(t, err)
 
-	fmt.Println(recipients)
-
+	assert.Equal(t, []string{"alice:1", "bob:1"}, recipeints)
 }
