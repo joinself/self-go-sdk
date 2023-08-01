@@ -20,6 +20,8 @@ import (
 )
 
 var (
+	// ErrInvalidRecipients returned when an empty list of recipients is provided
+	ErrInvalidRecipients = errors.New("recipient list is empty")
 	// ErrSessionNotFound session was not found for a given recipient and sender
 	ErrSessionNotFound = errors.New("there is no existing session that matches the given sender and recipient")
 	// ErrInvalidGroupMessageRecipient a received message is not intended for this identity
@@ -287,6 +289,10 @@ func (s *Storage) AccountOffset(inboxID string) (int64, error) {
 }
 
 func (s *Storage) Encrypt(from string, to []string, plaintext []byte) ([]byte, error) {
+	if len(to) < 1 {
+		return nil, ErrInvalidRecipients
+	}
+
 	sessions := make([]*selfcrypto.Session, len(to))
 
 	s.mu.Lock()
