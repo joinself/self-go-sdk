@@ -1,6 +1,9 @@
 package helpers
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type RestTransport interface {
 	Get(path string) ([]byte, error)
@@ -42,6 +45,10 @@ func getDevices(api RestTransport, selfID string) ([]string, error) {
 	err = json.Unmarshal(resp, &devices)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(devices) < 1 {
+		return nil, fmt.Errorf("recipient '%s' has no active devices", selfID)
 	}
 
 	return devices, nil
