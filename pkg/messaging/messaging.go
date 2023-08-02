@@ -27,7 +27,7 @@ var (
 
 	priorities = map[string]priority{
 		"chat.invite":                 priorityVisible,
-		"chat.join":                   priorityInvisible,
+		"chat.join":                   priorityVisible,
 		"chat.message":                priorityVisible,
 		"chat.message.delete":         priorityInvisible,
 		"chat.message.delivered":      priorityInvisible,
