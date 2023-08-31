@@ -494,7 +494,7 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 	case StatusAccepted:
 		return &resp, nil
 	case StatusRejected:
-		return &resp, ErrStatusRejected
+		return &resp, nil
 	case StatusUnauthorized:
 		return &resp, ErrStatusUnauthorized
 	default:

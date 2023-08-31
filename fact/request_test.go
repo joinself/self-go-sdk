@@ -460,8 +460,9 @@ func TestRequestBadStatus(t *testing.T) {
 		return fr.SelfID + ":1", []byte(response.FullSerialize()), nil
 	}
 
-	_, err = s.Request(fr)
-	require.NotNil(t, err)
+	resp, err := s.Request(fr)
+	require.Nil(t, err)
+	require.Equal(t, StatusRejected, resp.Status)
 	assert.True(t, called)
 }
 
@@ -1582,7 +1583,7 @@ func TestRequestViaIntermediaryBadStatus(t *testing.T) {
 	}
 
 	_, err = s.RequestViaIntermediary(fr)
-	require.NotNil(t, err)
+	require.Nil(t, err)
 	assert.True(t, called)
 }
 
