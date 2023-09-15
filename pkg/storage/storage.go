@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -203,11 +204,12 @@ func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) er
 	// publish the keys after they have been successfuly saved to the db
 	// to avoid a situation where keys are published to the network, but
 	// forgotten by the account. attempt to retry the upload if it fails
-	for i := 0; i < 60; i++ {
+	for {
 		err = s.publishOneTimeKeys(inboxID, otks)
 		if err == nil {
 			break
 		}
+		log.Println("retrying one time key publication")
 		time.Sleep(time.Second * 5)
 	}
 
