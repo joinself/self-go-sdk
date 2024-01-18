@@ -13,12 +13,12 @@ const FactGivenNames = "given_names"
 const FactIssuingAuthority = "issuing_authority"
 const FactNationality = "nationality"
 const FactNickname = "nickname"
-const FactPhoneNumber = "phone_number"
 const FactPhoto = "photo"
 const FactPlaceOfBirth = "place_of_birth"
 const FactSelfieVerification = "selfie_verification"
 const FactSex = "sex"
 const FactSurname = "surname"
+const FactUnverifiedPhoneNumber = "unverified_phone_number"
 const SourceDrivingLicense = "driving_license"
 const SourceFacebook = "facebook"
 const SourceIdentityCard = "identity_card"
@@ -80,6 +80,6 @@ var spec = map[string][]string{
 		FactDocumentNumber,
 		FactDisplayName,
 		FactEmailAddress,
-		FactPhoneNumber,
+		FactUnverifiedPhoneNumber,
 	},
 }
