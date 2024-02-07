@@ -89,7 +89,11 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 			return
 		}
 
-		if ntp.TimeFunc().After(mp.ExpiresAt) {
+		expiresAt := mp.ExpiresAt
+		if mp.ExpiresAt.IsZero() {
+			expiresAt = mp.IssuedAt.Add(24 * time.Hour)
+		}
+		if ntp.TimeFunc().After(expiresAt) {
 			log.Println("messaging:", ErrMessageExpired.Error())
 			return
 		}
