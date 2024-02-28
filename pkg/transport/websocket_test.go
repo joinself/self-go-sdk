@@ -148,7 +148,7 @@ func TestWebsocketReceive(t *testing.T) {
 
 	s.out <- b.FinishedBytes()
 
-	sender, _, m, err := c.Receive()
+	_, sender, _, m, err := c.Receive()
 	require.Nil(t, err)
 
 	assert.Equal(t, "alice:1", sender)
