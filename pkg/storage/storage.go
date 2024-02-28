@@ -430,8 +430,12 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	var sessionExisting bool
 	var otks []byte
 
+	log.Printf("[sdk.storage] decrypting message from: %s ciphertext: %s", from, string(ciphertext))
+
 	err = row.Scan(&sessionPickle)
 	if err != nil {
+		log.Printf("[sdk.storage] creating new session with %s", from)
+
 		if !errors.Is(err, sql.ErrNoRows) {
 			txn.Rollback()
 			return nil, err
@@ -461,11 +465,15 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 		// so create a new inbound session as this is a
 		// one time key message
 		if otkm.Type == 0 && !matches {
+			log.Printf("[sdk.storage] refreshing session with %s", from)
+
 			session, otks, err = s.createInboundSession(txn, from, to, otkm)
 			if err != nil {
 				txn.Rollback()
 				return nil, err
 			}
+		} else {
+			log.Printf("[sdk.storage] using existing session with %s", from)
 		}
 	}
 
