@@ -24,9 +24,9 @@ func (t *testWebsocketTransport) SendAsync(recipients []string, mtype string, pr
 	callback(nil)
 }
 
-func (t *testWebsocketTransport) Receive() (string, int64, []byte, error) {
+func (t *testWebsocketTransport) Receive() ([]byte, string, int64, []byte, error) {
 	time.Sleep(time.Minute)
-	return "test:1", 0, []byte("{}"), nil
+	return []byte("id"), "test:1", 0, []byte("{}"), nil
 }
 
 func (t *testWebsocketTransport) Command(command string, payload []byte) ([]byte, error) {

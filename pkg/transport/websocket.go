@@ -175,13 +175,13 @@ func (c *Websocket) SendAsyncWithID(id, recipient string, mtype string, priority
 }
 
 // Receive receive a message
-func (c *Websocket) Receive() (string, int64, []byte, error) {
+func (c *Websocket) Receive() ([]byte, string, int64, []byte, error) {
 	m, ok := <-c.inbox
 	if !ok {
-		return "", -1, nil, ErrChannelClosed
+		return nil, "", -1, nil, ErrChannelClosed
 	}
 
-	return string(m.msg.Sender()), m.offset, m.msg.CiphertextBytes(), nil
+	return m.msg.Id(), string(m.msg.Sender()), m.offset, m.msg.CiphertextBytes(), nil
 }
 
 // Close closes the messaging clients persistent connection

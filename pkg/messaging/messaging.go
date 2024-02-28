@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/joinself/self-go-sdk/pkg/helpers"
+	"github.com/joinself/self-go-sdk/pkg/storage"
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/ed25519"
@@ -40,6 +42,7 @@ var (
 		"identities.facts.query.req":  priorityVisible,
 		"identities.facts.issue":      priorityVisible,
 		"identities.notify":           priorityVisible,
+		"sessions.recover":            priorityInvisible,
 	}
 )
 
@@ -52,7 +55,7 @@ type response struct {
 type Transport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(err error))
-	Receive() (string, int64, []byte, error)
+	Receive() ([]byte, string, int64, []byte, error)
 	Close() error
 }
 
@@ -67,6 +70,7 @@ type Storage interface {
 type Config struct {
 	SelfID       string
 	DeviceID     string
+	KeyID        string
 	PrivateKey   ed25519.PrivateKey
 	MessagingURL string
 	APIURL       string
@@ -220,7 +224,7 @@ func (c *Client) reader() {
 		default:
 		}
 
-		sender, offset, ciphertext, err := c.transport.Receive()
+		id, sender, offset, ciphertext, err := c.transport.Receive()
 		if err != nil {
 			if !errors.Is(err, transport.ErrChannelClosed) {
 				log.Println("messaging:", err)
@@ -231,6 +235,40 @@ func (c *Client) reader() {
 		plaintext, err := c.storage.Decrypt(sender, c.inboxID, offset, ciphertext)
 		if err != nil {
 			log.Println("messaging:", err)
+			if errors.Is(err, storage.ErrDecryptionFailed) {
+				log.Println("messaging: decryption failed, re-establishing session with sender")
+
+				// we've entered a failure state with the current
+				// session, so let the sender know their message
+				// failed to decrypt using a new session
+				resp, err := helpers.PrepareJWS(
+					map[string]interface{}{
+						"typ":           "sessions.recover",
+						"from_event_id": string(id),
+					},
+					c.config.KeyID,
+					c.config.PrivateKey,
+				)
+
+				if err != nil {
+					log.Println("messaging:", err)
+					continue
+				}
+
+				ciphertext, err = c.storage.Encrypt(c.inboxID, []string{sender}, resp)
+				if err != nil {
+					log.Println("messaging:", err)
+					continue
+				}
+
+				mtype := "sessions.recover"
+
+				c.transport.SendAsync([]string{sender}, mtype, int(selectPriority(mtype)), ciphertext, func(err error) {
+					if err != nil {
+						log.Println("messaging:", err)
+					}
+				})
+			}
 			continue
 		}
 

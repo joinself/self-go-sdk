@@ -32,7 +32,7 @@ type RestTransport interface {
 type WebsocketTransport interface {
 	Send(recipients []string, mtype string, priority int, data []byte) error
 	SendAsync(recipients []string, mtype string, priority int, data []byte, callback func(error))
-	Receive() (string, int64, []byte, error)
+	Receive() ([]byte, string, int64, []byte, error)
 	Connect() error
 	Close() error
 }

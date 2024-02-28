@@ -9,6 +9,7 @@ import (
 )
 
 type testEvent struct {
+	id        string
 	sender    string
 	recipient string
 	data      []byte
@@ -48,18 +49,18 @@ func (c *testWebsocket) SendAsync(recipients []string, mtype string, priority in
 	callback(nil)
 }
 
-func (c *testWebsocket) Receive() (string, int64, []byte, error) {
+func (c *testWebsocket) Receive() ([]byte, string, int64, []byte, error) {
 	c.offset++
 
 	e, ok := <-c.in
 	if !ok {
-		return "", c.offset, nil, transport.ErrChannelClosed
+		return nil, "", c.offset, nil, transport.ErrChannelClosed
 	}
 
 	if e.recipient == "failure" {
-		return "", c.offset, nil, errors.New("transport failure")
+		return nil, "", c.offset, nil, errors.New("transport failure")
 	}
-	return e.sender, c.offset, e.data, nil
+	return []byte(e.id), e.sender, c.offset, e.data, nil
 }
 
 func (c *testWebsocket) Command(command string, payload []byte) ([]byte, error) {

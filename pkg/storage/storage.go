@@ -27,6 +27,8 @@ var (
 	ErrSessionNotFound = errors.New("there is no existing session that matches the given sender and recipient")
 	// ErrInvalidGroupMessageRecipient a received message is not intended for this identity
 	ErrInvalidGroupMessageRecipient = errors.New("group message does not contain a recipient header for this identity")
+	// ErrDecryptionFailed returned when a session failed to decrypt a message
+	ErrDecryptionFailed = errors.New("session failed to decrypt message")
 )
 
 type oneTimeKeys []oneTimeKey
@@ -485,6 +487,31 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 
 	plaintext, err := gs.Decrypt(from, ciphertext)
 	if err != nil {
+		sessionerr := session.LastError()
+		if sessionerr != nil {
+			if sessionerr.Error() == "BAD_MESSAGE_MAC" {
+				if !sessionExisting {
+					return nil, ErrDecryptionFailed
+				}
+
+				// the session can't decrypt, so delete it
+				// and the messaging layer transmit with a new
+				// session
+				_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
+				if err != nil {
+					txn.Rollback()
+					return nil, err
+				}
+
+				err = txn.Commit()
+				if err != nil {
+					return nil, err
+				}
+
+				return nil, ErrDecryptionFailed
+			}
+		}
+
 		txn.Rollback()
 		return nil, err
 	}
