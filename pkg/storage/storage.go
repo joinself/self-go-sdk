@@ -499,10 +499,12 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 				return nil, ErrDecryptionFailed
 			}
 
+			log.Printf("[sdk.storage] purging bad session as: %s with: %s", to, from)
+
 			// the session can't decrypt, so delete it
 			// and the messaging layer transmit with a new
 			// session
-			_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
+			_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?;", to, from)
 			if err != nil {
 				txn.Rollback()
 				return nil, err
