@@ -488,28 +488,32 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	plaintext, err := gs.Decrypt(from, ciphertext)
 	if err != nil {
 		sessionerr := session.LastError()
+
 		if sessionerr != nil {
-			if sessionerr.Error() == "bad message MAC" {
-				if !sessionExisting {
-					return nil, ErrDecryptionFailed
-				}
+			log.Printf("[sdk.storage] decryption failed with %s", sessionerr)
+		}
 
-				// the session can't decrypt, so delete it
-				// and the messaging layer transmit with a new
-				// session
-				_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
-				if err != nil {
-					txn.Rollback()
-					return nil, err
-				}
-
-				err = txn.Commit()
-				if err != nil {
-					return nil, err
-				}
-
+		if errors.Is(sessionerr, selfcrypto.ErrBadMessageFormat) || errors.Is(sessionerr, selfcrypto.ErrBadMessageMAC) || errors.Is(sessionerr, selfcrypto.ErrBadMessageKeyID) || errors.Is(sessionerr, selfcrypto.ErrBadSessionKey) {
+			if !sessionExisting {
+				txn.Rollback()
 				return nil, ErrDecryptionFailed
 			}
+
+			// the session can't decrypt, so delete it
+			// and the messaging layer transmit with a new
+			// session
+			_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?;", sessionPickle, to, from)
+			if err != nil {
+				txn.Rollback()
+				return nil, err
+			}
+
+			err = txn.Commit()
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, ErrDecryptionFailed
 		}
 
 		txn.Rollback()
