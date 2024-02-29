@@ -7,10 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
+	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/storage"
 	"github.com/joinself/self-go-sdk/pkg/transport"
 	"github.com/tidwall/gjson"
@@ -244,6 +247,12 @@ func (c *Client) reader() {
 				resp, err := helpers.PrepareJWS(
 					map[string]interface{}{
 						"typ":           "sessions.recover",
+						"jti":           uuid.New().String(),
+						"iss":           c.config.SelfID,
+						"sub":           strings.Split(sender, ":")[0],
+						"aud":           strings.Split(sender, ":")[0],
+						"iat":           ntp.TimeFunc().Format(time.RFC3339),
+						"exp":           ntp.TimeFunc().Add(time.Hour * 10240).Format(time.RFC3339),
 						"from_event_id": string(id),
 					},
 					c.config.KeyID,
