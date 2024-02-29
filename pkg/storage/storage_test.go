@@ -112,6 +112,68 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 	assert.Equal(t, int64(1), offset)
 }
 
+func TestStorageSessionRecovery(t *testing.T) {
+	pki := newTestPKI(t)
+
+	as1, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	require.Nil(t, err)
+
+	aliceKey := registerUser(t, pki, "alice:1")
+
+	err = as1.AccountCreate("alice:1", aliceKey)
+	require.Nil(t, err)
+
+	bs, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	require.Nil(t, err)
+
+	err = bs.AccountCreate("bob:1", registerUser(t, pki, "bob:1"))
+	require.Nil(t, err)
+
+	// establish a complete session between alice and bob
+	ciphertext, err := as1.Encrypt("alice:1", []string{"bob:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err := bs.Decrypt("alice:1", "bob:1", 0, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	ciphertext, err = bs.Encrypt("bob:1", []string{"alice:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err = as1.Decrypt("bob:1", "alice:1", 0, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	// clear alices storage by creating a new store
+	as2, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	require.Nil(t, err)
+
+	err = as2.AccountCreate("alice:1", aliceKey)
+	require.Nil(t, err)
+
+	// send a message using bobs established session to the empty account store
+	ciphertext, err = bs.Encrypt("bob:1", []string{"alice:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	_, err = as2.Decrypt("bob:1", "alice:1", 0, ciphertext)
+	require.Equal(t, ErrDecryptionFailed, err)
+
+	// send a message from alices new account to bob
+	ciphertext, err = as2.Encrypt("alice:1", []string{"bob:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err = bs.Decrypt("alice:1", "bob:1", 0, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+
+	ciphertext, err = bs.Encrypt("bob:1", []string{"alice:1"}, []byte("hello"))
+	require.Nil(t, err)
+
+	plaintext, err = as2.Decrypt("bob:1", "alice:1", 0, ciphertext)
+	require.Nil(t, err)
+	assert.Equal(t, []byte("hello"), plaintext)
+}
+
 func BenchmarkEncrypt(b *testing.B) {
 	pki := newTestPKI(b)
 

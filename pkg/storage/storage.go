@@ -489,7 +489,7 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	if err != nil {
 		sessionerr := session.LastError()
 		if sessionerr != nil {
-			if sessionerr.Error() == "BAD_MESSAGE_MAC" {
+			if sessionerr.Error() == "bad message MAC" {
 				if !sessionExisting {
 					return nil, ErrDecryptionFailed
 				}
@@ -572,7 +572,8 @@ func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfc
 
 	session, err := selfcrypto.CreateInboundSession(account, from, otkm)
 	if err != nil {
-		return nil, nil, err
+		log.Println("[sdk.storage] inbound session creation failed:", err.Error())
+		return nil, nil, ErrDecryptionFailed
 	}
 
 	err = account.RemoveOneTimeKeys(session)
