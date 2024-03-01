@@ -105,11 +105,19 @@ func (c *Config) load() error {
 
 	if c.Environment != "" {
 		if c.APIURL == "" {
-			c.APIURL = "https://api." + c.Environment + ".joinself.com"
+			if c.Environment == "development" {
+				c.APIURL = "http://localhost:8080"
+			} else {
+				c.APIURL = "https://api." + c.Environment + ".joinself.com"
+			}
 		}
 
 		if c.MessagingURL == "" {
-			c.MessagingURL = "wss://messaging." + c.Environment + ".joinself.com/v2/messaging"
+			if c.Environment == "development" {
+				c.MessagingURL = "ws://localhost:8086/v2/messaging"
+			} else {
+				c.MessagingURL = "wss://messaging." + c.Environment + ".joinself.com/v2/messaging"
+			}
 		}
 	}
 
