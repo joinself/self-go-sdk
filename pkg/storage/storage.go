@@ -553,6 +553,46 @@ func (s *Storage) Decrypt(from, to string, offset int64, ciphertext []byte) ([]b
 	return plaintext, s.publishOneTimeKeys(to, otks)
 }
 
+func (s *Storage) SessionList(asIdentifier string) ([]string, error) {
+	var sessions []string
+
+	txn, err := s.db.Begin()
+	if err != nil {
+		return sessions, err
+	}
+
+	rows, err := txn.Query("SELECT with_identifier FROM sessions WHERE as_identifier = ?", asIdentifier)
+	if err != nil {
+		txn.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var session string
+		rows.Scan(&session)
+		sessions = append(sessions, session)
+	}
+
+	return sessions, txn.Commit()
+}
+
+func (s *Storage) SessionPurge(asIdentifier, withIdentifier string) error {
+	txn, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = txn.Exec("DELETE FROM sessions WHERE as_identifier = ? AND with_identifier = ?", asIdentifier, withIdentifier)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	return txn.Commit()
+}
+
 // Close closes the storage connection
 func (s *Storage) Close() error {
 	return s.db.Close()
