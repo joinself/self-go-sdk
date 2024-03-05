@@ -237,9 +237,8 @@ func (c *Client) reader() {
 
 		plaintext, err := c.storage.Decrypt(sender, c.inboxID, offset, ciphertext)
 		if err != nil {
-			log.Println("messaging:", err)
 			if errors.Is(err, storage.ErrDecryptionFailed) {
-				log.Println("messaging: decryption failed, re-establishing session with sender")
+				log.Println("[sdk.messaging] decryption failed, re-establishing session with sender")
 
 				// we've entered a failure state with the current
 				// session, so let the sender know their message
