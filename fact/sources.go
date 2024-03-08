@@ -11,6 +11,7 @@ const FactDocumentNumber = "document_number"
 const FactEmailAddress = "email_address"
 const FactGivenNames = "given_names"
 const FactIssuingAuthority = "issuing_authority"
+const FactLocation = "location"
 const FactNationality = "nationality"
 const FactNickname = "nickname"
 const FactPhoto = "photo"
@@ -81,5 +82,6 @@ var spec = map[string][]string{
 		FactDisplayName,
 		FactEmailAddress,
 		FactUnverifiedPhoneNumber,
+		FactLocation,
 	},
 }
