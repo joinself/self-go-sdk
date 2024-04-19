@@ -2,20 +2,20 @@ package message
 
 import "github.com/joinself/self-go-sdk/account"
 
-type MessageType int
+type Type int
 
 const (
-	MessageTypeChat MessageType = iota
-	MessageTypeChatReceiptDelivered
-	MessageTypeChatReceiptRead
-	MessageTypeConnectionRequest
-	MessageTypeConnectionResponse
-	MessageTypeCredentialVerificationRequest
-	MessageTypeCredentialVerificationResponse
-	MessageTypeCredentialPresentationRequest
-	MessageTypeCredentialPresentationResponse
+	TypeChat Type = iota
+	TypeChatReceiptDelivered
+	TypeChatReceiptRead
+	TypeConnectionRequest
+	TypeConnectionResponse
+	TypeCredentialVerificationRequest
+	TypeCredentialVerificationResponse
+	TypeCredentialPresentationRequest
+	TypeCredentialPresentationResponse
 )
 
-func Classify(message *account.Message) MessageType {
-	return MessageTypeChat
+func Classify(message *account.Message) Type {
+	return TypeChat
 }
