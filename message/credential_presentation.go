@@ -8,7 +8,7 @@ type CredentialPresentationRequest struct {
 	challenge   []byte
 }
 
-func CredentialPresentationRequestFromMessage(message *account.Message) (*CredentialPresentationRequest, error) {
+func DecodeCredentialPresentationRequest(message *account.Message) (*CredentialPresentationRequest, error) {
 	return &CredentialPresentationRequest{
 		message: message,
 	}, nil
@@ -57,7 +57,7 @@ type CredentialPresentationResponse struct {
 	proof          []CredentialProof
 }
 
-func CredentialPresentationResponseFromMessage(message *account.Message) (*CredentialPresentationResponse, error) {
+func DecodeCredentialPresentationResponse(message *account.Message) (*CredentialPresentationResponse, error) {
 	return &CredentialPresentationResponse{
 		message: message,
 	}, nil
@@ -96,6 +96,6 @@ func (b *CredentialPresentationResponseBuilder) Sign(signer *account.PublicKey) 
 	return b
 }
 
-func (b *CredentialPresentationResponseBuilder) Build(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialPresentationResponseBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }

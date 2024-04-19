@@ -8,7 +8,7 @@ type CredentialVerificationRequest struct {
 	proof          []CredentialProof
 }
 
-func CredentialVerificationRequestFromMessage(message *account.Message) (*CredentialVerificationRequest, error) {
+func DecodeCredentialVerificationRequest(message *account.Message) (*CredentialVerificationRequest, error) {
 	return &CredentialVerificationRequest{
 		message: message,
 	}, nil
@@ -47,7 +47,7 @@ func (b *CredentialVerificationRequestBuilder) Sign(signer *account.PublicKey) *
 	return b
 }
 
-func (b *CredentialVerificationRequestBuilder) Build(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialVerificationRequestBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }
 
@@ -57,7 +57,7 @@ type CredentialVerificationResponse struct {
 	proof          []CredentialProof
 }
 
-func CredentialVerificationResponseFromMessage(message *account.Message) (*CredentialVerificationResponse, error) {
+func DecodeCredentialVerificationResponse(message *account.Message) (*CredentialVerificationResponse, error) {
 	return &CredentialVerificationResponse{
 		message: message,
 	}, nil
@@ -96,6 +96,6 @@ func (b *CredentialVerificationResponseBuilder) Sign(signer *account.PublicKey) 
 	return b
 }
 
-func (b *CredentialVerificationResponseBuilder) Build(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialVerificationResponseBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }
