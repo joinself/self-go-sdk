@@ -38,11 +38,13 @@ func unpin(pointer *Account) {
 	mu.Unlock()
 }
 
+// Account a self account
 type Account struct {
 	account   *C.self_account
 	callbacks *Callbacks
 }
 
+// New creates a new self account
 func New(cfg *Config) (*Account, error) {
 	account := &Account{
 		account:   C.self_account_init(),
@@ -84,6 +86,7 @@ func New(cfg *Config) (*Account, error) {
 	return account, nil
 }
 
+// InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*PublicKey, error) {
 	var address *C.self_signing_public_key
 
@@ -99,6 +102,8 @@ func (a *Account) InboxOpen() (*PublicKey, error) {
 	return &PublicKey{public: address}, nil
 }
 
+// ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
+// package to the recipient, which they will use to invite us to an encrypted group
 func (a *Account) ConnectionNegotiate(asAddress *PublicKey, withAddress *PublicKey) error {
 	C.self_account_connection_negotiate(
 		a.account,
@@ -109,6 +114,8 @@ func (a *Account) ConnectionNegotiate(asAddress *PublicKey, withAddress *PublicK
 	return nil
 }
 
+// ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
+// using the key package the initiator sent to us
 func (a *Account) ConnectionEstablish(asAddress *PublicKey, withAddress *PublicKey, keyPackage []byte) error {
 	keyPackageBuf := C.CBytes(keyPackage)
 
@@ -127,6 +134,7 @@ func (a *Account) ConnectionEstablish(asAddress *PublicKey, withAddress *PublicK
 	return nil
 }
 
+// ConnectionAccept accepts a welcome to a encrypted group
 func (a *Account) ConnectionAccept(asAddress *PublicKey, welcome, notificationToken []byte) error {
 	welcomeBuf := C.CBytes(welcome)
 	notificationTokenBuf := C.CBytes(notificationToken)
@@ -148,6 +156,7 @@ func (a *Account) ConnectionAccept(asAddress *PublicKey, welcome, notificationTo
 	return nil
 }
 
+// MessageSend sends a message to an address that we have established an encrypted group with
 func (a *Account) MessageSend(toAddress *PublicKey, message []byte) error {
 	messageBuf := C.CBytes(message)
 

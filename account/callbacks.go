@@ -62,7 +62,6 @@ self_account_callbacks *account_callbacks() {
 */
 import "C"
 import (
-	"fmt"
 	"unsafe"
 )
 
@@ -97,12 +96,10 @@ func goOnMessage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_k
 
 //export goOnCommit
 func goOnCommit(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, commitBuf *C.cuint8_t, commitLen C.size_t) {
-	fmt.Println("recevied commit...")
 }
 
 //export goOnKeyPackage
 func goOnKeyPackage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, keyPackageBuf *C.cuint8_t, keyPackageLen C.size_t) {
-	fmt.Println("received key package...")
 	(*Account)(user_data).ConnectionEstablish(
 		&PublicKey{toAddress},
 		&PublicKey{fromAddress},
@@ -115,12 +112,10 @@ func goOnKeyPackage(user_data unsafe.Pointer, fromAddress *C.cself_signing_publi
 
 //export goOnProposal
 func goOnProposal(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, proposalBuf *C.cuint8_t, proposalLen C.size_t) {
-	fmt.Println("recevied proposal...")
 }
 
 //export goOnWelcome
 func goOnWelcome(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, welcomeBuf *C.cuint8_t, welcomeLen C.size_t, notificationTokenBuf *C.cuint8_t, notificationTokenLen C.size_t) {
-	fmt.Println("received welcome...")
 	(*Account)(user_data).ConnectionAccept(
 		&PublicKey{toAddress},
 		C.GoBytes(
