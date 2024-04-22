@@ -7,7 +7,6 @@ import (
 
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/gowebpki/jcs"
-	"github.com/joinself/self-go-sdk/did"
 )
 
 var (
@@ -36,7 +35,7 @@ func NewVerifiableCredential(credentialType []string, issuer []byte, validFrom t
 	return &VerifiableCredential{
 		Context:   DefaultContext,
 		Type:      credentialType,
-		Issuer:    did.Aure(issuer),
+		Issuer:    aure(issuer),
 		ValidFrom: validFrom.UTC().Format("2006-01-02T15:04:05Z07:00"),
 		Subject:   subject,
 	}
@@ -78,7 +77,7 @@ func (vc *VerifiableCredential) SignDataIntegrityFunc(by []byte, pk ed25519.Publ
 		Type:        TypeDataIntegrityProof,
 		Cryptosuite: DefaultCryptoSuite,
 		Created:     at.UTC().Format("2006-01-02T15:04:05Z07:00"),
-		VerificationMethod: did.Aure(
+		VerificationMethod: aure(
 			by,
 			pk,
 		),

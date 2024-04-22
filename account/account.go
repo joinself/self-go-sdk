@@ -68,6 +68,14 @@ func New(cfg *Config) (*Account, error) {
 	// so we can pass them as user-data to C
 	pin(account)
 
+	runtime.SetFinalizer(account, func(account *Account) {
+		unpin(account)
+
+		C.self_account_destroy(
+			account.account,
+		)
+	})
+
 	s := C.self_account_configure(
 		account.account,
 		rpcURLBuf,
