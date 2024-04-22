@@ -15,26 +15,22 @@ import (
 	"unsafe"
 )
 
-var apins = make(map[*Account]*runtime.Pinner)
-var cpins = make(map[*Callbacks]*runtime.Pinner)
+var pins = make(map[*Account]*runtime.Pinner)
 var mu sync.Mutex
 
 func pin(pointer *Account) {
-	ap := new(runtime.Pinner)
-	cp := new(runtime.Pinner)
-	ap.Pin(pointer)
-	cp.Pin(pointer.callbacks)
+	p := new(runtime.Pinner)
+	p.Pin(pointer)
+	p.Pin(pointer.callbacks)
 
 	mu.Lock()
-	apins[pointer] = ap
-	cpins[pointer.callbacks] = cp
+	pins[pointer] = p
 	mu.Unlock()
 }
 
 func unpin(pointer *Account) {
 	mu.Lock()
-	apins[pointer].Unpin()
-	cpins[pointer.callbacks].Unpin()
+	pins[pointer].Unpin()
 	mu.Unlock()
 }
 
