@@ -159,6 +159,9 @@ func (s *Storage) createSessionsTable() error {
 }
 
 func (s *Storage) AccountCreate(inboxID string, secretKey ed25519.PrivateKey) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	txn, err := s.db.Begin()
 	if err != nil {
 		return err
