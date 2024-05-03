@@ -1,4 +1,4 @@
-package account
+package signing
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
@@ -8,15 +8,16 @@ package account
 #include <stdlib.h>
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
 
-// PublicKey a signing public key
-type PublicKey struct {
-	public *C.self_signing_public_key
-}
+	"github.com/joinself/self-go-sdk/keypair"
+)
 
-// Address converts a hex address to a public key
-func Address(hex string) *PublicKey {
+type PublicKey C.self_signing_public_key
+
+// FromAddress converts a hex address to a public key
+func FromAddress(hex string) *PublicKey {
 	var public *C.self_signing_public_key
 
 	hexBuf := (*C.uint8_t)(C.CBytes([]byte(hex)))
@@ -36,9 +37,12 @@ func Address(hex string) *PublicKey {
 		return nil
 	}
 
-	return &PublicKey{
-		public: public,
-	}
+	return (*PublicKey)(public)
+}
+
+// Type returns the type of key
+func (p *PublicKey) Type() keypair.KeyType {
+	return keypair.KeyTypeSigning
 }
 
 // String returns the hex encoded address of a public key
@@ -46,7 +50,7 @@ func (p *PublicKey) String() string {
 	encoded := make([]byte, 66)
 
 	status := C.self_signing_public_key_encode(
-		p.public,
+		(*C.self_signing_public_key)(p),
 		(*C.uchar)(unsafe.Pointer(&encoded[0])),
 		C.ulong(len(encoded)),
 	)

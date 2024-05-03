@@ -1,6 +1,9 @@
 package message
 
-import "github.com/joinself/self-go-sdk/account"
+import (
+	"github.com/joinself/self-go-sdk/account"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+)
 
 type CredentialVerificationRequest struct {
 	message        *account.Message
@@ -25,7 +28,7 @@ func (c *CredentialVerificationRequest) Proof() []CredentialProof {
 type CredentialVerificationRequestBuilder struct {
 	credentialType []string
 	proof          []CredentialProof
-	signers        []*account.PublicKey
+	signers        []*signing.PublicKey
 }
 
 func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
@@ -42,12 +45,12 @@ func (b *CredentialVerificationRequestBuilder) AttachProof(proof CredentialProof
 	return b
 }
 
-func (b *CredentialVerificationRequestBuilder) Sign(signer *account.PublicKey) *CredentialVerificationRequestBuilder {
+func (b *CredentialVerificationRequestBuilder) Sign(signer *signing.PublicKey) *CredentialVerificationRequestBuilder {
 	b.signers = append(b.signers, signer)
 	return b
 }
 
-func (b *CredentialVerificationRequestBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialVerificationRequestBuilder) Encode(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }
 
@@ -74,7 +77,7 @@ func (c *CredentialVerificationResponse) Proof() []CredentialProof {
 type CredentialVerificationResponseBuilder struct {
 	credentialType []string
 	proof          []CredentialProof
-	signers        []*account.PublicKey
+	signers        []*signing.PublicKey
 }
 
 func NewCredentialVerificationResponse() *CredentialVerificationResponseBuilder {
@@ -91,11 +94,11 @@ func (b *CredentialVerificationResponseBuilder) AttachProof(proof CredentialProo
 	return b
 }
 
-func (b *CredentialVerificationResponseBuilder) Sign(signer *account.PublicKey) *CredentialVerificationResponseBuilder {
+func (b *CredentialVerificationResponseBuilder) Sign(signer *signing.PublicKey) *CredentialVerificationResponseBuilder {
 	b.signers = append(b.signers, signer)
 	return b
 }
 
-func (b *CredentialVerificationResponseBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialVerificationResponseBuilder) Encode(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }

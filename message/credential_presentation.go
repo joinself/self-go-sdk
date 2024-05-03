@@ -1,6 +1,9 @@
 package message
 
-import "github.com/joinself/self-go-sdk/account"
+import (
+	"github.com/joinself/self-go-sdk/account"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+)
 
 type CredentialPresentationRequest struct {
 	message     *account.Message
@@ -25,7 +28,7 @@ func (c *CredentialPresentationRequest) Challenge() []byte {
 type CredentialPresentationRequestBuilder struct {
 	credentialType []string
 	proof          []CredentialProof
-	signers        []*account.PublicKey
+	signers        []*signing.PublicKey
 }
 
 func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
@@ -42,12 +45,12 @@ func (b *CredentialPresentationRequestBuilder) AttachProof(proof CredentialProof
 	return b
 }
 
-func (b *CredentialPresentationRequestBuilder) Sign(signer *account.PublicKey) *CredentialPresentationRequestBuilder {
+func (b *CredentialPresentationRequestBuilder) Sign(signer *signing.PublicKey) *CredentialPresentationRequestBuilder {
 	b.signers = append(b.signers, signer)
 	return b
 }
 
-func (b *CredentialPresentationRequestBuilder) Build(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialPresentationRequestBuilder) Build(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }
 
@@ -74,7 +77,7 @@ func (c *CredentialPresentationResponse) Proof() []CredentialProof {
 type CredentialPresentationResponseBuilder struct {
 	credentialType []string
 	proof          []CredentialProof
-	signers        []*account.PublicKey
+	signers        []*signing.PublicKey
 }
 
 func NewCredentialPresentationResponse() *CredentialPresentationResponseBuilder {
@@ -91,11 +94,11 @@ func (b *CredentialPresentationResponseBuilder) AttachProof(proof CredentialProo
 	return b
 }
 
-func (b *CredentialPresentationResponseBuilder) Sign(signer *account.PublicKey) *CredentialPresentationResponseBuilder {
+func (b *CredentialPresentationResponseBuilder) Sign(signer *signing.PublicKey) *CredentialPresentationResponseBuilder {
 	b.signers = append(b.signers, signer)
 	return b
 }
 
-func (b *CredentialPresentationResponseBuilder) Encode(fromAddress, toAddress *account.PublicKey) (*account.Message, error) {
+func (b *CredentialPresentationResponseBuilder) Encode(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
 	return &account.Message{}, nil
 }

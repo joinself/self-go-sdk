@@ -71,8 +71,9 @@ func TestAccount(t *testing.T) {
 	require.Nil(t, err)
 
 	// wait for negotiation to finish
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 2000)
 
+	fmt.Println("message send")
 	// send a message from alice
 	err = alice.MessageSend(
 		bobbyAddress,
@@ -81,10 +82,13 @@ func TestAccount(t *testing.T) {
 
 	require.Nil(t, err)
 
+	fmt.Println("message send ok")
+
 	message := wait(t, bobbyInbox, time.Second)
 	assert.Equal(t, aliceAddress.String(), message.FromAddress().String())
 	assert.Equal(t, []byte("hello"), message.Message())
 
+	fmt.Println("message send")
 	// send a response from bobby
 	err = bobby.MessageSend(
 		aliceAddress,
@@ -97,3 +101,12 @@ func TestAccount(t *testing.T) {
 	assert.Equal(t, bobbyAddress.String(), message.FromAddress().String())
 	assert.Equal(t, []byte("hi!"), message.Message())
 }
+
+/*
+func TestAccountQRConnection(t *testing.T) {
+	alice, aliceInbox := testAccount(t)
+
+	alice.
+
+}
+*/

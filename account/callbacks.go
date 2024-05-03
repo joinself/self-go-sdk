@@ -62,7 +62,10 @@ self_account_callbacks *account_callbacks() {
 */
 import "C"
 import (
+	"fmt"
 	"unsafe"
+
+	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
 func accountCallbacks() *C.self_account_callbacks {
@@ -84,8 +87,8 @@ func goOnMessage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_k
 	(*Account)(user_data).callbacks.OnMessage(
 		(*Account)(user_data),
 		&Message{
-			fromAddress: &PublicKey{fromAddress},
-			toAddress:   &PublicKey{toAddress},
+			fromAddress: (*signing.PublicKey)(fromAddress),
+			toAddress:   (*signing.PublicKey)(toAddress),
 			message: C.GoBytes(
 				unsafe.Pointer(messageBuf),
 				C.int(messageLen),
@@ -100,14 +103,18 @@ func goOnCommit(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_ke
 
 //export goOnKeyPackage
 func goOnKeyPackage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, keyPackageBuf *C.cuint8_t, keyPackageLen C.size_t) {
-	(*Account)(user_data).ConnectionEstablish(
-		&PublicKey{toAddress},
-		&PublicKey{fromAddress},
+	fmt.Println("got key package...")
+	err := (*Account)(user_data).ConnectionEstablish(
+		(*signing.PublicKey)(toAddress),
+		(*signing.PublicKey)(fromAddress),
 		C.GoBytes(
 			unsafe.Pointer(keyPackageBuf),
 			C.int(keyPackageLen),
 		),
 	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 //export goOnProposal
@@ -116,8 +123,9 @@ func goOnProposal(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_
 
 //export goOnWelcome
 func goOnWelcome(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, welcomeBuf *C.cuint8_t, welcomeLen C.size_t, notificationTokenBuf *C.cuint8_t, notificationTokenLen C.size_t) {
-	(*Account)(user_data).ConnectionAccept(
-		&PublicKey{toAddress},
+	fmt.Println("got welcome...")
+	err := (*Account)(user_data).ConnectionAccept(
+		(*signing.PublicKey)(toAddress),
 		C.GoBytes(
 			unsafe.Pointer(welcomeBuf),
 			C.int(welcomeLen),
@@ -127,4 +135,7 @@ func goOnWelcome(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_k
 			C.int(notificationTokenLen),
 		),
 	)
+	if err != nil {
+		panic(err)
+	}
 }

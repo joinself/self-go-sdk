@@ -1,5 +1,7 @@
 package account
 
+import "github.com/joinself/self-go-sdk/keypair/signing"
+
 // Config stores config for an account
 type Config struct {
 	StorageKey  []byte
@@ -16,18 +18,18 @@ type Callbacks struct {
 
 // Message message recevied from another sender
 type Message struct {
-	fromAddress *PublicKey
-	toAddress   *PublicKey
+	fromAddress *signing.PublicKey
+	toAddress   *signing.PublicKey
 	message     []byte
 }
 
 // FromAddress the public key of the sender
-func (m *Message) FromAddress() *PublicKey {
+func (m *Message) FromAddress() *signing.PublicKey {
 	return m.fromAddress
 }
 
 // ToAddress the destination address of the recipient
-func (m *Message) ToAddress() *PublicKey {
+func (m *Message) ToAddress() *signing.PublicKey {
 	return m.toAddress
 }
 
