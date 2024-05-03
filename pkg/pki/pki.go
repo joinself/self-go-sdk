@@ -104,3 +104,9 @@ func (c *Client) SetDeviceKeys(selfID, deviceID string, pkb []byte) error {
 	_, err := c.transport.Post(path, "application/json", pkb)
 	return err
 }
+
+// ListDeviceKeys updates an identites device prekey bundle
+func (c *Client) ListDeviceKeys(selfID, deviceID string) ([]byte, error) {
+	path := fmt.Sprintf("/v1/apps/%s/devices/%s/pre_keys", selfID, deviceID)
+	return c.transport.Get(path)
+}

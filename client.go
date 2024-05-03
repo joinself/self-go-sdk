@@ -56,6 +56,7 @@ type PKIClient interface {
 	GetHistory(selfID string) ([]json.RawMessage, error)
 	GetDeviceKey(selfID, deviceID string) ([]byte, error)
 	SetDeviceKeys(selfID, deviceID string, pkb []byte) error
+	ListDeviceKeys(selfID, deviceID string) ([]byte, error)
 }
 
 // Storage the storage interface that is used to handle persistence across

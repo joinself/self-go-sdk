@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ type testPKI struct {
 	dkoff   map[string]int
 	dkeys   map[string][]byte
 	history map[string][]json.RawMessage
+	mu      sync.Mutex
 }
 
 func newTestPKI(t testing.TB) *testPKI {
@@ -29,10 +31,15 @@ func newTestPKI(t testing.TB) *testPKI {
 }
 
 func (p *testPKI) GetHistory(selfID string) ([]json.RawMessage, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	return p.history[selfID], nil
 }
 
 func (p *testPKI) GetDeviceKey(selfID, deviceID string) ([]byte, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	var keys oneTimeKeys
 
 	err := json.Unmarshal(p.dkeys[selfID+":"+deviceID], &keys)
@@ -52,8 +59,27 @@ func (p *testPKI) GetDeviceKey(selfID, deviceID string) ([]byte, error) {
 }
 
 func (p *testPKI) SetDeviceKeys(selfID, deviceID string, pkb []byte) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	p.dkeys[selfID+":"+deviceID] = pkb
 	return nil
+}
+
+func (p *testPKI) ListDeviceKeys(selfID, deviceID string) ([]byte, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if len(p.dkeys[selfID+":"+deviceID]) < 1 {
+		return []byte("[]"), nil
+	}
+	return p.dkeys[selfID+":"+deviceID], nil
+}
+
+func (p *testPKI) purgeDeviceKeys(selfID, deviceID string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.dkeys[selfID+":"+deviceID] = nil
 }
 
 func (p *testPKI) addpk(selfID string, sk ed25519.PrivateKey, pk ed25519.PublicKey) {
