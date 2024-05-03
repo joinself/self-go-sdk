@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 
 	selfcrypto "github.com/joinself/self-crypto-go"
 	"github.com/stretchr/testify/assert"
@@ -12,14 +14,14 @@ import (
 func TestStorageNew(t *testing.T) {
 	pki := newTestPKI(t)
 
-	_, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	_, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 }
 
 func TestStorageAccount(t *testing.T) {
 	pki := newTestPKI(t)
 
-	s, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	s, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = s.AccountCreate("alice:1", registerUser(t, pki, "alice:1"))
@@ -61,19 +63,19 @@ func TestStorageAccount(t *testing.T) {
 func TestStorageEncryptAndDecrypt(t *testing.T) {
 	pki := newTestPKI(t)
 
-	s1, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	s1, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = s1.AccountCreate("alice:1", registerUser(t, pki, "alice:1"))
 	require.Nil(t, err)
 
-	s2, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	s2, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = s2.AccountCreate("bob:1", registerUser(t, pki, "bob:1"))
 	require.Nil(t, err)
 
-	s3, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	s3, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = s3.AccountCreate("carol:1", registerUser(t, pki, "carol:1"))
@@ -115,7 +117,7 @@ func TestStorageEncryptAndDecrypt(t *testing.T) {
 func TestStorageSessionRecovery(t *testing.T) {
 	pki := newTestPKI(t)
 
-	as1, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	as1, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	aliceKey := registerUser(t, pki, "alice:1")
@@ -123,7 +125,7 @@ func TestStorageSessionRecovery(t *testing.T) {
 	err = as1.AccountCreate("alice:1", aliceKey)
 	require.Nil(t, err)
 
-	bs, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	bs, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = bs.AccountCreate("bob:1", registerUser(t, pki, "bob:1"))
@@ -145,7 +147,7 @@ func TestStorageSessionRecovery(t *testing.T) {
 	assert.Equal(t, []byte("hello"), plaintext)
 
 	// clear alices storage by creating a new store
-	as2, err := New(&Config{t.TempDir(), "key", "alice:1", pki})
+	as2, err := New(&Config{t.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(t, err)
 
 	err = as2.AccountCreate("alice:1", aliceKey)
@@ -174,16 +176,51 @@ func TestStorageSessionRecovery(t *testing.T) {
 	assert.Equal(t, []byte("hello"), plaintext)
 }
 
+func TestStorageSyncOneTimeKeys(t *testing.T) {
+	pki := newTestPKI(t)
+
+	alice, err := New(&Config{t.TempDir(), "key", "alice:1", time.Millisecond * 10, pki})
+	require.Nil(t, err)
+
+	aliceKey := registerUser(t, pki, "alice:1")
+
+	err = alice.AccountCreate("alice:1", aliceKey)
+	require.Nil(t, err)
+
+	// delete the one time keys
+	pki.purgeDeviceKeys("alice", "1")
+
+	var otks oneTimeKeys
+
+	keys, err := pki.ListDeviceKeys("alice", "1")
+	require.Nil(t, err)
+
+	err = json.Unmarshal(keys, &otks)
+	require.Nil(t, err)
+	assert.Len(t, otks, 0)
+
+	// wait some time for them to be republished
+	time.Sleep(time.Millisecond * 100)
+
+	keys, err = pki.ListDeviceKeys("alice", "1")
+	require.Nil(t, err)
+
+	err = json.Unmarshal(keys, &otks)
+	require.Nil(t, err)
+	assert.Len(t, otks, 100)
+
+}
+
 func BenchmarkEncrypt(b *testing.B) {
 	pki := newTestPKI(b)
 
-	s1, err := New(&Config{b.TempDir(), "key", "alice:1", pki})
+	s1, err := New(&Config{b.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(b, err)
 
 	err = s1.AccountCreate("alice:1", registerUser(b, pki, "alice:1"))
 	require.Nil(b, err)
 
-	s2, err := New(&Config{b.TempDir(), "key", "alice:1", pki})
+	s2, err := New(&Config{b.TempDir(), "key", "alice:1", time.Minute, pki})
 	require.Nil(b, err)
 
 	err = s2.AccountCreate("bob:1", registerUser(b, pki, "bob:1"))

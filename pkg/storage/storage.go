@@ -17,6 +17,7 @@ import (
 
 	selfcrypto "github.com/joinself/self-crypto-go"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
+	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -43,6 +44,7 @@ type PKI interface {
 	GetHistory(selfID string) ([]json.RawMessage, error)
 	GetDeviceKey(selfID, deviceID string) ([]byte, error)
 	SetDeviceKeys(selfID, deviceID string, pkb []byte) error
+	ListDeviceKeys(selfID, deviceID string) ([]byte, error)
 }
 
 // Config messaging configuration for connecting to self messaging
@@ -50,6 +52,7 @@ type Config struct {
 	StorageDir    string
 	EncryptionKey string
 	AccountID     string
+	SyncInterval  time.Duration
 	PKI           PKI
 }
 
@@ -59,7 +62,9 @@ type Storage struct {
 	db *sql.DB
 	mu sync.Mutex
 	pk PKI
+	id string
 	ec string
+	si time.Duration
 }
 
 func New(cfg *Config) (*Storage, error) {
@@ -77,7 +82,9 @@ func New(cfg *Config) (*Storage, error) {
 	s := &Storage{
 		db: db,
 		pk: cfg.PKI,
+		id: cfg.AccountID,
 		ec: cfg.EncryptionKey,
+		si: cfg.SyncInterval,
 	}
 
 	err = s.setPragmas()
@@ -99,6 +106,8 @@ func New(cfg *Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	go s.scheduleSyncOneTimeKeyState()
 
 	return s, nil
 }
@@ -588,6 +597,104 @@ func (s *Storage) SessionPurge(asIdentifier, withIdentifier string) error {
 // Close closes the storage connection
 func (s *Storage) Close() error {
 	return s.db.Close()
+}
+
+func (s *Storage) scheduleSyncOneTimeKeyState() {
+	for {
+		err := s.syncOneTimeKeyState()
+		if err != nil {
+			log.Printf("[sdk.storage] failed to sync one time key state: %s", err.Error())
+		}
+
+		time.Sleep(s.si)
+	}
+}
+
+func (s *Storage) syncOneTimeKeyState() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	id := strings.Split(s.id, ":")
+
+	dks, err := s.pk.ListDeviceKeys(id[0], id[1])
+	if err != nil {
+		return err
+	}
+
+	var rkeys oneTimeKeys
+
+	err = json.Unmarshal(dks, &rkeys)
+	if err != nil {
+		return err
+	}
+
+	if len(rkeys) > 0 {
+		return nil
+	}
+
+	txn, err := s.db.Begin()
+	if err != nil {
+		var sqlErr sqlite3.Error
+		if errors.As(err, &sqlErr) && sqlErr.Code == sqlite3.ErrCantOpen {
+			// the database hasn't been created yet
+			return nil
+		}
+		return err
+	}
+
+	// query the accounts state
+	row := txn.QueryRow("SELECT olm_account FROM accounts WHERE as_identifier = ?;", s.id)
+	if row.Err() != nil {
+		txn.Rollback()
+		return err
+	}
+
+	var accountPickle string
+
+	err = row.Scan(&accountPickle)
+	if err != nil {
+		txn.Rollback()
+		if errors.Is(err, sql.ErrNoRows) {
+			// we don't have an account yet, so skip syncing
+			return nil
+		}
+		return err
+	}
+
+	log.Println("[sdk.storage] remote one time keys exhausted, publishing new keys")
+
+	account, err := selfcrypto.AccountFromPickle(s.id, s.ec, accountPickle)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	account.MarkKeysAsPublished()
+
+	otkd, err := s.generateOneTimeKeys(s.id, account)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	accountPickle, err = account.Pickle(s.ec)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	_, err = txn.Exec("UPDATE accounts SET olm_account = ? WHERE as_identifier = ?", accountPickle, s.id)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return err
+	}
+
+	return s.publishOneTimeKeys(s.id, otkd)
 }
 
 func (s *Storage) createInboundSession(txn *sql.Tx, from, to string, otkm *selfcrypto.Message) (*selfcrypto.Session, []byte, error) {

@@ -26,6 +26,7 @@ var (
 	defaultReconnectionAttempts = 10
 	defaultTCPDeadline          = time.Second * 90
 	defaultRequestTimeout       = time.Second * 5
+	defaultSyncInterval         = time.Minute * 5
 	defaultInboxSize            = 256
 
 	decoder = base64.RawStdEncoding
@@ -57,6 +58,7 @@ type Config struct {
 	ReconnectionAttempts int
 	TCPDeadline          time.Duration
 	RequestTimeout       time.Duration
+	SyncInterval         time.Duration
 	Connectors           *Connectors
 	kid                  string
 	sk                   ed25519.PrivateKey
@@ -139,6 +141,10 @@ func (c *Config) load() error {
 
 	if c.RequestTimeout == 0 {
 		c.RequestTimeout = defaultRequestTimeout
+	}
+
+	if c.SyncInterval == 0 {
+		c.SyncInterval = defaultSyncInterval
 	}
 
 	kp := strings.Split(c.SelfAppDeviceSecret, ":")
@@ -260,6 +266,7 @@ func (c Config) loadStorageConnector() error {
 		StorageDir:    filepath.Join(c.StorageDir, "identities", c.SelfAppID, "devices", c.DeviceID),
 		EncryptionKey: c.StorageKey,
 		AccountID:     fmt.Sprintf("%s:%s", c.SelfAppID, c.DeviceID),
+		SyncInterval:  c.SyncInterval,
 		PKI:           c.Connectors.PKI,
 	}
 
