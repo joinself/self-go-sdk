@@ -16,6 +16,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/identity"
+	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
@@ -96,6 +97,69 @@ func New(cfg *Config) (*Account, error) {
 	return account, nil
 }
 
+// KeypairSigningCreate creates a new signing keypair
+func (a *Account) KeypairSigningCreate() (*signing.PublicKey, error) {
+	var address *C.self_signing_public_key
+
+	status := C.self_account_keypair_signing_create(
+		a.account,
+		&address,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to create keypair")
+	}
+
+	return (*signing.PublicKey)(address), nil
+}
+
+// KeypairExchangeCreate creates a new exchange keypair
+func (a *Account) KeypairExchangeCreate() (*exchange.PublicKey, error) {
+	var address *C.self_exchange_public_key
+
+	status := C.self_account_keypair_exchange_create(
+		a.account,
+		&address,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to create keypair")
+	}
+
+	return (*exchange.PublicKey)(address), nil
+}
+
+// IdentityResolve resolves an identity document
+func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Document, error) {
+	var document *C.self_identity_document
+
+	status := C.self_account_identity_resolve(
+		a.account,
+		(*C.self_signing_public_key)(address),
+		&document,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to resolve identity")
+	}
+
+	return (*identity.Document)(document), nil
+}
+
+// IdentityExecute executes an operation that creates or modifies a document
+func (a *Account) IdentityExecute(operation *identity.Operation) error {
+	status := C.self_account_identity_execute(
+		a.account,
+		(*C.self_identity_operation)(operation),
+	)
+
+	if status > 0 {
+		return errors.New("failed to execute operation")
+	}
+
+	return nil
+}
+
 // InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
@@ -110,6 +174,20 @@ func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	}
 
 	return (*signing.PublicKey)(address), nil
+}
+
+// InboxClose closes an existing inbox permanently
+func (a *Account) InboxClose(address *signing.PublicKey) error {
+	status := C.self_account_inbox_close(
+		a.account,
+		(*C.self_signing_public_key)(address),
+	)
+
+	if status > 0 {
+		return errors.New("failed to close inbox")
+	}
+
+	return nil
 }
 
 // ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
@@ -197,13 +275,5 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, message []byte) erro
 		return fmt.Errorf("failed message send, code: %d", status)
 	}
 
-	return nil
-}
-
-func (a *Account) IdentityResolve(didAddress *signing.PublicKey) (*identity.Document, error) {
-	return nil, nil
-}
-
-func (a *Account) IdentityExecute(operation *identity.Operation) error {
 	return nil
 }

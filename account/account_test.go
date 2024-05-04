@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/joinself/self-go-sdk/account"
+	"github.com/joinself/self-go-sdk/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +51,7 @@ func wait(t testing.TB, ch chan *account.Message, timeout time.Duration) *accoun
 	}
 }
 
-func TestAccount(t *testing.T) {
+func TestAccountMessaging(t *testing.T) {
 	alice, aliceInbox := testAccount(t)
 	bobby, bobbyInbox := testAccount(t)
 
@@ -100,6 +101,52 @@ func TestAccount(t *testing.T) {
 	message = wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), message.FromAddress().String())
 	assert.Equal(t, []byte("hi!"), message.Message())
+
+	identityKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+	invocationKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+	multiroleKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+
+	document := identity.NewDocument()
+	operation := document.
+		Create().
+		Identifier(identityKey).
+		GrantEmbedded(invocationKey, identity.RoleInvocation).
+		GrantEmbedded(multiroleKey, identity.RoleAuthentication|identity.RoleMessaging).
+		SignWith(identityKey).
+		SignWith(invocationKey).
+		SignWith(multiroleKey).
+		Finish()
+
+	err = alice.IdentityExecute(operation)
+	require.Nil(t, err)
+}
+
+func TestAccountIdentity(t *testing.T) {
+	alice, _ := testAccount(t)
+
+	identityKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+	invocationKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+	multiroleKey, err := alice.KeypairSigningCreate()
+	require.Nil(t, err)
+
+	document := identity.NewDocument()
+	operation := document.
+		Create().
+		Identifier(identityKey).
+		GrantEmbedded(invocationKey, identity.RoleInvocation).
+		GrantEmbedded(multiroleKey, identity.RoleAuthentication|identity.RoleMessaging).
+		SignWith(identityKey).
+		SignWith(invocationKey).
+		SignWith(multiroleKey).
+		Finish()
+
+	err = alice.IdentityExecute(operation)
+	require.Nil(t, err)
 }
 
 /*
