@@ -9,6 +9,7 @@ package signing
 */
 import "C"
 import (
+	"runtime"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair"
@@ -37,7 +38,15 @@ func FromAddress(hex string) *PublicKey {
 		return nil
 	}
 
-	return (*PublicKey)(public)
+	key := (*PublicKey)(public)
+
+	runtime.SetFinalizer(key, func(key *PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(key),
+		)
+	})
+
+	return key
 }
 
 // Type returns the type of key
@@ -60,4 +69,31 @@ func (p *PublicKey) String() string {
 	}
 
 	return *(*string)(unsafe.Pointer(&encoded))
+}
+
+type PublicKeyCollection C.self_collection_signing_public_key
+
+func NewPublicKeyCollection() *PublicKeyCollection {
+	collection := (*PublicKeyCollection)(C.self_collection_signing_public_key_init())
+
+	runtime.SetFinalizer(collection, func(collection *PublicKeyCollection) {
+		C.self_collection_signing_public_key_destroy(
+			(*C.self_collection_signing_public_key)(collection),
+		)
+	})
+
+	return collection
+}
+
+func (c *PublicKeyCollection) Length() int {
+	return int(C.self_collection_signing_public_key_len(
+		(*C.self_collection_signing_public_key)(c),
+	))
+}
+
+func (c *PublicKeyCollection) Get(index int) *PublicKey {
+	return (*PublicKey)(C.self_collection_signing_public_key_at(
+		(*C.self_collection_signing_public_key)(c),
+		C.ulong(index),
+	))
 }

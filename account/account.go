@@ -129,6 +129,24 @@ func (a *Account) KeypairExchangeCreate() (*exchange.PublicKey, error) {
 	return (*exchange.PublicKey)(address), nil
 }
 
+// KeypairSigningAssociatedWith lists all keys associated with a identity posessing the specified set of roles
+func (a *Account) KeypairSigningAssociatedWith(address *signing.PublicKey, roles identity.Role) (*signing.PublicKeyCollection, error) {
+	var collection *C.self_collection_signing_public_key
+
+	status := C.self_account_keypair_signing_associated_with(
+		a.account,
+		(*C.self_signing_public_key)(address),
+		C.ulong(roles),
+		&collection,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to create keypair")
+	}
+
+	return (*signing.PublicKeyCollection)(collection), nil
+}
+
 // IdentityResolve resolves an identity document
 func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Document, error) {
 	var document *C.self_identity_document

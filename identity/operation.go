@@ -21,13 +21,12 @@ import (
 type Role uint64
 
 const (
-	RoleAssertion      Role = 1
-	RoleAuthentication Role = 2
-	RoleVerification   Role = 3
-	RoleInvocation     Role = 4
-	RoleDelegation     Role = 5
-	RoleIdentifier     Role = 6
-	RoleMessaging      Role = 7
+	RoleAssertion      Role = C.ASSERTION
+	RoleAuthentication Role = C.AUTHENTICATION
+	RoleVerification   Role = C.VERIFICATION
+	RoleInvocation     Role = C.INVOCATION
+	RoleDelegation     Role = C.DELEGATION
+	RoleMessaging      Role = C.MESSAGING
 )
 
 type Operation C.self_identity_operation
@@ -51,6 +50,16 @@ func (b *OperationBuilder) Identifier(address *signing.PublicKey) *OperationBuil
 	C.self_identity_operation_builder_id(
 		(*C.self_identity_operation_builder)(b),
 		(*C.self_signing_public_key)(address),
+	)
+
+	return b
+}
+
+// Identifier sets the identifier of the document to target
+func (b *OperationBuilder) Sequence(sequence uint32) *OperationBuilder {
+	C.self_identity_operation_builder_sequence(
+		(*C.self_identity_operation_builder)(b),
+		C.uint(sequence),
 	)
 
 	return b

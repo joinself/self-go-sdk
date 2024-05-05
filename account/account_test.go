@@ -134,12 +134,12 @@ func TestAccountIdentity(t *testing.T) {
 	multiroleKey, err := alice.KeypairSigningCreate()
 	require.Nil(t, err)
 
-	document := identity.NewDocument()
-	operation := document.
-		Create().
+	operation := identity.NewOperation().
 		Identifier(identityKey).
+		Sequence(0).
+		Timestamp(time.Now()).
 		GrantEmbedded(invocationKey, identity.RoleInvocation).
-		GrantEmbedded(multiroleKey, identity.RoleAuthentication|identity.RoleMessaging).
+		GrantEmbedded(multiroleKey, identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging).
 		SignWith(identityKey).
 		SignWith(invocationKey).
 		SignWith(multiroleKey).
@@ -147,13 +147,35 @@ func TestAccountIdentity(t *testing.T) {
 
 	err = alice.IdentityExecute(operation)
 	require.Nil(t, err)
+
+	keys, err := alice.KeypairSigningAssociatedWith(identityKey, identity.RoleInvocation)
+	require.Nil(t, err)
+	assert.Equal(t, keys.Length(), 1)
+
+	invocationKey = keys.Get(0)
+	require.NotNil(t, invocationKey)
+
+	document, err := alice.IdentityResolve(identityKey)
+	require.Nil(t, err)
+
+	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleVerification, time.Now()))
+	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleAuthentication, time.Now()))
+	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleMessaging, time.Now()))
+
+	operation = document.
+		Create().
+		Timestamp(time.Now().Add(time.Second)).
+		Modify(multiroleKey, identity.RoleVerification|identity.RoleMessaging).
+		SignWith(invocationKey).
+		Finish()
+
+	err = alice.IdentityExecute(operation)
+	require.Nil(t, err)
+
+	document, err = alice.IdentityResolve(identityKey)
+	require.Nil(t, err)
+
+	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleVerification, time.Now()))
+	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleMessaging, time.Now()))
+	assert.False(t, document.HasRolesAt(multiroleKey, identity.RoleAuthentication, time.Now()))
 }
-
-/*
-func TestAccountQRConnection(t *testing.T) {
-	alice, aliceInbox := testAccount(t)
-
-	alice.
-
-}
-*/
