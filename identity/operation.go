@@ -196,9 +196,14 @@ func (b *OperationBuilder) SignWith(signer *signing.PublicKey) *OperationBuilder
 
 // Finish finalizes the operation and prepares it for execution
 func (b *OperationBuilder) Finish() *Operation {
-	operation := (*Operation)(C.self_identity_operation_builder_finish(
+	var operationPtr *C.self_identity_operation
+
+	C.self_identity_operation_builder_finish(
 		(*C.self_identity_operation_builder)(b),
-	))
+		&operationPtr,
+	)
+
+	operation := (*Operation)(operationPtr)
 
 	runtime.SetFinalizer(operation, func(operation *Operation) {
 		C.self_identity_operation_destroy(
