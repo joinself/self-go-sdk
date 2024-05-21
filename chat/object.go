@@ -65,6 +65,7 @@ func (o *Object) ToPayload() map[string]interface{} {
 		"key":     o.Key,
 		"mime":    o.Mime,
 		"expires": strconv.FormatInt(o.Expires, 10),
+		"public":  false,
 	}
 }
 

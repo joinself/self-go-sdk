@@ -62,9 +62,10 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 			if len(o.Link) > 0 {
 				// Is a public image, just append it
 				objects = append(objects, map[string]interface{}{
-					"link": o.Link,
-					"name": o.Name,
-					"mime": o.Mime,
+					"link":   o.Link,
+					"name":   o.Name,
+					"mime":   o.Mime,
+					"public": true,
 				})
 			} else {
 				fo := NewObject(s.fileInteractor)
