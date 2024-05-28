@@ -53,16 +53,24 @@ type Fact struct {
 func (f *Fact) AttestedValues() []string {
 	values := make([]string, len(f.payloads))
 
+	fact := f.Fact
+	if fact == "photo" {
+		fact = "image_hash"
+	}
+
 	for i, p := range f.payloads {
-		v := gjson.GetBytes(p, f.Fact).String()
+		v := gjson.GetBytes(p, fact).String()
 		if v == "" {
 			for _, sf := range gjson.GetBytes(p, "facts").Array() {
 				if sf.Map()["key"].String() == f.Fact {
 					v = sf.Map()["value"].String()
 				}
 			}
+
 		}
-		values[i] = v
+		if len(v) > 0 {
+			values[i] = v
+		}
 	}
 
 	return values
