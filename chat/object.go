@@ -18,6 +18,11 @@ type Object struct {
 	Ciphertext string
 }
 
+// Message sends a message to a list of recipients.
+func (s *Service) NewObject() *Object {
+	return NewObject(s.fileInteractor)
+}
+
 // NewObject creates an object.
 func NewObject(fi remoteFile) *Object {
 	return &Object{
