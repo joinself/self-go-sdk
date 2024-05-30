@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/joinself/self-go-sdk/chat"
 	"github.com/square/go-jose"
 
 	"github.com/tidwall/gjson"
@@ -36,15 +37,17 @@ var (
 
 // Fact specific details about the fact
 type Fact struct {
-	Fact          string            `json:"fact"`
-	Sources       []string          `json:"sources,omitempty"`
-	Origin        string            `json:"iss,omitempty"`
-	Operator      string            `json:"operator,omitempty"`
-	Attestations  []json.RawMessage `json:"attestations,omitempty"`
-	Issuers       []string          `json:"issuers,omitempty"`
-	ExpectedValue string            `json:"expected_value,omitempty"`
-	AttestedValue string            `json:"-"`
+	Fact          string                   `json:"fact"`
+	Sources       []string                 `json:"sources,omitempty"`
+	Origin        string                   `json:"iss,omitempty"`
+	Operator      string                   `json:"operator,omitempty"`
+	Attestations  []json.RawMessage        `json:"attestations,omitempty"`
+	Objects       []map[string]interface{} `json:"objects,omitempty"`
+	Issuers       []string                 `json:"issuers,omitempty"`
+	ExpectedValue string                   `json:"expected_value,omitempty"`
+	AttestedValue string                   `json:"-"`
 	payloads      [][]byte
+	objects       []*chat.Object
 	results       []string
 	value         string
 }
@@ -66,6 +69,11 @@ func (f *Fact) AttestedValues() []string {
 	}
 
 	return values
+}
+
+// AttestedObjects returns all attested objects for an attestations
+func (f *Fact) AttestedObjects() []*chat.Object {
+	return f.objects
 }
 
 // Result the result returned from an intermediary request

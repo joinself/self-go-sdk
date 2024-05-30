@@ -3,6 +3,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -52,8 +53,8 @@ func main() {
 		Description: "info",
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactPhoneNumber,
-				Sources: []string{fact.SourceUserSpecified},
+				Fact: fact.FactPhoto,
+				// Sources: []string{fact.SourceUserSpecified},
 			},
 		},
 		Expiry: time.Minute * 5,
@@ -68,5 +69,15 @@ func main() {
 
 	for _, f := range resp.Facts {
 		log.Println(f.Fact, ":", f.AttestedValues())
+		for _, o := range f.AttestedObjects() {
+			ct, err := o.GetContent()
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = ioutil.WriteFile("/tmp/output.jpg", ct, 0644)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }
