@@ -24,10 +24,12 @@ func (s *Service) SelfID() string {
 }
 
 type MessageObject struct {
-	Link string
-	Name string
-	Data []byte
-	Mime string
+	Link    string
+	Name    string
+	Data    []byte
+	Mime    string
+	Key     string
+	Expires int64
 }
 type MessageOptions struct {
 	GID     string
@@ -60,13 +62,25 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 		objects := make([]interface{}, 0)
 		for _, o := range opts[0].Objects {
 			if len(o.Link) > 0 {
-				// Is a public image, just append it
-				objects = append(objects, map[string]interface{}{
-					"link":   o.Link,
-					"name":   o.Name,
-					"mime":   o.Mime,
-					"public": true,
-				})
+				if len(o.Key) == 0 {
+					// Is a public image, just append it
+					objects = append(objects, map[string]interface{}{
+						"link":   o.Link,
+						"name":   o.Name,
+						"mime":   o.Mime,
+						"public": true,
+					})
+				} else {
+					// Is a prebuilt private object
+					objects = append(objects, map[string]interface{}{
+						"key":     o.Key,
+						"expires": o.Expires,
+						"link":    o.Link,
+						"name":    o.Name,
+						"mime":    o.Mime,
+						"public":  false,
+					})
+				}
 			} else {
 				fo := NewObject(s.fileInteractor)
 				err := fo.BuildFromData(o.Data, o.Name, o.Mime)
