@@ -56,7 +56,16 @@ func (o *Object) BuildFromObject(obj map[string]interface{}) error {
 	if _, ok := obj["key"]; ok {
 		o.Key = obj["key"].(string)
 		o.Mime = obj["mime"].(string)
-		o.Expires, _ = strconv.ParseInt(obj["expires"].(string), 10, 64)
+		if exp, exists := obj["expires"]; exists {
+			switch v := exp.(type) {
+			case string:
+				if expires, err := strconv.ParseInt(obj["expires"].(string), 10, 64); err == nil {
+					o.Expires = expires
+				}
+			case int64:
+				o.Expires = v
+			}
+		}
 	}
 
 	return nil
