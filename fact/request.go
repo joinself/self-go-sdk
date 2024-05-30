@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
@@ -488,20 +487,6 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 			}
 
 			resp.Facts[i].payloads[x] = msg
-
-			for _, sf := range gjson.GetBytes(msg, "facts").Array() {
-				for _, object := range sf.Map()["objects"].Array() {
-					o := chat.NewObject(s.fileInteractor)
-					o.BuildFromObject(map[string]interface{}{
-						"name":    "name",
-						"link":    object.Map()["link"].String(),
-						"key":     object.Map()["key"].String(),
-						"mime":    object.Map()["mime"].String(),
-						"expires": object.Map()["expires"].String(),
-					})
-					resp.Facts[i].objects = append(resp.Facts[i].objects, o)
-				}
-			}
 		}
 	}
 

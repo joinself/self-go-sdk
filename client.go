@@ -110,15 +110,14 @@ func (c *Client) Start() error {
 // FactService returns a client for working with facts
 func (c *Client) FactService() *fact.Service {
 	cfg := fact.Config{
-		SelfID:         c.config.SelfAppID,
-		DeviceID:       c.config.DeviceID,
-		KeyID:          c.config.kid,
-		Environment:    c.config.Environment,
-		PrivateKey:     c.config.sk,
-		Rest:           c.connectors.Rest,
-		PKI:            c.connectors.PKI,
-		Messaging:      c.connectors.Messaging,
-		FileInteractor: c.connectors.FileInteractor.(*object.RemoteFileInteractor),
+		SelfID:      c.config.SelfAppID,
+		DeviceID:    c.config.DeviceID,
+		KeyID:       c.config.kid,
+		Environment: c.config.Environment,
+		PrivateKey:  c.config.sk,
+		Rest:        c.connectors.Rest,
+		PKI:         c.connectors.PKI,
+		Messaging:   c.connectors.Messaging,
 	}
 	return fact.NewService(cfg)
 }
