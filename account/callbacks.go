@@ -8,11 +8,12 @@ package account
 #include <stdlib.h>
 
 typedef const self_signing_public_key cself_signing_public_key_t;
+typedef const self_message cself_message_t;
 typedef const uint8_t cuint8_t;
 
 extern void goOnConnect(void*);
 extern void goOnDisconnect(void*, self_status);
-extern void goOnMessage(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
+extern void goOnMessage(void*, cself_message_t*);
 extern void goOnCommit(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
 extern void goOnKeyPackage(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
 extern void goOnProposal(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
@@ -26,8 +27,8 @@ void c_on_disconnect(void* user_data, self_status reason) {
   goOnDisconnect(user_data, reason);
 }
 
-void c_on_message(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *message_buf, size_t message_len) {
-  goOnMessage(user_data, sender, recipient, message_buf, message_len);
+void c_on_message(void *user_data, const self_message *message) {
+  goOnMessage(user_data, message);
 }
 
 void c_on_commit(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *commit_buf, size_t commit_len) {
@@ -66,6 +67,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 )
 
 func accountCallbacks() *C.self_account_callbacks {
@@ -83,17 +85,10 @@ func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
 }
 
 //export goOnMessage
-func goOnMessage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, messageBuf *C.cuint8_t, messageLen C.size_t) {
+func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
 	(*Account)(user_data).callbacks.OnMessage(
 		(*Account)(user_data),
-		&Message{
-			fromAddress: (*signing.PublicKey)(fromAddress),
-			toAddress:   (*signing.PublicKey)(toAddress),
-			message: C.GoBytes(
-				unsafe.Pointer(messageBuf),
-				C.int(messageLen),
-			),
-		},
+		(*message.Message)(msg),
 	)
 }
 

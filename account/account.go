@@ -19,6 +19,7 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 )
 
 var pins = make(map[*Account]*runtime.Pinner)
@@ -455,18 +456,11 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome, notifi
 }
 
 // MessageSend sends a message to an address that we have established an encrypted group with
-func (a *Account) MessageSend(toAddress *signing.PublicKey, message []byte) error {
-	messageBuf := C.CBytes(message)
-
-	defer func() {
-		C.free(messageBuf)
-	}()
-
+func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
 	status := C.self_account_message_send(
 		a.account,
 		(*C.self_signing_public_key)(toAddress),
-		(*C.uint8_t)(messageBuf),
-		C.size_t(len(message)),
+		(*C.self_message_content)(content),
 	)
 
 	if status > 0 {

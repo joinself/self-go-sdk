@@ -1,17 +1,16 @@
 package message
 
 import (
-	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
 type CredentialPresentationRequest struct {
-	message     *account.Message
+	message     *Message
 	credentials [][]string
 	challenge   []byte
 }
 
-func DecodeCredentialPresentationRequest(message *account.Message) (*CredentialPresentationRequest, error) {
+func DecodeCredentialPresentationRequest(message *Message) (*CredentialPresentationRequest, error) {
 	return &CredentialPresentationRequest{
 		message: message,
 	}, nil
@@ -50,17 +49,17 @@ func (b *CredentialPresentationRequestBuilder) Sign(signer *signing.PublicKey) *
 	return b
 }
 
-func (b *CredentialPresentationRequestBuilder) Build(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
-	return &account.Message{}, nil
+func (b *CredentialPresentationRequestBuilder) Build(fromAddress, toAddress *signing.PublicKey) (*Content, error) {
+	return nil, nil
 }
 
 type CredentialPresentationResponse struct {
-	message        *account.Message
+	message        *Message
 	credentialType []string
 	proof          []CredentialProof
 }
 
-func DecodeCredentialPresentationResponse(message *account.Message) (*CredentialPresentationResponse, error) {
+func DecodeCredentialPresentationResponse(message *Message) (*CredentialPresentationResponse, error) {
 	return &CredentialPresentationResponse{
 		message: message,
 	}, nil
@@ -99,6 +98,6 @@ func (b *CredentialPresentationResponseBuilder) Sign(signer *signing.PublicKey) 
 	return b
 }
 
-func (b *CredentialPresentationResponseBuilder) Encode(fromAddress, toAddress *signing.PublicKey) (*account.Message, error) {
-	return &account.Message{}, nil
+func (b *CredentialPresentationResponseBuilder) Encode(fromAddress, toAddress *signing.PublicKey) (*Content, error) {
+	return nil, nil
 }
