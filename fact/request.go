@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"github.com/joinself/self-go-sdk/pkg/siggraph"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
@@ -77,8 +78,9 @@ type FactRequestAsync struct {
 
 // FactResponse contains the details of the requested facts
 type FactResponse struct {
-	Status string
-	Facts  []Fact
+	Status  string
+	Facts   []Fact
+	Objects map[string]*object.Object
 }
 
 // QRFactRequest contains the details of the requested facts
@@ -132,20 +134,27 @@ type IntermediaryFactResponse struct {
 	Facts []Fact
 }
 
+type remoteFile interface {
+	SetObject(data []byte) (*object.EncryptedObject, error)
+	GetObject(link, key string) ([]byte, error)
+}
+
 type StandardResponse struct {
-	ID           string    `json:"jti"`
-	Type         string    `json:"typ"`
-	Conversation string    `json:"cid"`
-	Issuer       string    `json:"iss"`
-	Audience     string    `json:"aud"`
-	Subject      string    `json:"sub"`
-	IssuedAt     time.Time `json:"iat"`
-	ExpiresAt    time.Time `json:"exp"`
-	DeviceID     string    `json:"device_id"`
-	Status       string    `json:"status"`
-	Description  string    `json:"description"`
-	Facts        []Fact    `json:"facts"`
-	Auth         bool      `json:"auth"`
+	ID             string                   `json:"jti"`
+	Type           string                   `json:"typ"`
+	Conversation   string                   `json:"cid"`
+	Issuer         string                   `json:"iss"`
+	Audience       string                   `json:"aud"`
+	Subject        string                   `json:"sub"`
+	IssuedAt       time.Time                `json:"iat"`
+	ExpiresAt      time.Time                `json:"exp"`
+	DeviceID       string                   `json:"device_id"`
+	Status         string                   `json:"status"`
+	Description    string                   `json:"description"`
+	Facts          []Fact                   `json:"facts"`
+	Objects        []map[string]interface{} `json:"objects,omitempty"`
+	Auth           bool                     `json:"auth"`
+	FileInteractor *object.RemoteFileInteractor
 }
 
 // Request requests a fact from a given identity
@@ -197,7 +206,16 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	return &FactResponse{Facts: resp.Facts, Status: resp.Status}, nil
+	objects := map[string]*object.Object{}
+	for _, o := range resp.Objects {
+		fo := object.New(s.fileInteractor)
+		o["name"] = o["id"]
+		if err := fo.BuildFromObject(o); err == nil {
+			objects[o["image_hash"].(string)] = fo
+		}
+	}
+
+	return &FactResponse{Facts: resp.Facts, Objects: objects, Status: resp.Status}, nil
 }
 
 // RequestAsync requests a fact from a given identity and does not
@@ -415,6 +433,7 @@ func (s *Service) parseFactResponse(issuer, subject string, response []byte) (*S
 	if err != nil {
 		return nil, ErrBadJSONPayload
 	}
+	resp.FileInteractor = s.fileInteractor
 
 	if resp.Audience != s.selfID {
 		return nil, ErrMessageBadAudience

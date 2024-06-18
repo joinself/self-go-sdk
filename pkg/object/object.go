@@ -1,14 +1,20 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-package chat
+package object
 
 import (
 	"log"
 	"strconv"
 )
 
+// RemoteFile manages interactions with the remote filles
+type RemoteFile interface {
+	SetObject(data []byte) (*EncryptedObject, error)
+	GetObject(link, key string) ([]byte, error)
+}
+
 type Object struct {
-	fi         remoteFile
+	fi         RemoteFile
 	Link       string
 	Name       string
 	Mime       string
@@ -18,13 +24,8 @@ type Object struct {
 	Ciphertext string
 }
 
-// Message sends a message to a list of recipients.
-func (s *Service) NewObject() *Object {
-	return NewObject(s.fileInteractor)
-}
-
-// NewObject creates an object.
-func NewObject(fi remoteFile) *Object {
+// New creates an object.
+func New(fi RemoteFile) *Object {
 	return &Object{
 		fi: fi,
 	}

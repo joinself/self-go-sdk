@@ -52,7 +52,7 @@ func main() {
 		Description: "info",
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactPhoneNumber,
+				Fact:    fact.FactUnverifiedPhoneNumber,
 				Sources: []string{fact.SourceUserSpecified},
 			},
 		},
