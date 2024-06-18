@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/skip2/go-qrcode"
 )
@@ -82,7 +83,7 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 					})
 				}
 			} else {
-				fo := NewObject(s.fileInteractor)
+				fo := object.New(s.fileInteractor)
 				err := fo.BuildFromData(o.Data, o.Name, o.Mime)
 				if err != nil {
 					return nil, err
@@ -158,7 +159,7 @@ func (s *Service) Invite(gid string, name string, members []string, opts ...Invi
 	}
 
 	if len(opts) > 0 {
-		fo := NewObject(s.fileInteractor)
+		fo := object.New(s.fileInteractor)
 		err := fo.BuildFromData(opts[0].Data, "", opts[0].Mime)
 		if err != nil {
 			return err

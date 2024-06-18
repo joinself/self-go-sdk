@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/object"
 )
 
 var (
@@ -44,7 +44,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 	jti := uuid.New().String()
 	oo := make([]map[string]interface{}, 0)
 	for _, o := range objects {
-		fo := chat.NewObject(s.fileInteractor)
+		fo := object.New(s.fileInteractor)
 		err := fo.BuildFromData(o.Data, o.Name, o.Mime)
 		if err != nil {
 			return resp, err

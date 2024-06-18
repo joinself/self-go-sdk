@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
 	"github.com/joinself/self-go-sdk/pkg/object"
@@ -81,7 +80,7 @@ type FactRequestAsync struct {
 type FactResponse struct {
 	Status  string
 	Facts   []Fact
-	Objects map[string]*chat.Object
+	Objects map[string]*object.Object
 }
 
 // QRFactRequest contains the details of the requested facts
@@ -207,9 +206,9 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		return nil, err
 	}
 
-	objects := map[string]*chat.Object{}
+	objects := map[string]*object.Object{}
 	for _, o := range resp.Objects {
-		fo := chat.NewObject(s.fileInteractor)
+		fo := object.New(s.fileInteractor)
 		o["name"] = o["id"]
 		if err := fo.BuildFromObject(o); err == nil {
 			objects[o["image_hash"].(string)] = fo
