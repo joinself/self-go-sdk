@@ -56,7 +56,7 @@ func main() {
 		Callback:       redirectionCode,
 		Facts: []fact.Fact{
 			{
-				Fact:    fact.FactPhoneNumber,
+				Fact:    fact.FactUnverifiedPhoneNumber,
 				Sources: []string{fact.SourceUserSpecified},
 			},
 		},
