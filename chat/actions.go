@@ -38,6 +38,7 @@ type MessageOptions struct {
 	JTI     string
 	RID     string
 	Objects []MessageObject
+	Data    map[string]interface{}
 }
 
 // Message sends a message to a list of recipients.
@@ -92,6 +93,7 @@ func (s *Service) Message(recipients []string, body string, opts ...MessageOptio
 			}
 		}
 		payload["objects"] = objects
+		payload["data"] = opts[0].Data
 	}
 
 	err := s.send(recipients, payload)
