@@ -106,9 +106,11 @@ func TestAccountMessaging(t *testing.T) {
 	// wait for negotiation to finish
 	time.Sleep(time.Millisecond * 2000)
 
-	contentForBobby := message.NewChat().
+	contentForBobby, err := message.NewChat().
 		Message("hello").
 		Finish()
+
+	require.Nil(t, err)
 
 	// send a message from alice
 	err = alice.MessageSend(
@@ -125,9 +127,11 @@ func TestAccountMessaging(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, "hello", chatMessage.Message())
 
-	contentForAlice := message.NewChat().
+	contentForAlice, err := message.NewChat().
 		Message("hi!").
 		Finish()
+
+	require.Nil(t, err)
 
 	// send a response from bobby
 	err = bobby.MessageSend(

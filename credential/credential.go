@@ -29,6 +29,10 @@ type Credential C.self_credential
 type CredentialBuilder C.self_credential_builder
 type VerifiableCredential C.self_verifiable_credential
 type VerifiableCredentialCollection C.self_collection_verifiable_credential
+type CredentialPresentationDetail C.self_credential_presentation_detail
+type CredentialPresentationDetailCollection C.self_collection_credential_presentation_detail
+type CredentialVerificationEvidence C.self_credential_verification_evidence
+type CredentialVerificationEvidenceCollection C.self_collection_credential_verification_evidence
 
 // NewCredential creates a new credential builder
 func NewCredential() *CredentialBuilder {
@@ -246,6 +250,31 @@ func (c *VerifiableCredentialCollection) Length() int {
 func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
 	return (*VerifiableCredential)(C.self_collection_verifiable_credential_at(
 		(*C.self_collection_verifiable_credential)(c),
+		C.ulong(index),
+	))
+}
+
+func NewCredentialVerificationEvidenceCollection() *CredentialVerificationEvidenceCollection {
+	collection := (*CredentialVerificationEvidenceCollection)(C.self_collection_credential_verification_evidence_init())
+
+	runtime.SetFinalizer(collection, func(collection *CredentialVerificationEvidenceCollection) {
+		C.self_collection_credential_verification_evidence_destroy(
+			(*C.self_collection_credential_verification_evidence)(collection),
+		)
+	})
+
+	return collection
+}
+
+func (c *CredentialVerificationEvidenceCollection) Length() int {
+	return int(C.self_collection_credential_verification_evidence_len(
+		(*C.self_collection_credential_verification_evidence)(c),
+	))
+}
+
+func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVerificationEvidence {
+	return (*CredentialVerificationEvidence)(C.self_collection_credential_verification_evidence_at(
+		(*C.self_collection_credential_verification_evidence)(c),
 		C.ulong(index),
 	))
 }

@@ -9,15 +9,19 @@ package account
 
 typedef const self_signing_public_key cself_signing_public_key_t;
 typedef const self_message cself_message_t;
+typedef const self_commit cself_commit_t;
+typedef const self_key_package cself_key_package_t;
+typedef const self_proposal cself_proposal_t;
+typedef const self_welcome cself_welcome_t;
 typedef const uint8_t cuint8_t;
 
 extern void goOnConnect(void*);
 extern void goOnDisconnect(void*, self_status);
 extern void goOnMessage(void*, cself_message_t*);
-extern void goOnCommit(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
-extern void goOnKeyPackage(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
-extern void goOnProposal(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t);
-extern void goOnWelcome(void*, cself_signing_public_key_t*, cself_signing_public_key_t*, cuint8_t*, size_t, cuint8_t*, size_t);
+extern void goOnCommit(void*, cself_commit_t*);
+extern void goOnKeyPackage(void*, cself_key_package_t*);
+extern void goOnProposal(void*, cself_proposal_t*);
+extern void goOnWelcome(void*, cself_welcome_t*);
 
 void c_on_connect(void* user_data) {
   goOnConnect(user_data);
@@ -27,24 +31,24 @@ void c_on_disconnect(void* user_data, self_status reason) {
   goOnDisconnect(user_data, reason);
 }
 
-void c_on_message(void *user_data, const self_message *message) {
+void c_on_message(void *user_data, self_message *message) {
   goOnMessage(user_data, message);
 }
 
-void c_on_commit(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *commit_buf, size_t commit_len) {
-  goOnCommit(user_data, sender, recipient, commit_buf, commit_len);
+void c_on_commit(void *user_data, self_commit *commit) {
+  goOnCommit(user_data, commit);
 }
 
-void c_on_key_package(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *key_package_buf, size_t key_package_len) {
-  goOnKeyPackage(user_data, sender, recipient, key_package_buf, key_package_len);
+void c_on_key_package(void *user_data, self_key_package *key_package) {
+  goOnKeyPackage(user_data, key_package);
 }
 
-void c_on_proposal(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *proposal_buf, size_t proposal_len) {
-  goOnProposal(user_data, sender, recipient, proposal_buf, proposal_len);
+void c_on_proposal(void *user_data, self_proposal *proposal) {
+  goOnProposal(user_data, proposal);
 }
 
-void c_on_welcome(void *user_data, const self_signing_public_key *sender, const self_signing_public_key *recipient, const uint8_t *welcome_buf, size_t welcome_len, const uint8_t *subscription_token_buf, size_t subscription_token_len) {
-	goOnWelcome(user_data, sender, recipient, welcome_buf, welcome_len, subscription_token_buf, subscription_token_len);
+void c_on_welcome(void *user_data, self_welcome *welcome) {
+	goOnWelcome(user_data, welcome);
 }
 
 self_account_callbacks *account_callbacks() {
@@ -64,6 +68,7 @@ self_account_callbacks *account_callbacks() {
 import "C"
 import (
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
@@ -93,42 +98,56 @@ func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
 }
 
 //export goOnCommit
-func goOnCommit(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, commitBuf *C.cuint8_t, commitLen C.size_t) {
+func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
+	runtime.SetFinalizer(commit, func(commit *C.cself_commit_t) {
+		C.self_commit_destroy(
+			(*C.self_commit)(commit),
+		)
+	})
 }
 
 //export goOnKeyPackage
-func goOnKeyPackage(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, keyPackageBuf *C.cuint8_t, keyPackageLen C.size_t) {
+func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t) {
 	fmt.Println("got key package...")
+
+	runtime.SetFinalizer(keyPackage, func(keyPackage *C.cself_key_package_t) {
+		C.self_key_package_destroy(
+			(*C.self_key_package)(keyPackage),
+		)
+	})
+
 	err := (*Account)(user_data).ConnectionEstablish(
-		(*signing.PublicKey)(toAddress),
-		(*signing.PublicKey)(fromAddress),
-		C.GoBytes(
-			unsafe.Pointer(keyPackageBuf),
-			C.int(keyPackageLen),
-		),
+		(*signing.PublicKey)(C.self_key_package_to_address(keyPackage)),
+		(*message.KeyPackage)(keyPackage),
 	)
+
 	if err != nil {
 		panic(err)
 	}
 }
 
 //export goOnProposal
-func goOnProposal(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, proposalBuf *C.cuint8_t, proposalLen C.size_t) {
+func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
+	runtime.SetFinalizer(proposal, func(proposal *C.cself_proposal_t) {
+		C.self_proposal_destroy(
+			(*C.self_proposal)(proposal),
+		)
+	})
 }
 
 //export goOnWelcome
-func goOnWelcome(user_data unsafe.Pointer, fromAddress *C.cself_signing_public_key_t, toAddress *C.cself_signing_public_key_t, welcomeBuf *C.cuint8_t, welcomeLen C.size_t, notificationTokenBuf *C.cuint8_t, notificationTokenLen C.size_t) {
+func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 	fmt.Println("got welcome...")
+
+	runtime.SetFinalizer(welcome, func(welcome *C.cself_proposal_t) {
+		C.self_welcome_destroy(
+			(*C.self_welcome)(welcome),
+		)
+	})
+
 	err := (*Account)(user_data).ConnectionAccept(
-		(*signing.PublicKey)(toAddress),
-		C.GoBytes(
-			unsafe.Pointer(welcomeBuf),
-			C.int(welcomeLen),
-		),
-		C.GoBytes(
-			unsafe.Pointer(notificationTokenBuf),
-			C.int(notificationTokenLen),
-		),
+		(*signing.PublicKey)(C.self_welcome_to_address(welcome)),
+		(*message.Welcome)(welcome),
 	)
 	if err != nil {
 		panic(err)

@@ -20,6 +20,7 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk/object"
 )
 
 var pins = make(map[*Account]*runtime.Pinner)
@@ -54,16 +55,16 @@ func New(cfg *Config) (*Account, error) {
 		callbacks: &cfg.Callbacks,
 	}
 
-	// rpcURLBuf := C.CString("http://127.0.0.1:3000/")
-	// messagingURLBuf := C.CString("ws://127.0.0.1:3001/")
 	rpcURLBuf := C.CString("http://127.0.0.1:8080/")
-	messagingURLBuf := C.CString("ws://127.0.0.1:8088/")
+	objectURLBuf := C.CString("http://127.0.0.1:8090")
+	messagingURLBuf := C.CString("ws://127.0.0.1:9000/")
 	storagePathBuf := C.CString(cfg.StoragePath)
 	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))
 	storageKeyLen := C.size_t(len(cfg.StorageKey))
 
 	defer func() {
 		C.free(unsafe.Pointer(rpcURLBuf))
+		C.free(unsafe.Pointer(objectURLBuf))
 		C.free(unsafe.Pointer(messagingURLBuf))
 		C.free(unsafe.Pointer(storagePathBuf))
 		C.free(unsafe.Pointer(storageKeyBuf))
@@ -84,6 +85,7 @@ func New(cfg *Config) (*Account, error) {
 	s := C.self_account_configure(
 		account.account,
 		rpcURLBuf,
+		objectURLBuf,
 		messagingURLBuf,
 		storagePathBuf,
 		storageKeyBuf,
@@ -389,6 +391,37 @@ func (a *Account) InboxClose(address *signing.PublicKey) error {
 	return nil
 }
 
+// ObjectUpload uploads an encrypted object, optionally storing it our to local storage
+func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object, persistLocally bool) error {
+	status := C.self_account_object_upload(
+		a.account,
+		(*C.self_signing_public_key)(asAddress),
+		(*C.self_object)(obj),
+		C.bool(persistLocally),
+	)
+
+	if status > 0 {
+		return fmt.Errorf("failed object upload, code: %d", status)
+	}
+
+	return nil
+}
+
+// ObjectDownload downloads and decrypts an object
+func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Object) error {
+	status := C.self_account_object_download(
+		a.account,
+		(*C.self_signing_public_key)(asAddress),
+		(*C.self_object)(obj),
+	)
+
+	if status > 0 {
+		return fmt.Errorf("failed object download, code: %d", status)
+	}
+
+	return nil
+}
+
 // ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
 // package to the recipient, which they will use to invite us to an encrypted group
 func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress *signing.PublicKey) error {
@@ -407,19 +440,11 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
 // using the key package the initiator sent to us
-func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, withAddress *signing.PublicKey, keyPackage []byte) error {
-	keyPackageBuf := C.CBytes(keyPackage)
-
-	defer func() {
-		C.free(keyPackageBuf)
-	}()
-
+func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) error {
 	status := C.self_account_connection_establish(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
-		(*C.self_signing_public_key)(withAddress),
-		(*C.uint8_t)(keyPackageBuf),
-		C.size_t(len(keyPackage)),
+		(*C.self_key_package)(keyPackage),
 	)
 
 	if status > 0 {
@@ -430,22 +455,11 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, withAddress 
 }
 
 // ConnectionAccept accepts a welcome to a encrypted group
-func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome, notificationToken []byte) error {
-	welcomeBuf := C.CBytes(welcome)
-	notificationTokenBuf := C.CBytes(notificationToken)
-
-	defer func() {
-		C.free(welcomeBuf)
-		C.free(notificationTokenBuf)
-	}()
-
+func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) error {
 	status := C.self_account_connection_accept(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
-		(*C.uint8_t)(welcomeBuf),
-		C.size_t(len(welcome)),
-		(*C.uint8_t)(notificationTokenBuf),
-		C.size_t(len(notificationToken)),
+		(*C.self_welcome)(welcome),
 	)
 
 	if status > 0 {

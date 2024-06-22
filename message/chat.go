@@ -15,6 +15,7 @@ import (
 )
 
 type Chat C.self_message_content_chat
+type ChatBuilder C.self_message_content_chat_builder
 
 // DeocodeChat decodes a chat message
 func DecodeChat(msg *Message) (*Chat, error) {
@@ -47,8 +48,6 @@ func (c *Chat) Message() string {
 	return C.GoString(C.self_message_content_chat_message((*C.self_message_content_chat)(c)))
 }
 
-type ChatBuilder C.self_message_content_chat_builder
-
 // NewChat constructs a new chat message
 func NewChat() *ChatBuilder {
 	builder := (*ChatBuilder)(C.self_message_content_chat_builder_init())
@@ -77,13 +76,17 @@ func (b *ChatBuilder) Message(msg string) *ChatBuilder {
 }
 
 // Finish finalizes the chat message and prepares it for sending
-func (b *ChatBuilder) Finish() *Content {
+func (b *ChatBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	C.self_message_content_chat_builder_finish(
+	status := C.self_message_content_chat_builder_finish(
 		(*C.self_message_content_chat_builder)(b),
 		&finishedContent,
 	)
+
+	if status > 0 {
+		return nil, errors.New("failed to build chat request")
+	}
 
 	content := (*Content)(finishedContent)
 
@@ -93,5 +96,5 @@ func (b *ChatBuilder) Finish() *Content {
 		)
 	})
 
-	return content
+	return content, nil
 }
