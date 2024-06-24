@@ -56,7 +56,7 @@ func New(cfg *Config) (*Account, error) {
 	}
 
 	rpcURLBuf := C.CString("http://127.0.0.1:8080/")
-	objectURLBuf := C.CString("http://127.0.0.1:8090")
+	objectURLBuf := C.CString("http://127.0.0.1:8090/")
 	messagingURLBuf := C.CString("ws://127.0.0.1:9000/")
 	storagePathBuf := C.CString(cfg.StoragePath)
 	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))

@@ -19,7 +19,7 @@ func testAccount(t testing.TB) (*account.Account, chan *message.Message) {
 
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
-		StoragePath: t.TempDir() + "self.db",
+		StoragePath: t.TempDir() + "/self.db",
 		Callbacks: account.Callbacks{
 			OnConnect: func() {},
 			OnDisconnect: func(err error) {

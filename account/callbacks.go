@@ -67,7 +67,6 @@ self_account_callbacks *account_callbacks() {
 */
 import "C"
 import (
-	"fmt"
 	"runtime"
 	"unsafe"
 
@@ -91,15 +90,25 @@ func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
 
 //export goOnMessage
 func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
+	messageEvent := (*message.Message)(msg)
+
+	runtime.SetFinalizer(messageEvent, func(msg *message.Message) {
+		C.self_message_destroy(
+			(*C.self_message)(msg),
+		)
+	})
+
 	(*Account)(user_data).callbacks.OnMessage(
 		(*Account)(user_data),
-		(*message.Message)(msg),
+		messageEvent,
 	)
 }
 
 //export goOnCommit
 func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
-	runtime.SetFinalizer(commit, func(commit *C.cself_commit_t) {
+	commitEvent := (*message.Commit)(commit)
+
+	runtime.SetFinalizer(commitEvent, func(commit *message.Commit) {
 		C.self_commit_destroy(
 			(*C.self_commit)(commit),
 		)
@@ -108,9 +117,9 @@ func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
 
 //export goOnKeyPackage
 func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t) {
-	fmt.Println("got key package...")
+	keyPackageEvent := (*message.KeyPackage)(keyPackage)
 
-	runtime.SetFinalizer(keyPackage, func(keyPackage *C.cself_key_package_t) {
+	runtime.SetFinalizer(keyPackageEvent, func(keyPackage *message.KeyPackage) {
 		C.self_key_package_destroy(
 			(*C.self_key_package)(keyPackage),
 		)
@@ -118,7 +127,7 @@ func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t)
 
 	err := (*Account)(user_data).ConnectionEstablish(
 		(*signing.PublicKey)(C.self_key_package_to_address(keyPackage)),
-		(*message.KeyPackage)(keyPackage),
+		keyPackageEvent,
 	)
 
 	if err != nil {
@@ -128,7 +137,9 @@ func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t)
 
 //export goOnProposal
 func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
-	runtime.SetFinalizer(proposal, func(proposal *C.cself_proposal_t) {
+	proposalEvent := (*message.Proposal)(proposal)
+
+	runtime.SetFinalizer(proposalEvent, func(proposal *message.Proposal) {
 		C.self_proposal_destroy(
 			(*C.self_proposal)(proposal),
 		)
@@ -137,9 +148,9 @@ func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
 
 //export goOnWelcome
 func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
-	fmt.Println("got welcome...")
+	welcomeEvent := (*message.Welcome)(welcome)
 
-	runtime.SetFinalizer(welcome, func(welcome *C.cself_proposal_t) {
+	runtime.SetFinalizer(welcomeEvent, func(welcome *message.Welcome) {
 		C.self_welcome_destroy(
 			(*C.self_welcome)(welcome),
 		)
@@ -147,8 +158,9 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 
 	err := (*Account)(user_data).ConnectionAccept(
 		(*signing.PublicKey)(C.self_welcome_to_address(welcome)),
-		(*message.Welcome)(welcome),
+		welcomeEvent,
 	)
+
 	if err != nil {
 		panic(err)
 	}
