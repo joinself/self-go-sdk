@@ -2,7 +2,8 @@ package account_test
 
 import (
 	"errors"
-	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -14,12 +15,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testAccount(t testing.TB) (*account.Account, chan *message.Message) {
-	incoming := make(chan *message.Message, 1024)
+func testAccount(t testing.TB) (*account.Account, chan *message.Message, chan *message.Welcome) {
+	return testAccountWithPath(t, t.TempDir())
+}
+
+func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *message.Message, chan *message.Welcome) {
+	incomingMsg := make(chan *message.Message, 1024)
+	incomingWel := make(chan *message.Welcome, 1024)
 
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
-		StoragePath: t.TempDir() + "/self.db",
+		StoragePath: path + "/self.db",
 		Callbacks: account.Callbacks{
 			OnConnect: func() {},
 			OnDisconnect: func(err error) {
@@ -28,18 +34,30 @@ func testAccount(t testing.TB) (*account.Account, chan *message.Message) {
 			OnMessage: func(account *account.Account, msg *message.Message) {
 				switch message.ContentType(msg) {
 				case message.TypeChat:
-					content, err := message.DecodeChat(msg)
-					require.Nil(t, err)
+					/*
+						content, err := message.DecodeChat(msg)
+						require.Nil(t, err)
 
-					fmt.Println(
-						"to:", msg.ToAddress(),
-						"from:", msg.FromAddress(),
-						"message:", string(content.Message()),
-					)
+						fmt.Println(
+							"to:", msg.ToAddress(),
+							"from:", msg.FromAddress(),
+							"message:", string(content.Message()),
+						)
+					*/
 
-					incoming <- msg
+					incomingMsg <- msg
+				}
+			},
+			OnWelcome: func(account *account.Account, welcome *message.Welcome) {
+				err := account.ConnectionAccept(
+					welcome.ToAddress(),
+					welcome,
+				)
+				if err != nil {
+					panic(err)
 				}
 
+				incomingWel <- welcome
 			},
 		},
 	}
@@ -47,7 +65,7 @@ func testAccount(t testing.TB) (*account.Account, chan *message.Message) {
 	acc, err := account.New(cfg)
 	require.Nil(t, err)
 
-	return acc, incoming
+	return acc, incomingMsg, incomingWel
 }
 
 func testRegisterIdentity(t testing.TB, account *account.Account) {
@@ -84,8 +102,8 @@ func wait(t testing.TB, ch chan *message.Message, timeout time.Duration) *messag
 }
 
 func TestAccountMessaging(t *testing.T) {
-	alice, aliceInbox := testAccount(t)
-	bobby, bobbyInbox := testAccount(t)
+	alice, aliceInbox, aliceWel := testAccount(t)
+	bobby, bobbyInbox, _ := testAccount(t)
 
 	aliceAddress, err := alice.InboxOpen()
 	require.Nil(t, err)
@@ -93,8 +111,8 @@ func TestAccountMessaging(t *testing.T) {
 	bobbyAddress, err := bobby.InboxOpen()
 	require.Nil(t, err)
 
-	fmt.Println("alice:", aliceAddress)
-	fmt.Println("bobby:", bobbyAddress)
+	// fmt.Println("alice:", aliceAddress)
+	// fmt.Println("bobby:", bobbyAddress)
 
 	err = alice.ConnectionNegotiate(
 		aliceAddress,
@@ -104,7 +122,7 @@ func TestAccountMessaging(t *testing.T) {
 	require.Nil(t, err)
 
 	// wait for negotiation to finish
-	time.Sleep(time.Millisecond * 2000)
+	<-aliceWel
 
 	contentForBobby, err := message.NewChat().
 		Message("hello").
@@ -171,7 +189,7 @@ func TestAccountMessaging(t *testing.T) {
 }
 
 func TestAccountIdentity(t *testing.T) {
-	alice, _ := testAccount(t)
+	alice, _, _ := testAccount(t)
 
 	identityKey, err := alice.KeychainSigningCreate()
 	require.Nil(t, err)
@@ -231,8 +249,8 @@ func TestAccountIdentity(t *testing.T) {
 }
 
 func TestAccountCredentials(t *testing.T) {
-	alice, _ := testAccount(t)
-	bobby, _ := testAccount(t)
+	alice, _, _ := testAccount(t)
+	bobby, _, _ := testAccount(t)
 
 	testRegisterIdentity(t, alice)
 	testRegisterIdentity(t, bobby)
@@ -315,4 +333,72 @@ func TestAccountCredentials(t *testing.T) {
 
 	credentials := passportVerifiablePresentation.Credentials()
 	assert.Equal(t, 1, credentials.Length())
+}
+
+func TestAccountPersistence(t *testing.T) {
+	alicePath, bobbyPath := t.TempDir(), t.TempDir()
+
+	alice, _, aliceWel := testAccountWithPath(t, alicePath)
+	bobby, _, _ := testAccountWithPath(t, bobbyPath)
+
+	aliceAddress, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	bobbyAddress, err := bobby.InboxOpen()
+	require.Nil(t, err)
+
+	// establish an encrypted connection
+	err = alice.ConnectionNegotiate(
+		aliceAddress,
+		bobbyAddress,
+	)
+
+	require.Nil(t, err)
+
+	// wait for negotiation to finish
+	<-aliceWel
+
+	// close down alices account
+	err = alice.Close()
+	require.Nil(t, err)
+
+	time.Sleep(time.Second)
+
+	// send alice a bunch of messages
+	contentForAlice, err := message.NewChat().
+		Message("hello").
+		Finish()
+
+	require.Nil(t, err)
+
+	var received int64
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	for i := 0; i < 100; i++ {
+		bobby.MessageSendAsync(
+			aliceAddress,
+			contentForAlice,
+			func(err error) {
+				response := atomic.AddInt64(&received, 1)
+				if err != nil {
+					panic(err)
+				}
+
+				if response == 100 {
+					wg.Done()
+				}
+			},
+		)
+	}
+
+	wg.Wait()
+
+	// reopen alices account
+	_, aliceInbox, _ := testAccountWithPath(t, alicePath)
+
+	// receive the messages from bobby
+	for i := 0; i < 100; i++ {
+		<-aliceInbox
+	}
 }

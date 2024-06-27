@@ -483,3 +483,26 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Con
 
 	return nil
 }
+
+// MessageSend sends a message to an address that we have established an encrypted group with
+func (a *Account) MessageSendAsync(toAddress *signing.PublicKey, content *message.Content, callback func(err error)) {
+	accountMessageSendAsync(
+		a,
+		toAddress,
+		content,
+		callback,
+	)
+}
+
+// Close shuts down the account
+func (a *Account) Close() error {
+	status := C.self_account_destroy(
+		(*C.self_account)(a.account),
+	)
+
+	if status > 0 {
+		return errors.New("failed to close account")
+	}
+
+	return nil
+}

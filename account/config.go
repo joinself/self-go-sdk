@@ -14,4 +14,8 @@ type Callbacks struct {
 	OnConnect    func()
 	OnDisconnect func(err error)
 	OnMessage    func(account *Account, message *message.Message)
+	OnCommit     func(account *Account, commit *message.Commit)
+	OnKeyPackage func(account *Account, keyPackage *message.KeyPackage)
+	OnProposal   func(account *Account, proposal *message.Proposal)
+	OnWelcome    func(account *Account, welcome *message.Welcome)
 }

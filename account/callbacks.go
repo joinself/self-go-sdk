@@ -22,6 +22,7 @@ extern void goOnCommit(void*, cself_commit_t*);
 extern void goOnKeyPackage(void*, cself_key_package_t*);
 extern void goOnProposal(void*, cself_proposal_t*);
 extern void goOnWelcome(void*, cself_welcome_t*);
+extern void goOnResponse(void*, self_status);
 
 void c_on_connect(void* user_data) {
   goOnConnect(user_data);
@@ -64,15 +65,43 @@ self_account_callbacks *account_callbacks() {
 
 	return callbacks;
 }
+
+void c_on_response(void *user_data, self_status response) {
+	goOnResponse(user_data, response);
+}
+
+void c_self_account_message_send_async(
+	struct self_account *account,
+    const struct self_signing_public_key *to_address,
+    const struct self_message_content *content,
+    void *user_data
+) {
+	self_on_response_cb callback_fn = c_on_response;
+
+	self_account_message_send_async(
+		account,
+		to_address,
+		content,
+		&callback_fn,
+		user_data
+	);
+};
 */
 import "C"
 import (
+	"errors"
+	"fmt"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
 )
+
+var responseOffset int64
+var responseCallbacks sync.Map
 
 func accountCallbacks() *C.self_account_callbacks {
 	return C.account_callbacks()
@@ -85,6 +114,10 @@ func goOnConnect(user_data unsafe.Pointer) {
 
 //export goOnDisconnect
 func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
+	// TODO handle reason
+	if reason > 0 {
+		fmt.Println(reason)
+	}
 	(*Account)(user_data).callbacks.OnDisconnect(nil)
 }
 
@@ -113,6 +146,17 @@ func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
 			(*C.self_commit)(commit),
 		)
 	})
+
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnCommit != nil {
+		account.callbacks.OnCommit(
+			(*Account)(user_data),
+			commitEvent,
+		)
+
+		return
+	}
 }
 
 //export goOnKeyPackage
@@ -125,7 +169,18 @@ func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t)
 		)
 	})
 
-	err := (*Account)(user_data).ConnectionEstablish(
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnKeyPackage != nil {
+		account.callbacks.OnKeyPackage(
+			(*Account)(user_data),
+			keyPackageEvent,
+		)
+
+		return
+	}
+
+	err := account.ConnectionEstablish(
 		(*signing.PublicKey)(C.self_key_package_to_address(keyPackage)),
 		keyPackageEvent,
 	)
@@ -144,6 +199,17 @@ func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
 			(*C.self_proposal)(proposal),
 		)
 	})
+
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnProposal != nil {
+		account.callbacks.OnProposal(
+			(*Account)(user_data),
+			proposalEvent,
+		)
+
+		return
+	}
 }
 
 //export goOnWelcome
@@ -156,7 +222,18 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 		)
 	})
 
-	err := (*Account)(user_data).ConnectionAccept(
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnWelcome != nil {
+		account.callbacks.OnWelcome(
+			(*Account)(user_data),
+			welcomeEvent,
+		)
+
+		return
+	}
+
+	err := account.ConnectionAccept(
 		(*signing.PublicKey)(C.self_welcome_to_address(welcome)),
 		welcomeEvent,
 	)
@@ -164,4 +241,34 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+//export goOnResponse
+func goOnResponse(user_data unsafe.Pointer, response C.self_status) {
+	offset := (*int64)(user_data)
+
+	callback, ok := responseCallbacks.LoadAndDelete(*offset)
+	if !ok {
+		return
+	}
+
+	if callback != nil {
+		if int(response) > 0 {
+			(callback).(func(error))(errors.New("request failed"))
+		} else {
+			(callback).(func(error))(nil)
+		}
+	}
+}
+
+func accountMessageSendAsync(account *Account, toAddress *signing.PublicKey, content *message.Content, callback func(err error)) {
+	offset := atomic.AddInt64(&responseOffset, 1)
+	responseCallbacks.Store(offset, callback)
+
+	C.c_self_account_message_send_async(
+		account.account,
+		(*C.self_signing_public_key)(toAddress),
+		(*C.self_message_content)(content),
+		unsafe.Pointer(&offset),
+	)
 }
