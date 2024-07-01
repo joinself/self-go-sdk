@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joinself/self-go-sdk/pkg/helpers"
 	"github.com/joinself/self-go-sdk/pkg/ntp"
+	"github.com/joinself/self-go-sdk/pkg/object"
 	"gopkg.in/square/go-jose.v2"
 )
 
@@ -26,6 +27,7 @@ type FactToIssue struct {
 	Group      *FactGroup     `json:"group,omitempty"`
 	Type       string         `json:"type,omitempty"`
 	ExpTimeout *time.Duration `json:"-"`
+	Object     *object.Object `json:"-"`
 }
 
 func (f *FactToIssue) validate() error {
@@ -132,6 +134,14 @@ func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []
 		attestations[i] = json.RawMessage(attestation.FullSerialize())
 	}
 
+	objects := make([]map[string]interface{}, 0)
+	for _, f := range facts {
+		if f.Object != nil {
+			objects = append(objects, f.Object.ToPayload())
+		}
+
+	}
+
 	req := map[string]interface{}{
 		"typ":          "identities.facts.issue",
 		"iss":          s.selfID,
@@ -143,6 +153,7 @@ func (s *Service) sendIssuedFacts(selfID string, facts []FactToIssue, viewers []
 		"jti":          uuid.New().String(),
 		"status":       "verified",
 		"attestations": attestations,
+		"objects":      objects,
 		"viewers":      viewers,
 	}
 
