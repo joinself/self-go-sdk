@@ -211,7 +211,11 @@ func (s Service) Request(req *FactRequest) (*FactResponse, error) {
 		fo := object.New(s.fileInteractor)
 		o["name"] = o["id"]
 		if err := fo.BuildFromObject(o); err == nil {
-			objects[o["image_hash"].(string)] = fo
+			if _, ok := o["image_hash"]; ok {
+				objects[o["image_hash"].(string)] = fo
+			} else if _, ok := o["object_hash"]; ok {
+				objects[o["object_hash"].(string)] = fo
+			}
 		}
 	}
 

@@ -3,6 +3,9 @@
 package object
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"errors"
 	"log"
 	"strconv"
 )
@@ -22,6 +25,8 @@ type Object struct {
 	Key        string
 	Nonce      string
 	Ciphertext string
+	Content    []byte
+	Digest     string
 }
 
 // New creates an object.
@@ -46,6 +51,8 @@ func (o *Object) BuildFromData(data []byte, name, mime string) error {
 	o.Key = obj.Key
 	o.Mime = mime
 	o.Expires = obj.Expires
+	o.Content = data
+	o.Digest = o.calculateDigest(data)
 
 	return nil
 }
@@ -57,6 +64,11 @@ func (o *Object) BuildFromObject(obj map[string]interface{}) error {
 	if _, ok := obj["key"]; ok {
 		o.Key = obj["key"].(string)
 		o.Mime = obj["mime"].(string)
+		if val, ok := obj["object_hash"]; ok {
+			o.Digest = val.(string)
+		} else if val, ok := obj["image_hash"]; ok {
+			o.Digest = val.(string)
+		}
 		if exp, exists := obj["expires"]; exists {
 			switch v := exp.(type) {
 			case string:
@@ -75,12 +87,13 @@ func (o *Object) BuildFromObject(obj map[string]interface{}) error {
 // ToPayload translates the current object to payload.
 func (o *Object) ToPayload() map[string]interface{} {
 	return map[string]interface{}{
-		"name":    o.Name,
-		"link":    o.Link,
-		"key":     o.Key,
-		"mime":    o.Mime,
-		"expires": strconv.FormatInt(o.Expires, 10),
-		"public":  false,
+		"name":        o.Name,
+		"link":        o.Link,
+		"key":         o.Key,
+		"mime":        o.Mime,
+		"expires":     strconv.FormatInt(o.Expires, 10),
+		"public":      false,
+		"object_hash": o.Digest,
 	}
 }
 
@@ -92,6 +105,14 @@ func (o *Object) GetContent() ([]byte, error) {
 		println(err.Error())
 		return []byte(""), err
 	}
+	if o.calculateDigest(content) != o.Digest {
+		return content, errors.New("object digest and content digest do not match")
+	}
 
 	return content, nil
+}
+
+func (o *Object) calculateDigest(ct []byte) string {
+	h := sha256.Sum256(ct)
+	return base64.RawURLEncoding.EncodeToString(h[:])
 }
