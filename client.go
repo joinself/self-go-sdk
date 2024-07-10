@@ -200,6 +200,13 @@ func (c *Client) VoiceService() *voice.Service {
 	return voice.NewService(cfg)
 }
 
+// NewObject creates a new object from the provided data.
+func (c *Client) NewObject(data []byte, name, mime string) (*object.Object, error) {
+	o := object.New(c.connectors.FileInteractor)
+	err := o.BuildFromData(data, name, mime)
+	return o, err
+}
+
 // Rest provides access to the rest client to interact used by the sdk.
 func (c *Client) Rest() RestTransport {
 	return c.config.Connectors.Rest
