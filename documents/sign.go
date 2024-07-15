@@ -38,16 +38,13 @@ type Response struct {
 	Status        string         `json:"status"`
 }
 
-// RequestSignature sends a signature request to the specified user.
-func (s *Service) RequestSignature(recipient string, body string, objects []InputObject) (Response, error) {
-	var resp Response
-	jti := uuid.New().String()
+func (s *Service) prepareRequestPayload(jti, recipient, body string, objects []InputObject) ([]byte, error) {
 	oo := make([]map[string]interface{}, 0)
 	for _, o := range objects {
 		fo := object.New(s.fileInteractor)
 		err := fo.BuildFromData(o.Data, o.Name, o.Mime)
 		if err != nil {
-			return resp, err
+			return []byte(""), err
 		}
 		oo = append(oo, fo.ToPayload())
 	}
@@ -65,7 +62,29 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		"exp":     ntp.TimeFunc().Add(s.expiry).Format(time.RFC3339),
 	}
 
-	payload, err := helpers.PrepareJWS(req, s.keyID, s.sk)
+	return helpers.PrepareJWS(req, s.keyID, s.sk)
+}
+
+// RequestSignature sends a signature request to the specified user.
+func (s *Service) RequestSignatureAsync(cid, recipient, body string, objects []InputObject) error {
+	payload, err := s.prepareRequestPayload(cid, recipient, body, objects)
+	if err != nil {
+		return err
+	}
+
+	recipients, err := helpers.PrepareRecipients([]string{recipient}, []string{s.selfID + ":" + s.deviceID}, s.api)
+	if err != nil {
+		return err
+	}
+
+	return s.messaging.Send(recipients, "document.sign.req", payload)
+}
+
+// RequestSignature sends a signature request to the specified user.
+func (s *Service) RequestSignature(recipient string, body string, objects []InputObject) (Response, error) {
+	var resp Response
+	jti := uuid.New().String()
+	payload, err := s.prepareRequestPayload(jti, recipient, body, objects)
 	if err != nil {
 		return resp, err
 	}
@@ -75,7 +94,7 @@ func (s *Service) RequestSignature(recipient string, body string, objects []Inpu
 		return resp, err
 	}
 
-	issuer, response, err := s.messaging.Request(recs, jti, req["typ"].(string), payload, 0)
+	issuer, response, err := s.messaging.Request(recs, jti, "document.sign.req", payload, 0)
 	if err != nil {
 		return resp, err
 	}

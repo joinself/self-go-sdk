@@ -67,7 +67,7 @@ func (_m MessagingClient) Request(recipients []string, cid, mtype string, data [
 }
 
 // Send provides a mock function with given fields: recipients, data
-func (_m MessagingClient) Send(recipients []string, data []byte) error {
+func (_m MessagingClient) Send(recipients []string, mtype string, data []byte) error {
 	ret := _m.Called(recipients, data)
 
 	var r0 error
