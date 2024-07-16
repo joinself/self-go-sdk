@@ -33,6 +33,7 @@ type Message struct {
 	Sender         string
 	ConversationID string
 	Payload        []byte
+	Signature      string
 }
 
 // infoNotification message
@@ -104,7 +105,7 @@ func (s *Service) Subscribe(messageType string, h func(m *Message)) {
 		}
 
 		// verify jws's and send jws payload to subscription...
-		h(&Message{sender, mp.Conversation, msg})
+		h(&Message{sender, mp.Conversation, msg, string(payload)})
 	})
 }
 
