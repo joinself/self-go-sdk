@@ -11,19 +11,20 @@ import "C"
 import (
 	"errors"
 	"runtime"
+	"unsafe"
 )
 
-const (
-	PresentationPassport             = PresentationType(C.PRESENTATION_PASSPORT)
-	PresentationLiveness             = PresentationType(C.PRESENTATION_LIVENESS)
-	PresentationProfileImage         = PresentationType(C.PRESENTATION_PROFILE_IMAGE)
-	PresentationApplicationPublisher = PresentationType(C.PRESENTATION_APPLICATION_PUBLISHER)
+var (
+	PresentationTypePassport             = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("PassportPresentation")
+	PresentationTypeLiveness             = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("LivenessPresentation")
+	PresentationTypeProfileImage         = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfileImagePresentation")
+	PresentationTypeApplicationPublisher = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("ApplicationPublisherPresentation")
 )
 
-type PresentationType = C.self_presentation_type
 type Presentation C.self_presentation
 type PresentationBuilder C.self_presentation_builder
 type VerifiablePresentation C.self_verifiable_presentation
+type PresentationTypeCollection C.self_collection_presentation_type
 
 // NewPresentation creates a new presentation builder
 func NewPresentation() *PresentationBuilder {
@@ -39,10 +40,10 @@ func NewPresentation() *PresentationBuilder {
 }
 
 // PresentationType sets the type of presentation
-func (b *PresentationBuilder) Presentationtype(presentationType PresentationType) *PresentationBuilder {
+func (b *PresentationBuilder) Presentationtype(presentationType *PresentationTypeCollection) *PresentationBuilder {
 	C.self_presentation_builder_presentation_type(
 		(*C.self_presentation_builder)(b),
-		uint32(presentationType),
+		(*C.self_collection_presentation_type)(presentationType),
 	)
 	return b
 }
@@ -91,10 +92,18 @@ func (b *PresentationBuilder) Finish() (*Presentation, error) {
 }
 
 // PresentationType returns the type of presentation
-func (p *VerifiablePresentation) PresentationType() PresentationType {
-	return PresentationType(C.self_verifiable_presentation_presentation_type(
+func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection {
+	collection := (*PresentationTypeCollection)(C.self_verifiable_presentation_presentation_type(
 		(*C.self_verifiable_presentation)(p),
 	))
+
+	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+		C.self_collection_presentation_type_destroy(
+			(*C.self_collection_presentation_type)(collection),
+		)
+	})
+
+	return collection
 }
 
 // Holder returns the subject of the credential's holder
@@ -140,4 +149,42 @@ func (p *VerifiablePresentation) Validate() error {
 	}
 
 	return nil
+}
+
+func NewPresentationTypeCollection() *PresentationTypeCollection {
+	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
+
+	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+		C.self_collection_presentation_type_destroy(
+			(*C.self_collection_presentation_type)(collection),
+		)
+	})
+
+	return collection
+}
+
+func (c *PresentationTypeCollection) Length() int {
+	return int(C.self_collection_presentation_type_len(
+		(*C.self_collection_presentation_type)(c),
+	))
+}
+
+func (c *PresentationTypeCollection) Get(index int) string {
+	return C.GoString(C.self_collection_presentation_type_at(
+		(*C.self_collection_presentation_type)(c),
+		C.ulong(index),
+	))
+}
+
+func (c *PresentationTypeCollection) Append(element string) *PresentationTypeCollection {
+	elementC := C.CString(element)
+
+	C.self_collection_presentation_type_append(
+		(*C.self_collection_presentation_type)(c),
+		elementC,
+	)
+
+	C.free(unsafe.Pointer(elementC))
+
+	return c
 }

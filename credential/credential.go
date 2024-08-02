@@ -9,6 +9,7 @@ package credential
 */
 import "C"
 import (
+	"encoding/json"
 	"errors"
 	"runtime"
 	"time"
@@ -17,14 +18,13 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-const (
-	CredentialPassport             = CredentialType(C.CREDENTIAL_PASSPORT)
-	CredentialLiveness             = CredentialType(C.CREDENTIAL_LIVENESS)
-	CredentialProfileImage         = CredentialType(C.CREDENTIAL_PROFILE_IMAGE)
-	CredentialApplicationPublisher = CredentialType(C.CREDENTIAL_APPLICATION_PUBLISHER)
+var (
+	CredentialTypePassport             = NewCredentialTypeCollection().Append("VerifiableCredential").Append("PassportCredential")
+	CredentialTypeLiveness             = NewCredentialTypeCollection().Append("VerifiableCredential").Append("LivenessCredential")
+	CredentialTypeProfileImage         = NewCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileImageCredential")
+	CredentialTypeApplicationPublisher = NewCredentialTypeCollection().Append("VerifiableCredential").Append("ApplicationPublisherCredential")
 )
 
-type CredentialType = C.self_credential_type
 type Credential C.self_credential
 type CredentialBuilder C.self_credential_builder
 type VerifiableCredential C.self_verifiable_credential
@@ -33,6 +33,7 @@ type CredentialPresentationDetail C.self_credential_presentation_detail
 type CredentialPresentationDetailCollection C.self_collection_credential_presentation_detail
 type CredentialVerificationEvidence C.self_credential_verification_evidence
 type CredentialVerificationEvidenceCollection C.self_collection_credential_verification_evidence
+type CredentialTypeCollection C.self_collection_credential_type
 
 // NewCredential creates a new credential builder
 func NewCredential() *CredentialBuilder {
@@ -48,10 +49,10 @@ func NewCredential() *CredentialBuilder {
 }
 
 // CredentialType sets the type of credential
-func (b *CredentialBuilder) CredentialType(credentialType CredentialType) *CredentialBuilder {
+func (b *CredentialBuilder) CredentialType(credentialType *CredentialTypeCollection) *CredentialBuilder {
 	C.self_credential_builder_credential_type(
 		(*C.self_credential_builder)(b),
-		uint32(credentialType),
+		(*C.self_collection_credential_type)(credentialType),
 	)
 	return b
 }
@@ -79,6 +80,29 @@ func (b *CredentialBuilder) CredentialSubjectClaim(claimKey, claimValue string) 
 		(*C.self_credential_builder)(b),
 		key,
 		value,
+	)
+
+	return b
+}
+
+// CredentialSubjectClaims adds a collection of claims about the subject to te credential
+func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{}) *CredentialBuilder {
+	claim, err := json.Marshal(claims)
+	if err == nil {
+		return b
+	}
+
+	claimBuffer := C.CBytes(claim)
+	claimLength := len(claim)
+
+	defer func() {
+		C.free(claimBuffer)
+	}()
+
+	C.self_credential_builder_credential_subject_json(
+		(*C.self_credential_builder)(b),
+		(*C.uchar)(claimBuffer),
+		(C.ulong)(claimLength),
 	)
 
 	return b
@@ -137,10 +161,18 @@ func (b *CredentialBuilder) Finish() (*Credential, error) {
 }
 
 // CredentialType returns the type of credential
-func (c *VerifiableCredential) CredentialType() CredentialType {
-	return CredentialType(C.self_verifiable_credential_credential_type(
+func (c *VerifiableCredential) CredentialType() *CredentialTypeCollection {
+	collection := (*CredentialTypeCollection)(C.self_verifiable_credential_credential_type(
 		(*C.self_verifiable_credential)(c),
 	))
+
+	runtime.SetFinalizer(collection, func(collection *CredentialTypeCollection) {
+		C.self_collection_credential_type_destroy(
+			(*C.self_collection_credential_type)(collection),
+		)
+	})
+
+	return collection
 }
 
 // CredentialSubject returns the subject of the credential's address
@@ -277,4 +309,42 @@ func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVer
 		(*C.self_collection_credential_verification_evidence)(c),
 		C.ulong(index),
 	))
+}
+
+func NewCredentialTypeCollection() *CredentialTypeCollection {
+	collection := (*CredentialTypeCollection)(C.self_collection_credential_type_init())
+
+	runtime.SetFinalizer(collection, func(collection *CredentialTypeCollection) {
+		C.self_collection_credential_type_destroy(
+			(*C.self_collection_credential_type)(collection),
+		)
+	})
+
+	return collection
+}
+
+func (c *CredentialTypeCollection) Length() int {
+	return int(C.self_collection_credential_type_len(
+		(*C.self_collection_credential_type)(c),
+	))
+}
+
+func (c *CredentialTypeCollection) Get(index int) string {
+	return C.GoString(C.self_collection_credential_type_at(
+		(*C.self_collection_credential_type)(c),
+		C.ulong(index),
+	))
+}
+
+func (c *CredentialTypeCollection) Append(element string) *CredentialTypeCollection {
+	elementC := C.CString(element)
+
+	C.self_collection_credential_type_append(
+		(*C.self_collection_credential_type)(c),
+		elementC,
+	)
+
+	C.free(unsafe.Pointer(elementC))
+
+	return c
 }

@@ -22,6 +22,7 @@ extern void goOnCommit(void*, cself_commit_t*);
 extern void goOnKeyPackage(void*, cself_key_package_t*);
 extern void goOnProposal(void*, cself_proposal_t*);
 extern void goOnWelcome(void*, cself_welcome_t*);
+extern void goOnLog(self_log_entry*);
 extern void goOnResponse(void*, self_status);
 
 void c_on_connect(void* user_data) {
@@ -52,6 +53,10 @@ void c_on_welcome(void *user_data, self_welcome *welcome) {
 	goOnWelcome(user_data, welcome);
 }
 
+void c_on_log(self_log_entry *entry) {
+	goOnLog(entry);
+}
+
 self_account_callbacks *account_callbacks() {
 	self_account_callbacks *callbacks = malloc(sizeof(self_account_callbacks));
 
@@ -62,6 +67,7 @@ self_account_callbacks *account_callbacks() {
 	callbacks->on_key_package = c_on_key_package;
 	callbacks->on_proposal = c_on_proposal;
 	callbacks->on_welcome = c_on_welcome;
+	callbacks->on_log = c_on_log;
 
 	return callbacks;
 }
@@ -180,7 +186,7 @@ func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t)
 		return
 	}
 
-	err := account.ConnectionEstablish(
+	_, err := account.ConnectionEstablish(
 		(*signing.PublicKey)(C.self_key_package_to_address(keyPackage)),
 		keyPackageEvent,
 	)
@@ -233,7 +239,7 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 		return
 	}
 
-	err := account.ConnectionAccept(
+	_, err := account.ConnectionAccept(
 		(*signing.PublicKey)(C.self_welcome_to_address(welcome)),
 		welcomeEvent,
 	)
@@ -241,6 +247,27 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+//export goOnLog
+func goOnLog(entry *C.self_log_entry) {
+	level := C.self_log_entry_level(entry)
+	message := C.GoString(C.self_log_entry_args(entry))
+
+	switch level {
+	case C.LOG_ERROR:
+		fmt.Printf("[ERROR] %s\n", message)
+	case C.LOG_WARN:
+		fmt.Printf("[WARN] %s\n", message)
+	case C.LOG_INFO:
+		fmt.Printf("[INFO] %s\n", message)
+	case C.LOG_DEBUG:
+		fmt.Printf("[DEBUG] %s\n", message)
+	case C.LOG_TRACE:
+		fmt.Printf("[TRACE] %s\n", message)
+	}
+
+	C.self_log_entry_destroy(entry)
 }
 
 //export goOnResponse

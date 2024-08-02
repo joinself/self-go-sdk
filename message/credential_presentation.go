@@ -49,10 +49,18 @@ func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationR
 }
 
 // Type returns the type of credential that presentation is being requested for
-func (c *CredentialPresentationRequest) Type() credential.PresentationType {
-	return credential.PresentationType(C.self_message_content_credential_presentation_request_presentation_type(
+func (c *CredentialPresentationRequest) Type() *credential.PresentationTypeCollection {
+	collection := (*credential.PresentationTypeCollection)(C.self_message_content_credential_presentation_request_presentation_type(
 		(*C.self_message_content_credential_presentation_request)(c),
 	))
+
+	runtime.SetFinalizer(collection, func(collection *credential.PresentationTypeCollection) {
+		C.self_collection_presentation_type_destroy(
+			(*C.self_collection_presentation_type)(collection),
+		)
+	})
+
+	return collection
 }
 
 // Details returns details of the requested credential presentations
@@ -83,21 +91,21 @@ func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
 }
 
 // Type sets the type of presentation being requested
-func (b *CredentialPresentationRequestBuilder) Type(presentationType credential.PresentationType) *CredentialPresentationRequestBuilder {
+func (b *CredentialPresentationRequestBuilder) Type(presentationType *credential.PresentationTypeCollection) *CredentialPresentationRequestBuilder {
 	C.self_message_content_credential_presentation_request_builder_presentation_type(
 		(*C.self_message_content_credential_presentation_request_builder)(b),
-		uint32(presentationType),
+		(*C.self_collection_presentation_type)(presentationType),
 	)
 	return b
 }
 
 // Details specifies the details of the credentials being requested for presentation
-func (b *CredentialPresentationRequestBuilder) Details(credentialType credential.CredentialType, subject string) *CredentialPresentationRequestBuilder {
+func (b *CredentialPresentationRequestBuilder) Details(credentialType *credential.CredentialTypeCollection, subject string) *CredentialPresentationRequestBuilder {
 	subjectC := C.CString(subject)
 
 	C.self_message_content_credential_presentation_request_builder_details(
 		(*C.self_message_content_credential_presentation_request_builder)(b),
-		uint32(credentialType),
+		(*C.self_collection_credential_type)(credentialType),
 		subjectC,
 	)
 

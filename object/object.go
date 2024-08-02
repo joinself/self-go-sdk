@@ -16,14 +16,46 @@ import (
 
 type Object C.self_object
 
-func New(mime string, data []byte) (*Object, error) {
+func Encrypted(mime string, data []byte) (*Object, error) {
 	var objectPtr *C.self_object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.ulong(len(data))
 
-	status := C.self_object_create(
+	status := C.self_object_create_encrypted(
+		&objectPtr,
+		mimeType,
+		(*C.uint8_t)(dataBuf),
+		dataLen,
+	)
+
+	C.free(unsafe.Pointer(mimeType))
+	C.free(dataBuf)
+
+	if status > 0 {
+		return nil, errors.New("object creation failed")
+	}
+
+	object := (*Object)(objectPtr)
+
+	runtime.SetFinalizer(object, func(object *Object) {
+		C.self_object_destroy(
+			(*C.self_object)(object),
+		)
+	})
+
+	return object, nil
+}
+
+func Unencrypted(mime string, data []byte) (*Object, error) {
+	var objectPtr *C.self_object
+
+	mimeType := C.CString(mime)
+	dataBuf := C.CBytes(data)
+	dataLen := C.ulong(len(data))
+
+	status := C.self_object_create_unencrypted(
 		&objectPtr,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
@@ -54,7 +86,7 @@ func (o *Object) Id() []byte {
 		unsafe.Pointer(C.self_object_id(
 			(*C.self_object)(o),
 		)),
-		20,
+		32,
 	)
 }
 

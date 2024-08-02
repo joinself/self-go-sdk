@@ -2,6 +2,7 @@ package account_test
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -26,30 +27,23 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
 		StoragePath: path + "/self.db",
+		LogLevel:    account.LogWarn,
 		Callbacks: account.Callbacks{
-			OnConnect: func() {},
+			OnConnect: func() {
+				fmt.Println("CONNECTED")
+			},
 			OnDisconnect: func(err error) {
-				require.Nil(t, err)
+				fmt.Println("DISCONNECTED", err)
+				// require.Nil(t, err)
 			},
 			OnMessage: func(account *account.Account, msg *message.Message) {
 				switch message.ContentType(msg) {
 				case message.TypeChat:
-					/*
-						content, err := message.DecodeChat(msg)
-						require.Nil(t, err)
-
-						fmt.Println(
-							"to:", msg.ToAddress(),
-							"from:", msg.FromAddress(),
-							"message:", string(content.Message()),
-						)
-					*/
-
 					incomingMsg <- msg
 				}
 			},
 			OnWelcome: func(account *account.Account, welcome *message.Welcome) {
-				err := account.ConnectionAccept(
+				_, err := account.ConnectionAccept(
 					welcome.ToAddress(),
 					welcome,
 				)
@@ -186,6 +180,26 @@ func TestAccountMessaging(t *testing.T) {
 
 	err = alice.IdentityExecute(operation)
 	require.Nil(t, err)
+
+	contentForAlice, err = message.NewChat().
+		Message("hello again!").
+		Finish()
+
+	require.Nil(t, err)
+
+	err = bobby.MessageSend(
+		aliceAddress,
+		contentForAlice,
+	)
+
+	require.Nil(t, err)
+
+	messageFromBobby = wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	chatMessage, err = message.DecodeChat(messageFromBobby)
+	require.Nil(t, err)
+	assert.Equal(t, "hello again!", chatMessage.Message())
 }
 
 func TestAccountIdentity(t *testing.T) {
@@ -279,7 +293,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	// generate a credential for bobby, issued by alice
 	passportCredential, err := credential.NewCredential().
-		CredentialType(credential.CredentialPassport).
+		CredentialType(credential.CredentialTypePassport).
 		CredentialSubject(credential.AddressAure(bobbyIdentifiers.Get(0))).
 		CredentialSubjectClaim("firstName", "bobby").
 		Issuer(credential.AddressAure(aliceIdentifiers.Get(0))).
@@ -291,7 +305,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	passportVerifiableCredential, err := alice.CredentialIssue(passportCredential)
 	require.Nil(t, err)
-	assert.Equal(t, credential.CredentialPassport, passportVerifiableCredential.CredentialType())
+	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType())
 
 	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("firstName")
 	require.True(t, ok)
@@ -308,12 +322,12 @@ func TestAccountCredentials(t *testing.T) {
 	require.Nil(t, err)
 
 	// retrieve the credential from bobbys account
-	verifiableCredentials, err := bobby.CredentialLookupByCredentialType(credential.CredentialPassport)
+	verifiableCredentials, err := bobby.CredentialLookupByCredentialType(credential.CredentialTypePassport)
 	require.Nil(t, err)
 	require.Equal(t, 1, verifiableCredentials.Length())
 
 	passportPresentation, err := credential.NewPresentation().
-		Presentationtype(credential.PresentationPassport).
+		Presentationtype(credential.PresentationTypePassport).
 		Holder(
 			credential.AddressAureWithKey(
 				bobbyIdentifiers.Get(0),
@@ -401,4 +415,10 @@ func TestAccountPersistence(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		<-aliceInbox
 	}
+}
+
+func TestAccountSocketReconnect(t *testing.T) {
+	t.Skip("manual test")
+	testAccount(t)
+	time.Sleep(time.Hour)
 }

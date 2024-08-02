@@ -77,7 +77,15 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 
 // Create creates a new operation to update the document
 func (d *Document) Create() *OperationBuilder {
-	return (*OperationBuilder)(C.self_identity_document_create(
+	builder := (*OperationBuilder)(C.self_identity_document_create(
 		(*C.self_identity_document)(d),
 	))
+
+	runtime.SetFinalizer(builder, func(builder *OperationBuilder) {
+		C.self_identity_operation_builder_destroy(
+			(*C.self_identity_operation_builder)(builder),
+		)
+	})
+
+	return builder
 }

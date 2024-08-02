@@ -50,10 +50,18 @@ func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationR
 }
 
 // Type returns the type of credential that verification is being requested for
-func (c *CredentialVerificationRequest) Type() credential.CredentialType {
-	return credential.CredentialType(C.self_message_content_credential_verification_request_credential_type(
+func (c *CredentialVerificationRequest) Type() *credential.CredentialTypeCollection {
+	collection := (*credential.CredentialTypeCollection)(C.self_message_content_credential_verification_request_credential_type(
 		(*C.self_message_content_credential_verification_request)(c),
 	))
+
+	runtime.SetFinalizer(collection, func(collection *credential.CredentialTypeCollection) {
+		C.self_collection_credential_type_destroy(
+			(*C.self_collection_credential_type)(collection),
+		)
+	})
+
+	return collection
 }
 
 // Proof returns associated verifiable credential proof to support the verification request
@@ -91,10 +99,10 @@ func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
 }
 
 // Type sets the type of credential being requested
-func (b *CredentialVerificationRequestBuilder) Type(credentialType credential.CredentialType) *CredentialVerificationRequestBuilder {
+func (b *CredentialVerificationRequestBuilder) Type(credentialType *credential.CredentialTypeCollection) *CredentialVerificationRequestBuilder {
 	C.self_message_content_credential_verification_request_builder_credential_type(
 		(*C.self_message_content_credential_verification_request_builder)(b),
-		uint32(credentialType),
+		(*C.self_collection_credential_type)(credentialType),
 	)
 	return b
 }

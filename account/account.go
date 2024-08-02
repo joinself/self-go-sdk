@@ -55,6 +55,8 @@ func New(cfg *Config) (*Account, error) {
 		callbacks: &cfg.Callbacks,
 	}
 
+	cfg.defaults()
+
 	rpcURLBuf := C.CString("http://127.0.0.1:8080/")
 	objectURLBuf := C.CString("http://127.0.0.1:8090/")
 	messagingURLBuf := C.CString("ws://127.0.0.1:9000/")
@@ -82,7 +84,7 @@ func New(cfg *Config) (*Account, error) {
 		)
 	})
 
-	s := C.self_account_configure(
+	status := C.self_account_configure(
 		account.account,
 		rpcURLBuf,
 		objectURLBuf,
@@ -90,11 +92,12 @@ func New(cfg *Config) (*Account, error) {
 		storagePathBuf,
 		storageKeyBuf,
 		storageKeyLen,
+		uint32(cfg.LogLevel),
 		accountCallbacks(),
 		unsafe.Pointer(account),
 	)
 
-	if s > 0 {
+	if status > 0 {
 		return nil, errors.New("configuring account failed")
 	}
 
@@ -312,12 +315,12 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) (*credenti
 }
 
 // CredentialLookupBySubject looks up credentials matching a specific credential type
-func (a *Account) CredentialLookupByCredentialType(credentialType credential.CredentialType) (*credential.VerifiableCredentialCollection, error) {
+func (a *Account) CredentialLookupByCredentialType(credentialType *credential.CredentialTypeCollection) (*credential.VerifiableCredentialCollection, error) {
 	var collection *C.self_collection_verifiable_credential
 
 	status := C.self_account_credential_lookup_by_credential_type(
 		(*C.self_account)(a.account),
-		uint32(credentialType),
+		(*C.self_collection_credential_type)(credentialType),
 		&collection,
 	)
 
@@ -439,34 +442,56 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 }
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
-// using the key package the initiator sent to us
-func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) error {
+// using the key package the initiator sent to us, returns the address of the group
+func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) (*signing.PublicKey, error) {
+	var groupAddressPtr *C.self_signing_public_key
+
 	status := C.self_account_connection_establish(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
+		&groupAddressPtr,
 		(*C.self_key_package)(keyPackage),
 	)
 
 	if status > 0 {
-		return fmt.Errorf("failed establish connection, code: %d", status)
+		return nil, fmt.Errorf("failed establish connection, code: %d", status)
 	}
 
-	return nil
+	groupAddress := (*signing.PublicKey)(groupAddressPtr)
+
+	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(groupAddress),
+		)
+	})
+
+	return groupAddress, nil
 }
 
-// ConnectionAccept accepts a welcome to a encrypted group
-func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) error {
+// ConnectionAccept accepts a welcome to a encrypted group, returns the address of the group
+func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) (*signing.PublicKey, error) {
+	var groupAddressPtr *C.self_signing_public_key
+
 	status := C.self_account_connection_accept(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
+		&groupAddressPtr,
 		(*C.self_welcome)(welcome),
 	)
 
 	if status > 0 {
-		return fmt.Errorf("failed accept connection, code: %d", status)
+		return nil, fmt.Errorf("failed accept connection, code: %d", status)
 	}
 
-	return nil
+	groupAddress := (*signing.PublicKey)(groupAddressPtr)
+
+	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(groupAddress),
+		)
+	})
+
+	return groupAddress, nil
 }
 
 // MessageSend sends a message to an address that we have established an encrypted group with
