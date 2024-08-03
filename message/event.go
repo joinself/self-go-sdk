@@ -15,23 +15,6 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-type Type int
-
-const (
-	TypeUnknown Type = iota
-	TypeCustom
-	TypeChat
-	TypeReceipt
-	TypeDiscoveryRequest
-	TypeDiscoveryResponse
-	TypeConnectionRequest
-	TypeConnectionResponse
-	TypeCredentialVerificationRequest
-	TypeCredentialVerificationResponse
-	TypeCredentialPresentationRequest
-	TypeCredentialPresentationResponse
-)
-
 type Commit C.self_commit
 type KeyPackage C.self_key_package
 type Message C.self_message

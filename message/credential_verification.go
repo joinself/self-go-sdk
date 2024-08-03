@@ -190,9 +190,21 @@ func DecodeCredentialVerificationResponse(msg *Message) (*CredentialVerification
 	return credentialVerificationResponse, nil
 }
 
+// ResponseTo returns the id of the request that is being responded to
+func (c *CredentialVerificationResponse) ResponseTo() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_message_content_credential_verification_response_response_to(
+			(*C.self_message_content_credential_verification_response)(c),
+		)),
+		20,
+	)
+}
+
 // Status returns the status of the request
-func (c *CredentialVerificationResponse) Status() int {
-	return 0
+func (c *CredentialVerificationResponse) Status() ResponseStatus {
+	return ResponseStatus(C.self_message_content_credential_verification_response_status(
+		(*C.self_message_content_credential_verification_response)(c),
+	))
 }
 
 // Credentials returns verified credentials that have been asserted by the responder
@@ -213,6 +225,36 @@ func NewCredentialVerificationResponse() *CredentialVerificationResponseBuilder 
 	})
 
 	return builder
+}
+
+// ResponseTo sets the request id that is being responded to
+func (b *CredentialVerificationResponseBuilder) ResponseTo(requestID []byte) *CredentialVerificationResponseBuilder {
+	if len(requestID) != 20 {
+		return b
+	}
+
+	requestIDC := C.CBytes(
+		requestID,
+	)
+
+	C.self_message_content_credential_verification_response_builder_response_to(
+		(*C.self_message_content_credential_verification_response_builder)(b),
+		(*C.uchar)(requestIDC),
+	)
+
+	C.free(requestIDC)
+
+	return b
+}
+
+// ResponseTo sets the request id that is being responded to
+func (b *CredentialVerificationResponseBuilder) Status(status ResponseStatus) *CredentialVerificationResponseBuilder {
+	C.self_message_content_credential_verification_response_builder_status(
+		(*C.self_message_content_credential_verification_response_builder)(b),
+		uint32(status),
+	)
+
+	return b
 }
 
 // VerifiableCredential attaches a verified credential to the response
