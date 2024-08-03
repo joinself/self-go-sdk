@@ -16,6 +16,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/object"
 )
 
 var (
@@ -398,4 +399,49 @@ func (c *CredentialTypeCollection) Append(element string) *CredentialTypeCollect
 	C.free(unsafe.Pointer(elementC))
 
 	return c
+}
+
+// EvidenceType returns the evidence type
+func (c *CredentialVerificationEvidence) EvidenceType() string {
+	return C.GoString(
+		C.self_credential_verification_evidence_evidence_type(
+			(*C.self_credential_verification_evidence)(c),
+		),
+	)
+}
+
+// Object returns the object that makes up the content of the evidence
+func (c *CredentialVerificationEvidence) Object() *object.Object {
+	obj := (*object.Object)(C.self_credential_verification_evidence_object(
+		(*C.self_credential_verification_evidence)(c),
+	))
+
+	runtime.SetFinalizer(obj, func(obj *object.Object) {
+		C.self_object_destroy(
+			(*C.self_object)(obj),
+		)
+	})
+
+	return obj
+}
+
+// ParameterType returns the parameter type
+func (c *CredentialVerificationParameter) ParameterType() string {
+	return C.GoString(
+		C.self_credential_verification_parameter_parameter_type(
+			(*C.self_credential_verification_parameter)(c),
+		),
+	)
+}
+
+// Value returns the value of the parameter
+func (c *CredentialVerificationParameter) Value() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_credential_verification_parameter_value_buf(
+			(*C.self_credential_verification_parameter)(c),
+		)),
+		(C.int)(C.self_credential_verification_parameter_value_len(
+			(*C.self_credential_verification_parameter)(c),
+		)),
+	)
 }
