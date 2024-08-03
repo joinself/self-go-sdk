@@ -11,6 +11,7 @@ import "C"
 import (
 	"runtime"
 	"time"
+	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
@@ -109,31 +110,11 @@ func (c *KeyPackage) Timestamp() time.Time {
 	)), 0)
 }
 
-func ContentType(message *Message) Type {
-	content := C.self_message_message_content((*C.self_message)(message))
-
-	switch C.self_message_content_type_of(content) {
-	case C.CONTENT_CUSTOM:
-		return TypeCustom
-	case C.CONTENT_CHAT:
-		return TypeChat
-	case C.CONTENT_RECEIPT:
-		return TypeReceipt
-	case C.CONTENT_DISCOVERY_REQUEST:
-		return TypeDiscoveryRequest
-	case C.CONTENT_DISCOVERY_RESPONSE:
-		return TypeDiscoveryResponse
-	case C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST:
-		return TypeCredentialVerificationRequest
-	case C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE:
-		return TypeCredentialVerificationResponse
-	case C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST:
-		return TypeCredentialPresentationRequest
-	case C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE:
-		return TypeCredentialPresentationResponse
-	default:
-		return TypeUnknown
-	}
+func (m *Message) ID() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_message_id((*C.self_message)(m))),
+		20,
+	)
 }
 
 func (m *Message) FromAddress() *signing.PublicKey {
