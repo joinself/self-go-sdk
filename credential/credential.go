@@ -32,7 +32,9 @@ type VerifiableCredentialCollection C.self_collection_verifiable_credential
 type CredentialPresentationDetail C.self_credential_presentation_detail
 type CredentialPresentationDetailCollection C.self_collection_credential_presentation_detail
 type CredentialVerificationEvidence C.self_credential_verification_evidence
+type CredentialVerificationParameter C.self_credential_verification_parameter
 type CredentialVerificationEvidenceCollection C.self_collection_credential_verification_evidence
+type CredentialVerificationParameterCollection C.self_collection_credential_verification_parameter
 type CredentialTypeCollection C.self_collection_credential_type
 
 // NewCredential creates a new credential builder
@@ -280,10 +282,18 @@ func (c *VerifiableCredentialCollection) Length() int {
 }
 
 func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
-	return (*VerifiableCredential)(C.self_collection_verifiable_credential_at(
+	credential := (*VerifiableCredential)(C.self_collection_verifiable_credential_at(
 		(*C.self_collection_verifiable_credential)(c),
 		C.ulong(index),
 	))
+
+	runtime.SetFinalizer(credential, func(credential *VerifiableCredential) {
+		C.self_verifiable_credential_destroy(
+			(*C.self_verifiable_credential)(credential),
+		)
+	})
+
+	return credential
 }
 
 func NewCredentialVerificationEvidenceCollection() *CredentialVerificationEvidenceCollection {
@@ -305,10 +315,51 @@ func (c *CredentialVerificationEvidenceCollection) Length() int {
 }
 
 func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVerificationEvidence {
-	return (*CredentialVerificationEvidence)(C.self_collection_credential_verification_evidence_at(
+	evidence := (*CredentialVerificationEvidence)(C.self_collection_credential_verification_evidence_at(
 		(*C.self_collection_credential_verification_evidence)(c),
 		C.ulong(index),
 	))
+
+	runtime.SetFinalizer(evidence, func(evidence *signing.PublicKey) {
+		C.self_credential_verification_evidence_destroy(
+			(*C.self_credential_verification_evidence)(evidence),
+		)
+	})
+
+	return evidence
+}
+
+func NewCredentialVerificationParameterCollection() *CredentialVerificationParameterCollection {
+	collection := (*CredentialVerificationParameterCollection)(C.self_collection_credential_verification_parameter_init())
+
+	runtime.SetFinalizer(collection, func(collection *CredentialVerificationParameterCollection) {
+		C.self_collection_credential_verification_parameter_destroy(
+			(*C.self_collection_credential_verification_parameter)(collection),
+		)
+	})
+
+	return collection
+}
+
+func (c *CredentialVerificationParameterCollection) Length() int {
+	return int(C.self_collection_credential_verification_parameter_len(
+		(*C.self_collection_credential_verification_parameter)(c),
+	))
+}
+
+func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVerificationParameter {
+	parameter := (*CredentialVerificationParameter)(C.self_collection_credential_verification_parameter_at(
+		(*C.self_collection_credential_verification_parameter)(c),
+		C.ulong(index),
+	))
+
+	runtime.SetFinalizer(parameter, func(parameter *signing.PublicKey) {
+		C.self_credential_verification_parameter_destroy(
+			(*C.self_credential_verification_parameter)(parameter),
+		)
+	})
+
+	return parameter
 }
 
 func NewCredentialTypeCollection() *CredentialTypeCollection {

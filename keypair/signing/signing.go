@@ -92,8 +92,16 @@ func (c *PublicKeyCollection) Length() int {
 }
 
 func (c *PublicKeyCollection) Get(index int) *PublicKey {
-	return (*PublicKey)(C.self_collection_signing_public_key_at(
+	publicKey := (*PublicKey)(C.self_collection_signing_public_key_at(
 		(*C.self_collection_signing_public_key)(c),
 		C.ulong(index),
 	))
+
+	runtime.SetFinalizer(publicKey, func(publicKey *PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(publicKey),
+		)
+	})
+
+	return publicKey
 }

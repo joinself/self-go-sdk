@@ -9,28 +9,63 @@ package message
 */
 import "C"
 import (
+	"runtime"
 	"time"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
+type Type int
+
+const (
+	TypeUnknown Type = iota
+	TypeCustom
+	TypeChat
+	TypeReceipt
+	TypeDiscoveryRequest
+	TypeDiscoveryResponse
+	TypeConnectionRequest
+	TypeConnectionResponse
+	TypeCredentialVerificationRequest
+	TypeCredentialVerificationResponse
+	TypeCredentialPresentationRequest
+	TypeCredentialPresentationResponse
+)
+
 type Commit C.self_commit
 type KeyPackage C.self_key_package
+type Message C.self_message
 type Proposal C.self_proposal
 type Welcome C.self_welcome
 
 // ToAddress returns the address the event was addressed to
 func (c *Commit) ToAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_commit_to_address(
+	address := (*signing.PublicKey)(C.self_commit_to_address(
 		(*C.self_commit)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // FromAddress returns the address the event was sent by
 func (c *Commit) FromAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_commit_from_address(
+	address := (*signing.PublicKey)(C.self_commit_from_address(
 		(*C.self_commit)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // Sequence returns the sequence of this event as determined by it's sender
@@ -49,16 +84,32 @@ func (c *Commit) Timestamp() time.Time {
 
 // ToAddress returns the address the event was addressed to
 func (c *KeyPackage) ToAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_key_package_to_address(
+	address := (*signing.PublicKey)(C.self_key_package_to_address(
 		(*C.self_key_package)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // FromAddress returns the address the event was sent by
 func (c *KeyPackage) FromAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_key_package_from_address(
+	address := (*signing.PublicKey)(C.self_key_package_from_address(
 		(*C.self_key_package)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // Sequence returns the sequence of this event as determined by it's sender
@@ -75,18 +126,97 @@ func (c *KeyPackage) Timestamp() time.Time {
 	)), 0)
 }
 
+func ContentType(message *Message) Type {
+	content := C.self_message_message_content((*C.self_message)(message))
+
+	switch C.self_message_content_type_of(content) {
+	case C.CONTENT_CUSTOM:
+		return TypeCustom
+	case C.CONTENT_CHAT:
+		return TypeChat
+	case C.CONTENT_RECEIPT:
+		return TypeReceipt
+	case C.CONTENT_DISCOVERY_REQUEST:
+		return TypeDiscoveryRequest
+	case C.CONTENT_DISCOVERY_RESPONSE:
+		return TypeDiscoveryResponse
+	case C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST:
+		return TypeCredentialVerificationRequest
+	case C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE:
+		return TypeCredentialVerificationResponse
+	case C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST:
+		return TypeCredentialPresentationRequest
+	case C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE:
+		return TypeCredentialPresentationResponse
+	default:
+		return TypeUnknown
+	}
+}
+
+func (m *Message) FromAddress() *signing.PublicKey {
+	address := (*signing.PublicKey)(C.self_message_from_address((*C.self_message)(m)))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
+}
+
+func (m *Message) ToAddress() *signing.PublicKey {
+	address := (*signing.PublicKey)(C.self_message_to_address((*C.self_message)(m)))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
+}
+
+func (m *Message) Content() *Content {
+	content := (*Content)(C.self_message_message_content((*C.self_message)(m)))
+
+	runtime.SetFinalizer(content, func(content *Content) {
+		C.self_message_content_destroy(
+			(*C.self_message_content)(content),
+		)
+	})
+
+	return content
+}
+
 // ToAddress returns the address the event was addressed to
 func (c *Proposal) ToAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_proposal_to_address(
+	address := (*signing.PublicKey)(C.self_proposal_to_address(
 		(*C.self_proposal)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // FromAddress returns the address the event was sent by
 func (c *Proposal) FromAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_proposal_from_address(
+	address := (*signing.PublicKey)(C.self_proposal_from_address(
 		(*C.self_proposal)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // Sequence returns the sequence of this event as determined by it's sender
@@ -105,16 +235,32 @@ func (c *Proposal) Timestamp() time.Time {
 
 // ToAddress returns the address the event was addressed to
 func (c *Welcome) ToAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_welcome_to_address(
+	address := (*signing.PublicKey)(C.self_welcome_to_address(
 		(*C.self_welcome)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // FromAddress returns the address the event was sent by
 func (c *Welcome) FromAddress() *signing.PublicKey {
-	return (*signing.PublicKey)(C.self_welcome_from_address(
+	address := (*signing.PublicKey)(C.self_welcome_from_address(
 		(*C.self_welcome)(c),
 	))
+
+	runtime.SetFinalizer(address, func(address *signing.PublicKey) {
+		C.self_signing_public_key_destroy(
+			(*C.self_signing_public_key)(address),
+		)
+	})
+
+	return address
 }
 
 // Sequence returns the sequence of this event as determined by it's sender
