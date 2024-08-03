@@ -110,6 +110,7 @@ func (c *KeyPackage) Timestamp() time.Time {
 	)), 0)
 }
 
+// ID returns the id of the messages content
 func (m *Message) ID() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_message_id((*C.self_message)(m))),
@@ -117,6 +118,7 @@ func (m *Message) ID() []byte {
 	)
 }
 
+// FromAddress returns the address the event was sent by
 func (m *Message) FromAddress() *signing.PublicKey {
 	address := (*signing.PublicKey)(C.self_message_from_address((*C.self_message)(m)))
 
@@ -129,6 +131,7 @@ func (m *Message) FromAddress() *signing.PublicKey {
 	return address
 }
 
+// ToAddress returns the address the event was addressed to
 func (m *Message) ToAddress() *signing.PublicKey {
 	address := (*signing.PublicKey)(C.self_message_to_address((*C.self_message)(m)))
 
@@ -141,6 +144,7 @@ func (m *Message) ToAddress() *signing.PublicKey {
 	return address
 }
 
+// Content returns the messages content
 func (m *Message) Content() *Content {
 	content := (*Content)(C.self_message_message_content((*C.self_message)(m)))
 

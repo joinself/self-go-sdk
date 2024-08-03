@@ -99,6 +99,18 @@ func (o *Object) MimeType() string {
 	)
 }
 
+// Key returns the objects encryption key or nil if not present
+func (o *Object) Key() []byte {
+	key := C.self_object_key(
+		(*C.self_object)(o),
+	)
+
+	return C.GoBytes(
+		unsafe.Pointer(key),
+		32,
+	)
+}
+
 // Data returns the objects data
 func (o *Object) Data() []byte {
 	return C.GoBytes(
