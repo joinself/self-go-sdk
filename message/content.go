@@ -26,7 +26,7 @@ const (
 	TypeCredentialPresentationResponse Type           = C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE
 	ResponseStatusUnknown              ResponseStatus = C.RESPONSE_STATUS_UNKNOWN
 	ResponseStatusOk                   ResponseStatus = C.RESPONSE_STATUS_OK
-	RESPONSE_STATUS_ACCEPTED           ResponseStatus = C.RESPONSE_STATUS_ACCEPTED
+	ResponseStatusAccepted             ResponseStatus = C.RESPONSE_STATUS_ACCEPTED
 	ResponseStatusCreated              ResponseStatus = C.RESPONSE_STATUS_CREATED
 	ResponseStatusBadRequest           ResponseStatus = C.RESPONSE_STATUS_BAD_REQUEST
 	ResponseStatusUnauthorized         ResponseStatus = C.RESPONSE_STATUS_UNAUTHORIZED
