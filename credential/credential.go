@@ -163,6 +163,37 @@ func (b *CredentialBuilder) Finish() (*Credential, error) {
 	return credential, nil
 }
 
+func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential, error) {
+	var verifiableCredentialPtr *C.self_verifiable_credential
+
+	encodedBuf := C.CBytes(encodedCredential)
+	encodedLen := len(encodedCredential)
+
+	defer func() {
+		C.free(encodedBuf)
+	}()
+
+	status := C.self_verifiable_credential_decode(
+		&verifiableCredentialPtr,
+		(*C.uint8_t)(encodedBuf),
+		(C.ulong)(encodedLen),
+	)
+
+	if status > 0 {
+		return nil, errors.New("decode credential failed")
+	}
+
+	verifiableCredential := (*VerifiableCredential)(verifiableCredentialPtr)
+
+	runtime.SetFinalizer(verifiableCredential, func(verifiableCredential *VerifiableCredential) {
+		C.self_collection_credential_type_destroy(
+			(*C.self_collection_credential_type)(verifiableCredential),
+		)
+	})
+
+	return verifiableCredential, nil
+}
+
 // CredentialType returns the type of credential
 func (c *VerifiableCredential) CredentialType() *CredentialTypeCollection {
 	collection := (*CredentialTypeCollection)(C.self_verifiable_credential_credential_type(
