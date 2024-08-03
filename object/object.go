@@ -105,6 +105,10 @@ func (o *Object) Key() []byte {
 		(*C.self_object)(o),
 	)
 
+	if key == nil {
+		return nil
+	}
+
 	return C.GoBytes(
 		unsafe.Pointer(key),
 		32,
