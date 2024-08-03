@@ -78,6 +78,13 @@ func (c *CredentialVerificationRequest) Evidence() *credential.CredentialVerific
 	))
 }
 
+// Parameters returns associated data to be used as parameters to support the verification request
+func (c *CredentialVerificationRequest) Parameters() *credential.CredentialVerificationParameterCollection {
+	return (*credential.CredentialVerificationParameterCollection)(C.self_message_content_credential_verification_request_parameters(
+		(*C.self_message_content_credential_verification_request)(c),
+	))
+}
+
 // Type returns the time the request expires at
 func (c *CredentialVerificationRequest) Expires() time.Time {
 	return time.Unix(int64(C.self_message_content_credential_verification_request_expires(
@@ -127,6 +134,25 @@ func (b *CredentialVerificationRequestBuilder) Evidence(evidenceType string, evi
 	)
 
 	C.free(unsafe.Pointer(evidenceTypeC))
+
+	return b
+}
+
+// Evidence attaches evidence to the credential verification request
+func (b *CredentialVerificationRequestBuilder) Parameter(parameterType string, value []byte) *CredentialVerificationRequestBuilder {
+	parameterTypeC := C.CString(parameterType)
+	valueBuf := C.CBytes(value)
+	valueLen := len(value)
+
+	C.self_message_content_credential_verification_request_builder_parameter(
+		(*C.self_message_content_credential_verification_request_builder)(b),
+		parameterTypeC,
+		(*C.uint8_t)(valueBuf),
+		(C.ulong)(valueLen),
+	)
+
+	C.free(unsafe.Pointer(parameterTypeC))
+	C.free(valueBuf)
 
 	return b
 }
@@ -233,16 +259,16 @@ func (b *CredentialVerificationResponseBuilder) ResponseTo(requestID []byte) *Cr
 		return b
 	}
 
-	requestIDC := C.CBytes(
+	requestIDBuf := C.CBytes(
 		requestID,
 	)
 
 	C.self_message_content_credential_verification_response_builder_response_to(
 		(*C.self_message_content_credential_verification_response_builder)(b),
-		(*C.uchar)(requestIDC),
+		(*C.uint8_t)(requestIDBuf),
 	)
 
-	C.free(requestIDC)
+	C.free(requestIDBuf)
 
 	return b
 }

@@ -82,7 +82,7 @@ func (b *OperationBuilder) Previous(previousHash []byte) *OperationBuilder {
 
 	C.self_identity_operation_builder_previous(
 		(*C.self_identity_operation_builder)(b),
-		(*C.uchar)(previousBuf),
+		(*C.uint8_t)(previousBuf),
 		C.ulong(previousLen),
 	)
 

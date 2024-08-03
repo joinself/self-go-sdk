@@ -103,7 +103,7 @@ func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{
 
 	C.self_credential_builder_credential_subject_json(
 		(*C.self_credential_builder)(b),
-		(*C.uchar)(claimBuffer),
+		(*C.uint8_t)(claimBuffer),
 		(C.ulong)(claimLength),
 	)
 

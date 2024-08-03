@@ -216,16 +216,16 @@ func (b *CredentialPresentationResponseBuilder) ResponseTo(requestID []byte) *Cr
 		return b
 	}
 
-	requestIDC := C.CBytes(
+	requestIDBuf := C.CBytes(
 		requestID,
 	)
 
 	C.self_message_content_credential_presentation_response_builder_response_to(
 		(*C.self_message_content_credential_presentation_response_builder)(b),
-		(*C.uchar)(requestIDC),
+		(*C.uint8_t)(requestIDBuf),
 	)
 
-	C.free(requestIDC)
+	C.free(requestIDBuf)
 
 	return b
 }

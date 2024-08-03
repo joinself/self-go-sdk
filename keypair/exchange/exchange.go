@@ -51,7 +51,7 @@ func (p *PublicKey) String() string {
 
 	status := C.self_exchange_public_key_encode(
 		(*C.self_exchange_public_key)(p),
-		(*C.uchar)(unsafe.Pointer(&encoded[0])),
+		(*C.uint8_t)(unsafe.Pointer(&encoded[0])),
 		C.ulong(len(encoded)),
 	)
 
