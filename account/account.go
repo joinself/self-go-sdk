@@ -278,6 +278,10 @@ func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) (*credenti
 		return nil, errors.New("failed to store credential")
 	}
 
+	if collection == nil {
+		return nil, errors.New("no credentials found")
+	}
+
 	c := (*credential.VerifiableCredentialCollection)(collection)
 
 	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
@@ -303,6 +307,10 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) (*credenti
 		return nil, errors.New("failed to store credential")
 	}
 
+	if collection == nil {
+		return nil, errors.New("no credentials found")
+	}
+
 	c := (*credential.VerifiableCredentialCollection)(collection)
 
 	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
@@ -326,6 +334,10 @@ func (a *Account) CredentialLookupByCredentialType(credentialType *credential.Cr
 
 	if status > 0 {
 		return nil, errors.New("failed to store credential")
+	}
+
+	if collection == nil {
+		return nil, errors.New("no credentials found")
 	}
 
 	c := (*credential.VerifiableCredentialCollection)(collection)
