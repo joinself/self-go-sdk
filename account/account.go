@@ -164,7 +164,7 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 
 // IdentityList lists identities associated with or owned by the account
 func (a *Account) IdentityList() (*signing.PublicKeyCollection, error) {
-	var collection *C.self_collection_signing_public_key
+	collection := C.self_collection_signing_public_key_init()
 
 	status := C.self_account_identity_list(
 		a.account,
@@ -175,18 +175,14 @@ func (a *Account) IdentityList() (*signing.PublicKeyCollection, error) {
 		return nil, errors.New("failed to list identities")
 	}
 
-	c := (*signing.PublicKeyCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *signing.PublicKeyCollection) {
-		if collection == nil {
-			return
-		}
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
+		fmt.Println("FINALIZER!")
 		C.self_collection_signing_public_key_destroy(
-			(*C.self_collection_signing_public_key)(collection),
+			collection,
 		)
 	})
 
-	return c, nil
+	return (*signing.PublicKeyCollection)(collection), nil
 }
 
 // IdentityResolve resolves an identity document
@@ -206,9 +202,6 @@ func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Documen
 	d := (*identity.Document)(document)
 
 	runtime.SetFinalizer(d, func(document *identity.Document) {
-		if document == nil {
-			return
-		}
 		C.self_identity_document_destroy(
 			(*C.self_identity_document)(document),
 		)
@@ -248,9 +241,6 @@ func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (
 	verifiableCredential := (*credential.VerifiableCredential)(verifiableCredentialPtr)
 
 	runtime.SetFinalizer(verifiableCredential, func(verifiableCredential *credential.VerifiableCredential) {
-		if verifiableCredential == nil {
-			return
-		}
 		C.self_verifiable_credential_destroy(
 			(*C.self_verifiable_credential)(verifiableCredential),
 		)
@@ -294,9 +284,6 @@ func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) (*credenti
 	c := (*credential.VerifiableCredentialCollection)(collection)
 
 	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
-		if collection == nil {
-			return
-		}
 		C.self_collection_verifiable_credential_destroy(
 			(*C.self_collection_verifiable_credential)(collection),
 		)
@@ -326,9 +313,6 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) (*credenti
 	c := (*credential.VerifiableCredentialCollection)(collection)
 
 	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
-		if collection == nil {
-			return
-		}
 		C.self_collection_verifiable_credential_destroy(
 			(*C.self_collection_verifiable_credential)(collection),
 		)
@@ -358,9 +342,6 @@ func (a *Account) CredentialLookupByCredentialType(credentialType *credential.Cr
 	c := (*credential.VerifiableCredentialCollection)(collection)
 
 	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
-		if collection == nil {
-			return
-		}
 		C.self_collection_verifiable_credential_destroy(
 			(*C.self_collection_verifiable_credential)(collection),
 		)
@@ -386,9 +367,6 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 	verifiablePresentation := (*credential.VerifiablePresentation)(verifiablePresentationPtr)
 
 	runtime.SetFinalizer(verifiablePresentation, func(verifiablePresentation *credential.VerifiablePresentation) {
-		if verifiablePresentation == nil {
-			return
-		}
 		C.self_verifiable_presentation_destroy(
 			(*C.self_verifiable_presentation)(verifiablePresentation),
 		)
@@ -493,9 +471,6 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 	groupAddress := (*signing.PublicKey)(groupAddressPtr)
 
 	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
-		if groupAddress == nil {
-			return
-		}
 		C.self_signing_public_key_destroy(
 			(*C.self_signing_public_key)(groupAddress),
 		)
@@ -522,9 +497,6 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 	groupAddress := (*signing.PublicKey)(groupAddressPtr)
 
 	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
-		if groupAddress == nil {
-			return
-		}
 		C.self_signing_public_key_destroy(
 			(*C.self_signing_public_key)(groupAddress),
 		)

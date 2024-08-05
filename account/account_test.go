@@ -3,6 +3,7 @@ package account_test
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -421,4 +422,18 @@ func TestAccountSocketReconnect(t *testing.T) {
 	t.Skip("manual test")
 	testAccount(t)
 	time.Sleep(time.Hour)
+}
+
+func TestAccountIdentityList(t *testing.T) {
+	alice, _, _ := testAccount(t)
+
+	for i := 0; i < 100000; i++ {
+		_, err := alice.IdentityList()
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Millisecond)
+		runtime.GC()
+	}
+
 }
