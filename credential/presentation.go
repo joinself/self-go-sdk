@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	PresentationTypePassport             = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("PassportPresentation")
-	PresentationTypeLiveness             = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("LivenessPresentation")
-	PresentationTypeProfileImage         = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfileImagePresentation")
-	PresentationTypeApplicationPublisher = NewPresentationTypeCollection().Append("VerifiablePresentation").Append("ApplicationPublisherPresentation")
+	PresentationTypePassport             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("PassportPresentation")
+	PresentationTypeLiveness             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("LivenessPresentation")
+	PresentationTypeProfileImage         = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfileImagePresentation")
+	PresentationTypeApplicationPublisher = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ApplicationPublisherPresentation")
 )
 
 type Presentation C.self_presentation
@@ -163,6 +163,18 @@ func NewPresentationTypeCollection() *PresentationTypeCollection {
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)
+	})
+
+	return collection
+}
+
+func newPresentationTypeCollection() *PresentationTypeCollection {
+	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
+
+	fmt.Println("ptr!", collection)
+
+	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+		fmt.Println("HERE 4")
 	})
 
 	return collection
