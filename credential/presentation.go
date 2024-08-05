@@ -10,6 +10,7 @@ package credential
 import "C"
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"unsafe"
 )
@@ -98,6 +99,7 @@ func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection 
 	))
 
 	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+		fmt.Println("HERE 2", collection)
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)
@@ -155,6 +157,7 @@ func NewPresentationTypeCollection() *PresentationTypeCollection {
 	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
 
 	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+		fmt.Println("HERE 3", collection)
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)
