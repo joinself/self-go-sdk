@@ -240,8 +240,8 @@ func (b *CredentialPresentationResponseBuilder) Status(status ResponseStatus) *C
 	return b
 }
 
-// VerifiableCredential attaches a verified presentation of credentails to the response
-func (b *CredentialPresentationResponseBuilder) VerifiableCredential(presentation *credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
+// VerifiablePresentation attaches a verified presentation of credentails to the response
+func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentation *credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
 	C.self_message_content_credential_presentation_response_builder_verifiable_presentation(
 		(*C.self_message_content_credential_presentation_response_builder)(b),
 		(*C.self_verifiable_presentation)(presentation),
