@@ -164,7 +164,8 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 
 // IdentityList lists identities associated with or owned by the account
 func (a *Account) IdentityList() (*signing.PublicKeyCollection, error) {
-	collection := C.self_collection_signing_public_key_init()
+	var collection *C.self_collection_signing_public_key
+	collection = (*C.self_collection_signing_public_key)(C.malloc(C.size_t(unsafe.Sizeof(*collection))))
 
 	status := C.self_account_identity_list(
 		a.account,
@@ -175,14 +176,15 @@ func (a *Account) IdentityList() (*signing.PublicKeyCollection, error) {
 		return nil, errors.New("failed to list identities")
 	}
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
-		fmt.Println("FINALIZER!")
+	c := (*signing.PublicKeyCollection)(collection)
+
+	runtime.SetFinalizer(c, func(collection *signing.PublicKeyCollection) {
 		C.self_collection_signing_public_key_destroy(
-			collection,
+			(*C.self_collection_signing_public_key)(collection),
 		)
 	})
 
-	return (*signing.PublicKeyCollection)(collection), nil
+	return c, nil
 }
 
 // IdentityResolve resolves an identity document
