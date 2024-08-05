@@ -11,6 +11,7 @@ import "C"
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"runtime"
 	"time"
 	"unsafe"
@@ -20,10 +21,10 @@ import (
 )
 
 var (
-	CredentialTypePassport             = NewCredentialTypeCollection().Append("VerifiableCredential").Append("PassportCredential")
-	CredentialTypeLiveness             = NewCredentialTypeCollection().Append("VerifiableCredential").Append("LivenessCredential")
-	CredentialTypeProfileImage         = NewCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileImageCredential")
-	CredentialTypeApplicationPublisher = NewCredentialTypeCollection().Append("VerifiableCredential").Append("ApplicationPublisherCredential")
+	CredentialTypePassport             = newCredentialTypeCollection().Append("VerifiableCredential").Append("PassportCredential")
+	CredentialTypeLiveness             = newCredentialTypeCollection().Append("VerifiableCredential").Append("LivenessCredential")
+	CredentialTypeProfileImage         = newCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileImageCredential")
+	CredentialTypeApplicationPublisher = newCredentialTypeCollection().Append("VerifiableCredential").Append("ApplicationPublisherCredential")
 )
 
 type Credential C.self_credential
@@ -401,6 +402,16 @@ func NewCredentialTypeCollection() *CredentialTypeCollection {
 		C.self_collection_credential_type_destroy(
 			(*C.self_collection_credential_type)(collection),
 		)
+	})
+
+	return collection
+}
+
+func newCredentialTypeCollection() *CredentialTypeCollection {
+	collection := (*CredentialTypeCollection)(C.self_collection_credential_type_init())
+
+	runtime.SetFinalizer(collection, func(collection *CredentialTypeCollection) {
+		fmt.Println("HERE 5")
 	})
 
 	return collection
