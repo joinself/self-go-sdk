@@ -10,7 +10,6 @@ package credential
 import "C"
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"unsafe"
 )
@@ -99,7 +98,6 @@ func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection 
 	))
 
 	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
-		fmt.Println("HERE 2", collection)
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)
@@ -156,10 +154,7 @@ func (p *VerifiablePresentation) Validate() error {
 func NewPresentationTypeCollection() *PresentationTypeCollection {
 	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
 
-	fmt.Println("ptr!", collection)
-
 	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
-		fmt.Println("HERE 3", collection)
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)
@@ -169,15 +164,7 @@ func NewPresentationTypeCollection() *PresentationTypeCollection {
 }
 
 func newPresentationTypeCollection() *PresentationTypeCollection {
-	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
-
-	fmt.Println("ptr!", collection)
-
-	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
-		fmt.Println("HERE 4")
-	})
-
-	return collection
+	return (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
 }
 
 func (c *PresentationTypeCollection) Length() int {

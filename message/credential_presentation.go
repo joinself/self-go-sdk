@@ -10,7 +10,6 @@ package message
 import "C"
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"time"
 	"unsafe"
@@ -56,7 +55,6 @@ func (c *CredentialPresentationRequest) Type() *credential.PresentationTypeColle
 	))
 
 	runtime.SetFinalizer(collection, func(collection *credential.PresentationTypeCollection) {
-		fmt.Println("HERE 1", collection)
 		C.self_collection_presentation_type_destroy(
 			(*C.self_collection_presentation_type)(collection),
 		)

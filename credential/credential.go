@@ -11,7 +11,6 @@ import "C"
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"runtime"
 	"time"
 	"unsafe"
@@ -408,13 +407,7 @@ func NewCredentialTypeCollection() *CredentialTypeCollection {
 }
 
 func newCredentialTypeCollection() *CredentialTypeCollection {
-	collection := (*CredentialTypeCollection)(C.self_collection_credential_type_init())
-
-	runtime.SetFinalizer(collection, func(collection *CredentialTypeCollection) {
-		fmt.Println("HERE 5")
-	})
-
-	return collection
+	return (*CredentialTypeCollection)(C.self_collection_credential_type_init())
 }
 
 func (c *CredentialTypeCollection) Length() int {
