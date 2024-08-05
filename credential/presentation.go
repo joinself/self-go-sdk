@@ -156,6 +156,8 @@ func (p *VerifiablePresentation) Validate() error {
 func NewPresentationTypeCollection() *PresentationTypeCollection {
 	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
 
+	fmt.Println("ptr!", collection)
+
 	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
 		fmt.Println("HERE 3", collection)
 		C.self_collection_presentation_type_destroy(
