@@ -22,25 +22,24 @@ func DecodeChat(msg *Message) (*Chat, error) {
 	content := C.self_message_message_content((*C.self_message)(msg))
 
 	var chatContent *C.self_message_content_chat
+	chatContentPtr := &chatContent
 
 	status := C.self_message_content_as_chat(
 		content,
-		&chatContent,
+		chatContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to decode chat message")
 	}
 
-	chat := (*Chat)(chatContent)
-
-	runtime.SetFinalizer(chat, func(chat *Chat) {
+	runtime.SetFinalizer(chatContentPtr, func(chat **C.self_message_content_chat) {
 		C.self_message_content_chat_destroy(
-			(*C.self_message_content_chat)(chat),
+			*chat,
 		)
 	})
 
-	return chat, nil
+	return (*Chat)(*chatContentPtr), nil
 }
 
 // Message returns the chat message
@@ -78,23 +77,22 @@ func (b *ChatBuilder) Message(msg string) *ChatBuilder {
 // Finish finalizes the chat message and prepares it for sending
 func (b *ChatBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
+	finishedContentPtr := &finishedContent
 
 	status := C.self_message_content_chat_builder_finish(
 		(*C.self_message_content_chat_builder)(b),
-		&finishedContent,
+		finishedContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to build chat request")
 	}
 
-	content := (*Content)(finishedContent)
-
-	runtime.SetFinalizer(content, func(content *Content) {
+	runtime.SetFinalizer(finishedContentPtr, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			(*C.self_message_content)(content),
+			*content,
 		)
 	})
 
-	return content, nil
+	return (*Content)(*finishedContentPtr), nil
 }

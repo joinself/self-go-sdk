@@ -424,7 +424,8 @@ func TestAccountSocketReconnect(t *testing.T) {
 	time.Sleep(time.Hour)
 }
 
-func TestAccountIdentityList(t *testing.T) {
+func TestFinalizers(t *testing.T) {
+	t.Skip("manual test")
 	alice, _, _ := testAccount(t)
 
 	for i := 0; i < 100000; i++ {

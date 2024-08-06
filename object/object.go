@@ -17,14 +17,15 @@ import (
 type Object C.self_object
 
 func Encrypted(mime string, data []byte) (*Object, error) {
-	var objectPtr *C.self_object
+	var object *C.self_object
+	objectPtr := &object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.ulong(len(data))
 
 	status := C.self_object_create_encrypted(
-		&objectPtr,
+		objectPtr,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
 		dataLen,
@@ -37,26 +38,25 @@ func Encrypted(mime string, data []byte) (*Object, error) {
 		return nil, errors.New("object creation failed")
 	}
 
-	object := (*Object)(objectPtr)
-
-	runtime.SetFinalizer(object, func(object *Object) {
+	runtime.SetFinalizer(objectPtr, func(object **C.self_object) {
 		C.self_object_destroy(
-			(*C.self_object)(object),
+			*object,
 		)
 	})
 
-	return object, nil
+	return (*Object)(*objectPtr), nil
 }
 
 func Unencrypted(mime string, data []byte) (*Object, error) {
-	var objectPtr *C.self_object
+	var object *C.self_object
+	objectPtr := &object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.ulong(len(data))
 
 	status := C.self_object_create_unencrypted(
-		&objectPtr,
+		objectPtr,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
 		dataLen,
@@ -69,15 +69,13 @@ func Unencrypted(mime string, data []byte) (*Object, error) {
 		return nil, errors.New("object creation failed")
 	}
 
-	object := (*Object)(objectPtr)
-
-	runtime.SetFinalizer(object, func(object *Object) {
+	runtime.SetFinalizer(object, func(object **C.self_object) {
 		C.self_object_destroy(
-			(*C.self_object)(object),
+			*object,
 		)
 	})
 
-	return object, nil
+	return (*Object)(*objectPtr), nil
 }
 
 // Id returns the id hash of the encrypted data

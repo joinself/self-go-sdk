@@ -27,25 +27,24 @@ func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationR
 	content := C.self_message_message_content((*C.self_message)(msg))
 
 	var credentialPresentationRequestContent *C.self_message_content_credential_presentation_request
+	credentialPresentationRequestContentPtr := &credentialPresentationRequestContent
 
 	status := C.self_message_content_as_credential_presentation_request(
 		content,
-		&credentialPresentationRequestContent,
+		credentialPresentationRequestContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to decode credential presentation request message")
 	}
 
-	credentialPresentationRequest := (*CredentialPresentationRequest)(credentialPresentationRequestContent)
-
-	runtime.SetFinalizer(credentialPresentationRequest, func(credentialPresentationRequest *CredentialPresentationRequest) {
+	runtime.SetFinalizer(credentialPresentationRequestContentPtr, func(credentialPresentationRequest **C.self_message_content_credential_presentation_request) {
 		C.self_message_content_credential_presentation_request_destroy(
-			(*C.self_message_content_credential_presentation_request)(credentialPresentationRequest),
+			*credentialPresentationRequest,
 		)
 	})
 
-	return credentialPresentationRequest, nil
+	return (*CredentialPresentationRequest)(*credentialPresentationRequestContentPtr), nil
 }
 
 // Type returns the type of credential that presentation is being requested for
@@ -126,25 +125,24 @@ func (b *CredentialPresentationRequestBuilder) Expires(expires time.Time) *Crede
 // Finish finalises the request and builds the content
 func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
+	finishedContentPtr := &finishedContent
 
 	status := C.self_message_content_credential_presentation_request_builder_finish(
 		(*C.self_message_content_credential_presentation_request_builder)(b),
-		&finishedContent,
+		finishedContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to build credential verificaiton request")
 	}
 
-	content := (*Content)(finishedContent)
-
-	runtime.SetFinalizer(content, func(content *Content) {
+	runtime.SetFinalizer(finishedContentPtr, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			(*C.self_message_content)(content),
+			*content,
 		)
 	})
 
-	return content, nil
+	return (*Content)(*finishedContentPtr), nil
 }
 
 // DecodeCredentialPresentationResponse decodes a message to a credential presentation response
@@ -152,25 +150,24 @@ func DecodeCredentialPresentationResponse(msg *Message) (*CredentialPresentation
 	content := C.self_message_message_content((*C.self_message)(msg))
 
 	var credentialPresentationResponseContent *C.self_message_content_credential_presentation_response
+	credentialPresentationResponseContentPtr := &credentialPresentationResponseContent
 
 	status := C.self_message_content_as_credential_presentation_response(
 		content,
-		&credentialPresentationResponseContent,
+		credentialPresentationResponseContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to decode credential presentation response message")
 	}
 
-	credentialPresentationResponse := (*CredentialPresentationResponse)(credentialPresentationResponseContent)
-
-	runtime.SetFinalizer(credentialPresentationResponse, func(credentialPresentationResponse *CredentialPresentationResponse) {
+	runtime.SetFinalizer(credentialPresentationResponseContentPtr, func(credentialPresentationResponse **C.self_message_content_credential_presentation_response) {
 		C.self_message_content_credential_presentation_response_destroy(
-			(*C.self_message_content_credential_presentation_response)(credentialPresentationResponse),
+			*credentialPresentationResponse,
 		)
 	})
 
-	return credentialPresentationResponse, nil
+	return (*CredentialPresentationResponse)(*credentialPresentationResponseContentPtr), nil
 }
 
 // ResponseTo returns the id of the request that is being responded to
@@ -252,23 +249,22 @@ func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentat
 // Finish finalises the response and builds the content
 func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
+	finishedContentPtr := &finishedContent
 
 	status := C.self_message_content_credential_presentation_response_builder_finish(
 		(*C.self_message_content_credential_presentation_response_builder)(b),
-		&finishedContent,
+		finishedContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to build credential verificaiton response")
 	}
 
-	content := (*Content)(finishedContent)
-
-	runtime.SetFinalizer(content, func(content *Content) {
+	runtime.SetFinalizer(finishedContentPtr, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			(*C.self_message_content)(content),
+			*content,
 		)
 	})
 
-	return content, nil
+	return (*Content)(*finishedContentPtr), nil
 }

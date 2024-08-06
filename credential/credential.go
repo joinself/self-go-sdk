@@ -141,30 +141,30 @@ func (b *CredentialBuilder) SignWith(signer *signing.PublicKey, issuedAt time.Ti
 
 // Finish generates and prepares the credential for being signed by an account
 func (b *CredentialBuilder) Finish() (*Credential, error) {
-	var credentialPtr *C.self_credential
+	var credential *C.self_credential
+	credentialPtr := &credential
 
 	status := C.self_credential_builder_finish(
 		(*C.self_credential_builder)(b),
-		&credentialPtr,
+		credentialPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create credential")
 	}
 
-	credential := (*Credential)(credentialPtr)
-
-	runtime.SetFinalizer(credential, func(credential *Credential) {
+	runtime.SetFinalizer(credentialPtr, func(credential **C.self_credential) {
 		C.self_credential_destroy(
-			(*C.self_credential)(credential),
+			*credential,
 		)
 	})
 
-	return credential, nil
+	return (*Credential)(*credentialPtr), nil
 }
 
 func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential, error) {
-	var verifiableCredentialPtr *C.self_verifiable_credential
+	var verifiableCredential *C.self_verifiable_credential
+	verifiableCredentialPtr := &verifiableCredential
 
 	encodedBuf := C.CBytes(encodedCredential)
 	encodedLen := len(encodedCredential)
@@ -174,7 +174,7 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 	}()
 
 	status := C.self_verifiable_credential_decode(
-		&verifiableCredentialPtr,
+		verifiableCredentialPtr,
 		(*C.uint8_t)(encodedBuf),
 		(C.ulong)(encodedLen),
 	)
@@ -183,15 +183,13 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 		return nil, errors.New("decode credential failed")
 	}
 
-	verifiableCredential := (*VerifiableCredential)(verifiableCredentialPtr)
-
-	runtime.SetFinalizer(verifiableCredential, func(verifiableCredential *VerifiableCredential) {
-		C.self_collection_credential_type_destroy(
-			(*C.self_collection_credential_type)(verifiableCredential),
+	runtime.SetFinalizer(verifiableCredentialPtr, func(verifiableCredential **C.self_verifiable_credential) {
+		C.self_verifiable_credential_destroy(
+			*verifiableCredential,
 		)
 	})
 
-	return verifiableCredential, nil
+	return (*VerifiableCredential)(*verifiableCredentialPtr), nil
 }
 
 // CredentialType returns the type of credential

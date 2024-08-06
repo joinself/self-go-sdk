@@ -69,26 +69,25 @@ func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *P
 
 // Finish generates and prepares the presentation for being signed by an account
 func (b *PresentationBuilder) Finish() (*Presentation, error) {
-	var presentationPtr *C.self_presentation
+	var presentation *C.self_presentation
+	presentationPtr := &presentation
 
 	status := C.self_presentation_builder_finish(
 		(*C.self_presentation_builder)(b),
-		&presentationPtr,
+		presentationPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create presentation")
 	}
 
-	presentation := (*Presentation)(presentationPtr)
-
-	runtime.SetFinalizer(presentation, func(presentation *Presentation) {
+	runtime.SetFinalizer(presentationPtr, func(presentation **C.self_presentation) {
 		C.self_presentation_destroy(
-			(*C.self_presentation)(presentation),
+			*presentation,
 		)
 	})
 
-	return presentation, nil
+	return (*Presentation)(*presentationPtr), nil
 }
 
 // PresentationType returns the type of presentation

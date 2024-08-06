@@ -107,44 +107,59 @@ func New(cfg *Config) (*Account, error) {
 // KeychainSigningCreate creates a new signing keypair
 func (a *Account) KeychainSigningCreate() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
+	addressPtr := &address
 
 	status := C.self_account_keychain_signing_create(
 		a.account,
-		&address,
+		addressPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create keypair")
 	}
 
-	return (*signing.PublicKey)(address), nil
+	runtime.SetFinalizer(addressPtr, func(address **C.self_signing_public_key) {
+		C.self_signing_public_key_destroy(
+			*address,
+		)
+	})
+
+	return (*signing.PublicKey)(*addressPtr), nil
 }
 
 // KeychainExchangeCreate creates a new exchange keypair
 func (a *Account) KeychainExchangeCreate() (*exchange.PublicKey, error) {
 	var address *C.self_exchange_public_key
+	addressPtr := &address
 
 	status := C.self_account_keychain_exchange_create(
 		a.account,
-		&address,
+		addressPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create keypair")
 	}
 
-	return (*exchange.PublicKey)(address), nil
+	runtime.SetFinalizer(addressPtr, func(address **C.self_exchange_public_key) {
+		C.self_exchange_public_key_destroy(
+			*address,
+		)
+	})
+
+	return (*exchange.PublicKey)(*addressPtr), nil
 }
 
 // KeychainSigningAssociatedWith lists all keys associated with a identity that posess the specified set of roles
 func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, roles identity.Role) (*signing.PublicKeyCollection, error) {
 	var collection *C.self_collection_signing_public_key
+	collectionPtr := &collection
 
 	status := C.self_account_keychain_signing_associated_with(
 		a.account,
 		(*C.self_signing_public_key)(address),
 		C.ulong(roles),
-		&collection,
+		collectionPtr,
 	)
 
 	if status > 0 {
@@ -165,51 +180,48 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 // IdentityList lists identities associated with or owned by the account
 func (a *Account) IdentityList() (*signing.PublicKeyCollection, error) {
 	var collection *C.self_collection_signing_public_key
-	collection = (*C.self_collection_signing_public_key)(C.malloc(C.size_t(unsafe.Sizeof(*collection))))
+	collectionPtr := &collection
 
 	status := C.self_account_identity_list(
 		a.account,
-		&collection,
+		collectionPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to list identities")
 	}
 
-	c := (*signing.PublicKeyCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *signing.PublicKeyCollection) {
+	runtime.SetFinalizer(collectionPtr, func(collection **C.self_collection_signing_public_key) {
 		C.self_collection_signing_public_key_destroy(
-			(*C.self_collection_signing_public_key)(collection),
+			*collection,
 		)
 	})
 
-	return c, nil
+	return (*signing.PublicKeyCollection)(*collectionPtr), nil
 }
 
 // IdentityResolve resolves an identity document
 func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Document, error) {
 	var document *C.self_identity_document
+	var documentPtr = &document
 
 	status := C.self_account_identity_resolve(
 		a.account,
 		(*C.self_signing_public_key)(address),
-		&document,
+		documentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to resolve identity")
 	}
 
-	d := (*identity.Document)(document)
-
-	runtime.SetFinalizer(d, func(document *identity.Document) {
+	runtime.SetFinalizer(documentPtr, func(document **C.self_identity_document) {
 		C.self_identity_document_destroy(
-			(*C.self_identity_document)(document),
+			*document,
 		)
 	})
 
-	return d, nil
+	return (*identity.Document)(*documentPtr), nil
 }
 
 // IdentityExecute executes an operation that creates or modifies a document
@@ -228,27 +240,26 @@ func (a *Account) IdentityExecute(operation *identity.Operation) error {
 
 // CredentialIssue signs and issues a verifiable credential
 func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (*credential.VerifiableCredential, error) {
-	var verifiableCredentialPtr *C.self_verifiable_credential
+	var verifiableCredential *C.self_verifiable_credential
+	verifiableCredentialPtr := &verifiableCredential
 
 	status := C.self_account_credential_issue(
 		(*C.self_account)(a.account),
 		(*C.self_credential)(unverifiedCredential),
-		&verifiableCredentialPtr,
+		verifiableCredentialPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to issue credential")
 	}
 
-	verifiableCredential := (*credential.VerifiableCredential)(verifiableCredentialPtr)
-
-	runtime.SetFinalizer(verifiableCredential, func(verifiableCredential *credential.VerifiableCredential) {
+	runtime.SetFinalizer(verifiableCredentialPtr, func(verifiableCredential **C.self_verifiable_credential) {
 		C.self_verifiable_credential_destroy(
-			(*C.self_verifiable_credential)(verifiableCredential),
+			*verifiableCredential,
 		)
 	})
 
-	return verifiableCredential, nil
+	return (*credential.VerifiableCredential)(*verifiableCredentialPtr), nil
 }
 
 // CredentialStore stores a verifiable credential
@@ -268,129 +279,120 @@ func (a *Account) CredentialStore(verifiedCredential *credential.VerifiableCrede
 // CredentialLookupByIssuer looks up credentials issued by a specific issuer
 func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) (*credential.VerifiableCredentialCollection, error) {
 	var collection *C.self_collection_verifiable_credential
+	collectionPtr := &collection
 
 	status := C.self_account_credential_lookup_by_issuer(
 		(*C.self_account)(a.account),
 		(*C.self_signing_public_key)(issuer),
-		&collection,
+		collectionPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to store credential")
 	}
 
-	if collection == nil {
-		return nil, errors.New("no credentials found")
-	}
-
-	c := (*credential.VerifiableCredentialCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
+	runtime.SetFinalizer(collectionPtr, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			(*C.self_collection_verifiable_credential)(collection),
+			*collection,
 		)
 	})
 
-	return c, nil
+	return (*credential.VerifiableCredentialCollection)(*collectionPtr), nil
 }
 
 // CredentialLookupByBearer looks up credentials held by a specific bearer
 func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) (*credential.VerifiableCredentialCollection, error) {
 	var collection *C.self_collection_verifiable_credential
+	collectionPtr := &collection
 
 	status := C.self_account_credential_lookup_by_bearer(
 		(*C.self_account)(a.account),
 		(*C.self_signing_public_key)(bearer),
-		&collection,
+		collectionPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to store credential")
 	}
 
-	if collection == nil {
-		return nil, errors.New("no credentials found")
-	}
-
-	c := (*credential.VerifiableCredentialCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
+	runtime.SetFinalizer(collectionPtr, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			(*C.self_collection_verifiable_credential)(collection),
+			*collection,
 		)
 	})
 
-	return c, nil
+	return (*credential.VerifiableCredentialCollection)(*collectionPtr), nil
 }
 
 // CredentialLookupBySubject looks up credentials matching a specific credential type
 func (a *Account) CredentialLookupByCredentialType(credentialType *credential.CredentialTypeCollection) (*credential.VerifiableCredentialCollection, error) {
 	var collection *C.self_collection_verifiable_credential
+	collectionPtr := &collection
 
 	status := C.self_account_credential_lookup_by_credential_type(
 		(*C.self_account)(a.account),
 		(*C.self_collection_credential_type)(credentialType),
-		&collection,
+		collectionPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to store credential")
 	}
 
-	if collection == nil {
-		return nil, errors.New("no credentials found")
-	}
-
-	c := (*credential.VerifiableCredentialCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *credential.VerifiableCredentialCollection) {
+	runtime.SetFinalizer(collectionPtr, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			(*C.self_collection_verifiable_credential)(collection),
+			*collection,
 		)
 	})
 
-	return c, nil
+	return (*credential.VerifiableCredentialCollection)(*collectionPtr), nil
 }
 
 // PresentationIssue signs and issues a verifiable presentation
 func (a *Account) PresentationIssue(presentation *credential.Presentation) (*credential.VerifiablePresentation, error) {
-	var verifiablePresentationPtr *C.self_verifiable_presentation
+	var verifiablePresentation *C.self_verifiable_presentation
+	verifiablePresentationPtr := &verifiablePresentation
 
 	status := C.self_account_presentation_issue(
 		(*C.self_account)(a.account),
 		(*C.self_presentation)(presentation),
-		&verifiablePresentationPtr,
+		verifiablePresentationPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to issue credential")
 	}
 
-	verifiablePresentation := (*credential.VerifiablePresentation)(verifiablePresentationPtr)
-
-	runtime.SetFinalizer(verifiablePresentation, func(verifiablePresentation *credential.VerifiablePresentation) {
+	runtime.SetFinalizer(verifiablePresentationPtr, func(verifiablePresentation **C.self_verifiable_presentation) {
 		C.self_verifiable_presentation_destroy(
-			(*C.self_verifiable_presentation)(verifiablePresentation),
+			*verifiablePresentation,
 		)
 	})
 
-	return verifiablePresentation, nil
+	return (*credential.VerifiablePresentation)(*verifiablePresentationPtr), nil
 }
 
 // InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
+	addressPtr := &address
 
 	status := C.self_account_inbox_open(
 		a.account,
-		&address,
+		addressPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to open inbox")
 	}
 
-	return (*signing.PublicKey)(address), nil
+	runtime.SetFinalizer(addressPtr, func(address **C.self_signing_public_key) {
+		C.self_signing_public_key_destroy(
+			*address,
+		)
+	})
+
+	return (*signing.PublicKey)(*addressPtr), nil
 }
 
 // InboxClose closes an existing inbox permanently
@@ -457,12 +459,13 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
 // using the key package the initiator sent to us, returns the address of the group
 func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) (*signing.PublicKey, error) {
-	var groupAddressPtr *C.self_signing_public_key
+	var groupAddress *C.self_signing_public_key
+	groupAddressPtr := &groupAddress
 
 	status := C.self_account_connection_establish(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
-		&groupAddressPtr,
+		groupAddressPtr,
 		(*C.self_key_package)(keyPackage),
 	)
 
@@ -470,25 +473,24 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 		return nil, fmt.Errorf("failed establish connection, code: %d", status)
 	}
 
-	groupAddress := (*signing.PublicKey)(groupAddressPtr)
-
-	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
+	runtime.SetFinalizer(groupAddressPtr, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			(*C.self_signing_public_key)(groupAddress),
+			*address,
 		)
 	})
 
-	return groupAddress, nil
+	return (*signing.PublicKey)(*groupAddressPtr), nil
 }
 
 // ConnectionAccept accepts a welcome to a encrypted group, returns the address of the group
 func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) (*signing.PublicKey, error) {
-	var groupAddressPtr *C.self_signing_public_key
+	var groupAddress *C.self_signing_public_key
+	groupAddressPtr := &groupAddress
 
 	status := C.self_account_connection_accept(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
-		&groupAddressPtr,
+		groupAddressPtr,
 		(*C.self_welcome)(welcome),
 	)
 
@@ -496,15 +498,13 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 		return nil, fmt.Errorf("failed accept connection, code: %d", status)
 	}
 
-	groupAddress := (*signing.PublicKey)(groupAddressPtr)
-
-	runtime.SetFinalizer(groupAddress, func(groupAddress *signing.PublicKey) {
+	runtime.SetFinalizer(groupAddressPtr, func(groupAddress **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			(*C.self_signing_public_key)(groupAddress),
+			*groupAddress,
 		)
 	})
 
-	return groupAddress, nil
+	return (*signing.PublicKey)(*groupAddressPtr), nil
 }
 
 // MessageSend sends a message to an address that we have established an encrypted group with

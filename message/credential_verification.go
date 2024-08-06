@@ -28,25 +28,24 @@ func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationR
 	content := C.self_message_message_content((*C.self_message)(msg))
 
 	var credentialVerificationRequestContent *C.self_message_content_credential_verification_request
+	credentialVerificationRequestContentPtr := &credentialVerificationRequestContent
 
 	status := C.self_message_content_as_credential_verification_request(
 		content,
-		&credentialVerificationRequestContent,
+		credentialVerificationRequestContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to decode credential verification request message")
 	}
 
-	credentialVerificationRequest := (*CredentialVerificationRequest)(credentialVerificationRequestContent)
-
-	runtime.SetFinalizer(credentialVerificationRequest, func(credentialVerificationRequest *CredentialVerificationRequest) {
+	runtime.SetFinalizer(credentialVerificationRequestContentPtr, func(credentialVerificationRequest **C.self_message_content_credential_verification_request) {
 		C.self_message_content_credential_verification_request_destroy(
-			(*C.self_message_content_credential_verification_request)(credentialVerificationRequest),
+			*credentialVerificationRequest,
 		)
 	})
 
-	return credentialVerificationRequest, nil
+	return (*CredentialVerificationRequest)(*credentialVerificationRequestContentPtr), nil
 }
 
 // Type returns the type of credential that verification is being requested for
@@ -169,25 +168,24 @@ func (b *CredentialVerificationRequestBuilder) Expires(expires time.Time) *Crede
 // Finish finalises the request and builds the content
 func (b *CredentialVerificationRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
+	finishedContentPtr := &finishedContent
 
 	status := C.self_message_content_credential_verification_request_builder_finish(
 		(*C.self_message_content_credential_verification_request_builder)(b),
-		&finishedContent,
+		finishedContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to build credential verificaiton request")
 	}
 
-	content := (*Content)(finishedContent)
-
-	runtime.SetFinalizer(content, func(content *Content) {
+	runtime.SetFinalizer(finishedContentPtr, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			(*C.self_message_content)(content),
+			*content,
 		)
 	})
 
-	return content, nil
+	return (*Content)(*finishedContentPtr), nil
 }
 
 // DecodeCredentialVerificationResponse decodes a message to a credential verification response
@@ -195,25 +193,24 @@ func DecodeCredentialVerificationResponse(msg *Message) (*CredentialVerification
 	content := C.self_message_message_content((*C.self_message)(msg))
 
 	var credentialVerificationResponseContent *C.self_message_content_credential_verification_response
+	credentialVerificationResponseContentPtr := &credentialVerificationResponseContent
 
 	status := C.self_message_content_as_credential_verification_response(
 		content,
-		&credentialVerificationResponseContent,
+		credentialVerificationResponseContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to decode credential verification response message")
 	}
 
-	credentialVerificationResponse := (*CredentialVerificationResponse)(credentialVerificationResponseContent)
-
-	runtime.SetFinalizer(credentialVerificationResponse, func(credentialVerificationResponse *CredentialVerificationResponse) {
+	runtime.SetFinalizer(credentialVerificationResponseContentPtr, func(credentialVerificationResponse **C.self_message_content_credential_verification_response) {
 		C.self_message_content_credential_verification_response_destroy(
-			(*C.self_message_content_credential_verification_response)(credentialVerificationResponse),
+			*credentialVerificationResponse,
 		)
 	})
 
-	return credentialVerificationResponse, nil
+	return (*CredentialVerificationResponse)(*credentialVerificationResponseContentPtr), nil
 }
 
 // ResponseTo returns the id of the request that is being responded to
@@ -295,23 +292,22 @@ func (b *CredentialVerificationResponseBuilder) VerifiableCredential(proof *cred
 // Finish finalises the response and builds the content
 func (b *CredentialVerificationResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
+	finishedContentPtr := &finishedContent
 
 	status := C.self_message_content_credential_verification_response_builder_finish(
 		(*C.self_message_content_credential_verification_response_builder)(b),
-		&finishedContent,
+		finishedContentPtr,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to build credential verificaiton response")
 	}
 
-	content := (*Content)(finishedContent)
-
-	runtime.SetFinalizer(content, func(content *Content) {
+	runtime.SetFinalizer(finishedContentPtr, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			(*C.self_message_content)(content),
+			*content,
 		)
 	})
 
-	return content, nil
+	return (*Content)(*finishedContentPtr), nil
 }

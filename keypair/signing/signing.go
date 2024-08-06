@@ -20,6 +20,7 @@ type PublicKey C.self_signing_public_key
 // FromAddress converts a hex address to a public key
 func FromAddress(hex string) *PublicKey {
 	var public *C.self_signing_public_key
+	publicPtr := &public
 
 	hexBuf := (*C.uint8_t)(C.CBytes([]byte(hex)))
 	hexLen := C.size_t(len(hex))
@@ -29,7 +30,7 @@ func FromAddress(hex string) *PublicKey {
 	}()
 
 	status := C.self_signing_public_key_decode(
-		&public,
+		publicPtr,
 		hexBuf,
 		hexLen,
 	)
@@ -38,15 +39,13 @@ func FromAddress(hex string) *PublicKey {
 		return nil
 	}
 
-	key := (*PublicKey)(public)
-
-	runtime.SetFinalizer(key, func(key *PublicKey) {
+	runtime.SetFinalizer(publicPtr, func(public **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			(*C.self_signing_public_key)(key),
+			*public,
 		)
 	})
 
-	return key
+	return (*PublicKey)(*publicPtr)
 }
 
 // Type returns the type of key
