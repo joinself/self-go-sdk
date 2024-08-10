@@ -1,0 +1,18 @@
+name: Docker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+    steps:
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
+      - name: Build and publish
+        run: |
+          docker build -t ${IMAGE_TAG} .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ${IMAGE_TAG}
