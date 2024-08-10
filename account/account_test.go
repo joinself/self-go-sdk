@@ -2,7 +2,6 @@ package account_test
 
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -31,10 +30,8 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 		LogLevel:    account.LogWarn,
 		Callbacks: account.Callbacks{
 			OnConnect: func() {
-				fmt.Println("CONNECTED")
 			},
 			OnDisconnect: func(err error) {
-				fmt.Println("DISCONNECTED", err)
 				// require.Nil(t, err)
 			},
 			OnMessage: func(account *account.Account, msg *message.Message) {

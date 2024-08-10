@@ -57,9 +57,9 @@ func New(cfg *Config) (*Account, error) {
 
 	cfg.defaults()
 
-	rpcURLBuf := C.CString("https://rpc.next.sandbox.joinself.com/")
-	objectURLBuf := C.CString("https://object.next.sandbox.joinself.com/")
-	messagingURLBuf := C.CString("wss://message.next.sandbox.joinself.com/")
+	rpcURLBuf := C.CString("http://rpc.next.sandbox.joinself.com/")
+	objectURLBuf := C.CString("http://object.next.sandbox.joinself.com/")
+	messagingURLBuf := C.CString("ws://message.next.sandbox.joinself.com/")
 	storagePathBuf := C.CString(cfg.StoragePath)
 	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))
 	storageKeyLen := C.size_t(len(cfg.StorageKey))
