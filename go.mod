@@ -1,4 +1,4 @@
-module github.com/joinself/self-go-sdk
+module github.com/joinself/self-go-sdk-next
 
 go 1.22
 
