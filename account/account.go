@@ -15,12 +15,12 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/identity"
-	"github.com/joinself/self-go-sdk/keypair/exchange"
-	"github.com/joinself/self-go-sdk/keypair/signing"
-	"github.com/joinself/self-go-sdk/message"
-	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/identity"
+	"github.com/joinself/self-go-sdk-next/keypair/exchange"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/message"
+	"github.com/joinself/self-go-sdk-next/object"
 )
 
 var pins = make(map[*Account]*runtime.Pinner)

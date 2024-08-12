@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk-next/credential"
 )
 
 type CredentialPresentationRequest C.self_message_content_credential_presentation_request

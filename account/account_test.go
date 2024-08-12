@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joinself/self-go-sdk/account"
-	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/identity"
-	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk-next/account"
+	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/identity"
+	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

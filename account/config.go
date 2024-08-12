@@ -8,7 +8,7 @@ package account
 #include <stdlib.h>
 */
 import "C"
-import "github.com/joinself/self-go-sdk/message"
+import "github.com/joinself/self-go-sdk-next/message"
 
 type LogLevel uint32
 

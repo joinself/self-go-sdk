@@ -14,8 +14,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/object"
 )
 
 type CredentialVerificationRequest C.self_message_content_credential_verification_request

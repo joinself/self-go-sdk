@@ -11,7 +11,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/keypair"
+	"github.com/joinself/self-go-sdk-next/keypair"
 )
 
 type PublicKey C.self_exchange_public_key

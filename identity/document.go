@@ -12,9 +12,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/joinself/self-go-sdk/keypair"
-	"github.com/joinself/self-go-sdk/keypair/exchange"
-	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/keypair"
+	"github.com/joinself/self-go-sdk-next/keypair/exchange"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
 // Document a collection of public keys tied to an identity

@@ -102,8 +102,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/keypair/signing"
-	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/message"
 )
 
 var responseOffset int64

@@ -13,7 +13,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
 type Commit C.self_commit

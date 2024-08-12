@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/keypair"
+	"github.com/joinself/self-go-sdk-next/keypair"
 )
 
 type PublicKey C.self_signing_public_key

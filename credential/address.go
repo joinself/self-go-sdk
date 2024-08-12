@@ -11,7 +11,7 @@ import "C"
 import (
 	"runtime"
 
-	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
 type Address = C.self_credential_address
