@@ -13,17 +13,29 @@ import "github.com/joinself/self-go-sdk-next/message"
 type LogLevel uint32
 
 const (
-	LogError LogLevel = C.LOG_ERROR
-	LogWarn  LogLevel = C.LOG_WARN
-	LogInfo  LogLevel = C.LOG_INFO
-	LogDebug LogLevel = C.LOG_DEBUG
-	LogTrace LogLevel = C.LOG_TRACE
+	LogError      LogLevel = C.LOG_ERROR
+	LogWarn       LogLevel = C.LOG_WARN
+	LogInfo       LogLevel = C.LOG_INFO
+	LogDebug      LogLevel = C.LOG_DEBUG
+	LogTrace      LogLevel = C.LOG_TRACE
+	TargetDevelop          = "develop"
+	TargetSandbox          = "sandbox"
+)
+
+var (
+	defaultRpcDevelop     = "http://127.0.0.1:8080/"
+	defaultObjectDevelop  = "http://127.0.0.1:8090/"
+	defaultMessageDevelop = "ws://127.0.0.1:9000/"
+	defaultRpcSandbox     = "http://rpc.next.sandbox.joinself.com/"
+	defaultObjectSandbox  = "http://object.next.sandbox.joinself.com/"
+	defaultMessageSandbox = "ws://message.next.sandbox.joinself.com/"
 )
 
 // Config stores config for an account
 type Config struct {
 	StorageKey  []byte
 	StoragePath string
+	Environment string
 	LogLevel    LogLevel
 	Callbacks   Callbacks
 }
@@ -42,5 +54,36 @@ type Callbacks struct {
 func (c *Config) defaults() {
 	if c.LogLevel == 0 {
 		c.LogLevel = LogError
+	}
+
+	if c.Environment != TargetDevelop && c.Environment != TargetSandbox {
+		c.Environment = TargetSandbox
+	}
+}
+
+func (c *Config) rpcURL() string {
+	switch c.Environment {
+	case TargetDevelop:
+		return defaultRpcDevelop
+	default:
+		return defaultRpcSandbox
+	}
+}
+
+func (c *Config) objectURL() string {
+	switch c.Environment {
+	case TargetDevelop:
+		return defaultObjectDevelop
+	default:
+		return defaultObjectSandbox
+	}
+}
+
+func (c *Config) messageURL() string {
+	switch c.Environment {
+	case TargetDevelop:
+		return defaultMessageDevelop
+	default:
+		return defaultMessageSandbox
 	}
 }
