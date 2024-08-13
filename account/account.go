@@ -104,6 +104,72 @@ func New(cfg *Config) (*Account, error) {
 	return account, nil
 }
 
+// Init creates a new account, without any configuration
+func Init() *Account {
+	account := &Account{
+		account: C.self_account_init(),
+	}
+
+	// pin our account and callback pointers
+	// so we can pass them as user-data to C
+	pin(account)
+
+	runtime.SetFinalizer(account, func(account *Account) {
+		unpin(account)
+
+		C.self_account_destroy(
+			account.account,
+		)
+	})
+
+	return account
+}
+
+// Configure configures an unconfigured account, fails if the account has already been configured
+func (a *Account) Configure(cfg *Config) error {
+	if a.callbacks != nil {
+		return errors.New("account already configured")
+	}
+
+	a.callbacks = &cfg.Callbacks
+
+	cfg.defaults()
+
+	rpcURLBuf := C.CString(cfg.rpcURL())
+	objectURLBuf := C.CString(cfg.objectURL())
+	messagingURLBuf := C.CString(cfg.messageURL())
+	storagePathBuf := C.CString(cfg.StoragePath)
+	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))
+	storageKeyLen := C.size_t(len(cfg.StorageKey))
+
+	defer func() {
+		C.free(unsafe.Pointer(rpcURLBuf))
+		C.free(unsafe.Pointer(objectURLBuf))
+		C.free(unsafe.Pointer(messagingURLBuf))
+		C.free(unsafe.Pointer(storagePathBuf))
+		C.free(unsafe.Pointer(storageKeyBuf))
+	}()
+
+	status := C.self_account_configure(
+		a.account,
+		rpcURLBuf,
+		objectURLBuf,
+		messagingURLBuf,
+		storagePathBuf,
+		storageKeyBuf,
+		storageKeyLen,
+		uint32(cfg.LogLevel),
+		accountCallbacks(),
+		unsafe.Pointer(a.account),
+	)
+
+	if status > 0 {
+		return errors.New("configuring account failed")
+	}
+
+	return nil
+}
+
 // KeychainSigningCreate creates a new signing keypair
 func (a *Account) KeychainSigningCreate() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
