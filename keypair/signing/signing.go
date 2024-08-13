@@ -48,6 +48,37 @@ func FromAddress(hex string) *PublicKey {
 	return (*PublicKey)(*publicPtr)
 }
 
+// FromBytes constructs a public key from bytes
+func FromBytes(data []byte) *PublicKey {
+	var public *C.self_signing_public_key
+	publicPtr := &public
+
+	dataBuf := (*C.uint8_t)(C.CBytes(data))
+	dataLen := C.size_t(len(data))
+
+	defer func() {
+		C.free(unsafe.Pointer(dataBuf))
+	}()
+
+	status := C.self_signing_public_key_from_bytes(
+		publicPtr,
+		dataBuf,
+		dataLen,
+	)
+
+	if status != 0 {
+		return nil
+	}
+
+	runtime.SetFinalizer(publicPtr, func(public **C.self_signing_public_key) {
+		C.self_signing_public_key_destroy(
+			*public,
+		)
+	})
+
+	return (*PublicKey)(*publicPtr)
+}
+
 // Type returns the type of key
 func (p *PublicKey) Type() keypair.KeyType {
 	return keypair.KeyTypeSigning
