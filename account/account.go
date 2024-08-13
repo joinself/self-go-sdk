@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
@@ -520,6 +521,32 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 	}
 
 	return nil
+}
+
+// ConnectionNegotiateOutOfBand negotiates a new encrypted group connection with an address. returns a
+// key pacakge for use in an out of band message, like an anonymous message encoded to a QR code
+func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*message.KeyPackage, error) {
+	var keyPackage *C.self_key_package
+	keyPackagePtr := &keyPackage
+
+	status := C.self_account_connection_negotiate_out_of_band(
+		a.account,
+		(*C.self_signing_public_key)(asAddress),
+		C.long(expires.Unix()),
+		keyPackagePtr,
+	)
+
+	if status > 0 {
+		return nil, fmt.Errorf("failed negotiate connection, code: %d", status)
+	}
+
+	runtime.SetFinalizer(keyPackagePtr, func(keyPackagePtr **C.self_key_package) {
+		C.self_key_package_destroy(
+			*keyPackagePtr,
+		)
+	})
+
+	return (*message.KeyPackage)(*keyPackagePtr), nil
 }
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
