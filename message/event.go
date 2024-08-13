@@ -9,6 +9,7 @@ package message
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"time"
 	"unsafe"
@@ -16,11 +17,108 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
+type QREncoding int
+
+const (
+	QREncodingSVG     QREncoding = C.QR_SVG
+	QREncodingUnicode QREncoding = C.QR_UNICODE
+)
+
+type AnonymousMessage C.self_anonymous_message
 type Commit C.self_commit
 type KeyPackage C.self_key_package
 type Message C.self_message
 type Proposal C.self_proposal
 type Welcome C.self_welcome
+
+func NewAnonymousMessage(content *Content) *AnonymousMessage {
+	anonymousMessage := C.self_anonymous_message_init(
+		(*C.self_message_content)(content),
+	)
+
+	runtime.SetFinalizer(anonymousMessage, func(anonymousMessage *C.self_anonymous_message) {
+		C.self_anonymous_message_destroy(
+			anonymousMessage,
+		)
+	})
+
+	return (*AnonymousMessage)(anonymousMessage)
+}
+
+func DecodeAnonymousMessage(data []byte) (*AnonymousMessage, error) {
+	var anonymousMessage *C.self_anonymous_message
+	anonymousMessagePtr := &anonymousMessage
+
+	dataBuf := C.CBytes(data)
+	dataLen := len(data)
+	defer C.free(dataBuf)
+
+	status := C.self_anonymous_message_decode(
+		anonymousMessagePtr,
+		(*C.uint8_t)(dataBuf),
+		C.ulong(dataLen),
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to decode anonymous message")
+	}
+
+	runtime.SetFinalizer(anonymousMessagePtr, func(anonymousMessagePtr **C.self_anonymous_message) {
+		C.self_anonymous_message_destroy(
+			*anonymousMessagePtr,
+		)
+	})
+
+	return (*AnonymousMessage)(*anonymousMessagePtr), nil
+}
+
+// ID returns the id of the messages content
+func (a *AnonymousMessage) ID() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_anonymous_message_id((*C.self_anonymous_message)(a))),
+		20,
+	)
+}
+
+// Content returns the messages content
+func (a *AnonymousMessage) Content() *Content {
+	content := C.self_anonymous_message_message_content((*C.self_anonymous_message)(a))
+
+	runtime.SetFinalizer(content, func(content *C.self_message_content) {
+		C.self_message_content_destroy(
+			content,
+		)
+	})
+
+	return (*Content)(content)
+}
+
+// Content returns the messages content
+func (a *AnonymousMessage) EncodeToQR(encoding QREncoding) ([]byte, error) {
+	var qrCode *C.self_encoded_buffer
+	qrCodePtr := &qrCode
+
+	status := C.self_anonymous_message_encode_as_qr(
+		(*C.self_anonymous_message)(a),
+		qrCodePtr,
+		uint32(encoding),
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to encode QR code")
+	}
+
+	encodedQR := C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(*qrCodePtr)),
+		C.int(C.self_encoded_buffer_len(*qrCodePtr)),
+	)
+
+	C.self_encoded_buffer_destroy(
+		*qrCodePtr,
+	)
+
+	return encodedQR, nil
+}
 
 // ToAddress returns the address the event was addressed to
 func (c *Commit) ToAddress() *signing.PublicKey {
