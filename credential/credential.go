@@ -280,6 +280,32 @@ func (c *VerifiableCredential) Created() time.Time {
 	return time.Unix(int64(created), 0)
 }
 
+// Encode returns a json encoded verifiable credential
+func (c *VerifiableCredential) Encode() ([]byte, error) {
+	var encodedCredentialBuffer *C.self_encoded_buffer
+	encodedCredentialBufferPtr := &encodedCredentialBuffer
+
+	status := C.self_verifiable_credential_encode(
+		(*C.self_verifiable_credential)(c),
+		encodedCredentialBufferPtr,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to encode credential")
+	}
+
+	encodedCredential := C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(*encodedCredentialBufferPtr)),
+		C.int(C.self_encoded_buffer_len(*encodedCredentialBufferPtr)),
+	)
+
+	C.self_encoded_buffer_destroy(
+		*encodedCredentialBufferPtr,
+	)
+
+	return encodedCredential, nil
+}
+
 // Validate validates the contents of the credential and it's signatures
 func (c *VerifiableCredential) Validate() error {
 	status := C.self_verifiable_credential_validate(

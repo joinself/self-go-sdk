@@ -10,6 +10,7 @@ package credential
 import "C"
 import (
 	"runtime"
+	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
@@ -57,4 +58,21 @@ func AddressKey(address *signing.PublicKey) *Address {
 	})
 
 	return a
+}
+
+func (a *Address) String() string {
+	encodedAddressBuffer := C.self_credential_address_encode(
+		(*C.self_credential_address)(a),
+	)
+
+	encodedAddress := C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(encodedAddressBuffer)),
+		C.int(C.self_encoded_buffer_len(encodedAddressBuffer)),
+	)
+
+	C.self_encoded_buffer_destroy(
+		encodedAddressBuffer,
+	)
+
+	return string(encodedAddress)
 }
