@@ -8,6 +8,7 @@ package message
 #include <stdlib.h>
 */
 import "C"
+import "unsafe"
 
 type Content C.self_message_content
 type Type int
@@ -61,4 +62,11 @@ func ContentType(message *Message) Type {
 	default:
 		return TypeUnknown
 	}
+}
+
+func (c *Content) ID() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_message_content_id((*C.self_message_content)(c))),
+		20,
+	)
 }
