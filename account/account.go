@@ -161,7 +161,7 @@ func (a *Account) Configure(cfg *Config) error {
 		storageKeyLen,
 		uint32(cfg.LogLevel),
 		accountCallbacks(),
-		unsafe.Pointer(a.account),
+		unsafe.Pointer(a),
 	)
 
 	if status > 0 {
