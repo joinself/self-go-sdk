@@ -111,10 +111,6 @@ func Init() *Account {
 		account: C.self_account_init(),
 	}
 
-	// pin our account and callback pointers
-	// so we can pass them as user-data to C
-	pin(account)
-
 	runtime.SetFinalizer(account, func(account *Account) {
 		unpin(account)
 
@@ -150,6 +146,10 @@ func (a *Account) Configure(cfg *Config) error {
 		C.free(unsafe.Pointer(storagePathBuf))
 		C.free(unsafe.Pointer(storageKeyBuf))
 	}()
+
+	// pin our account and callback pointers
+	// so we can pass them as user-data to C
+	pin(a)
 
 	status := C.self_account_configure(
 		a.account,
