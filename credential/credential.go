@@ -409,9 +409,9 @@ func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVe
 		C.ulong(index),
 	))
 
-	runtime.SetFinalizer(parameter, func(parameter *signing.PublicKey) {
+	runtime.SetFinalizer(parameter, func(parameter *C.self_credential_verification_parameter) {
 		C.self_credential_verification_parameter_destroy(
-			(*C.self_credential_verification_parameter)(parameter),
+			parameter,
 		)
 	})
 
