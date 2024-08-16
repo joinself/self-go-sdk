@@ -86,19 +86,48 @@ func (p *PublicKey) Type() keypair.KeyType {
 
 // String returns the hex encoded address of a public key
 func (p *PublicKey) String() string {
-	encoded := make([]byte, 66)
+	encodedPtr := C.CBytes(make([]byte, 66))
+	defer C.free(encodedPtr)
 
 	status := C.self_signing_public_key_encode(
 		(*C.self_signing_public_key)(p),
-		(*C.uint8_t)(unsafe.Pointer(&encoded[0])),
-		C.ulong(len(encoded)),
+		(*C.uint8_t)(encodedPtr),
+		66,
 	)
 
 	if status > 0 {
 		panic("invalid key conversion!")
 	}
 
-	return *(*string)(unsafe.Pointer(&encoded))
+	encoded := C.GoBytes(
+		encodedPtr,
+		66,
+	)
+
+	return string(encoded)
+}
+
+// Bytes returns the raw bytes of the address
+func (p *PublicKey) Bytes() []byte {
+	bytesPtr := C.CBytes(make([]byte, 33))
+	defer C.free(bytesPtr)
+
+	status := C.self_signing_public_key_as_bytes(
+		(*C.self_signing_public_key)(p),
+		(*C.uint8_t)(bytesPtr),
+		33,
+	)
+
+	if status > 0 {
+		panic("invalid key conversion!")
+	}
+
+	bytes := C.GoBytes(
+		bytesPtr,
+		33,
+	)
+
+	return bytes
 }
 
 type PublicKeyCollection C.self_collection_signing_public_key
