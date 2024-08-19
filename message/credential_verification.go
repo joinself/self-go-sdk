@@ -50,38 +50,56 @@ func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationR
 
 // Type returns the type of credential that verification is being requested for
 func (c *CredentialVerificationRequest) Type() *credential.CredentialTypeCollection {
-	collection := (*credential.CredentialTypeCollection)(C.self_message_content_credential_verification_request_credential_type(
+	collection := C.self_message_content_credential_verification_request_credential_type(
 		(*C.self_message_content_credential_verification_request)(c),
-	))
+	)
 
-	runtime.SetFinalizer(collection, func(collection *credential.CredentialTypeCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_type) {
 		C.self_collection_credential_type_destroy(
-			(*C.self_collection_credential_type)(collection),
+			collection,
 		)
 	})
 
-	return collection
+	return (*credential.CredentialTypeCollection)(collection)
 }
 
 // Proof returns associated verifiable credential proof to support the verification request
 func (c *CredentialVerificationRequest) Proof() *credential.VerifiableCredentialCollection {
-	return (*credential.VerifiableCredentialCollection)(C.self_message_content_credential_verification_request_proof(
+	collection := C.self_message_content_credential_verification_request_proof(
 		(*C.self_message_content_credential_verification_request)(c),
-	))
+	)
+
+	return (*credential.VerifiableCredentialCollection)(collection)
 }
 
 // Evidence returns associated data to be used as evidence to support the verification request
 func (c *CredentialVerificationRequest) Evidence() *credential.CredentialVerificationEvidenceCollection {
-	return (*credential.CredentialVerificationEvidenceCollection)(C.self_message_content_credential_verification_request_evidence(
+	collection := C.self_message_content_credential_verification_request_evidence(
 		(*C.self_message_content_credential_verification_request)(c),
-	))
+	)
+
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_verification_evidence) {
+		C.self_collection_credential_verification_evidence_destroy(
+			collection,
+		)
+	})
+
+	return (*credential.CredentialVerificationEvidenceCollection)(collection)
 }
 
 // Parameters returns associated data to be used as parameters to support the verification request
 func (c *CredentialVerificationRequest) Parameters() *credential.CredentialVerificationParameterCollection {
-	return (*credential.CredentialVerificationParameterCollection)(C.self_message_content_credential_verification_request_parameters(
+	collection := C.self_message_content_credential_verification_request_parameters(
 		(*C.self_message_content_credential_verification_request)(c),
-	))
+	)
+
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_verification_parameter) {
+		C.self_collection_credential_verification_parameter_destroy(
+			collection,
+		)
+	})
+
+	return (*credential.CredentialVerificationParameterCollection)(collection)
 }
 
 // Type returns the time the request expires at
@@ -93,15 +111,15 @@ func (c *CredentialVerificationRequest) Expires() time.Time {
 
 // NewCredentialVerificationRequest creates a new credential verification request
 func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
-	builder := (*CredentialVerificationRequestBuilder)(C.self_message_content_credential_verification_request_builder_init())
+	builder := C.self_message_content_credential_verification_request_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *CredentialVerificationRequestBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_message_content_credential_verification_request_builder) {
 		C.self_message_content_credential_verification_request_builder_destroy(
-			(*C.self_message_content_credential_verification_request_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*CredentialVerificationRequestBuilder)(builder)
 }
 
 // Type sets the type of credential being requested
@@ -232,22 +250,30 @@ func (c *CredentialVerificationResponse) Status() ResponseStatus {
 
 // Credentials returns verified credentials that have been asserted by the responder
 func (c *CredentialVerificationResponse) Credentials() *credential.VerifiableCredentialCollection {
-	return (*credential.VerifiableCredentialCollection)(C.self_message_content_credential_verification_response_verifiable_credentials(
+	collection := C.self_message_content_credential_verification_response_verifiable_credentials(
 		(*C.self_message_content_credential_verification_response)(c),
-	))
+	)
+
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+		C.self_collection_verifiable_credential_destroy(
+			collection,
+		)
+	})
+
+	return (*credential.VerifiableCredentialCollection)(collection)
 }
 
 // NewCredentialVerificationResponse creates a new credential verification response
 func NewCredentialVerificationResponse() *CredentialVerificationResponseBuilder {
-	builder := (*CredentialVerificationResponseBuilder)(C.self_message_content_credential_verification_response_builder_init())
+	builder := C.self_message_content_credential_verification_response_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *CredentialVerificationResponseBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_message_content_credential_verification_response_builder) {
 		C.self_message_content_credential_verification_response_builder_destroy(
-			(*C.self_message_content_credential_verification_response_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*CredentialVerificationResponseBuilder)(builder)
 }
 
 // ResponseTo sets the request id that is being responded to

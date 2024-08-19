@@ -34,15 +34,15 @@ type OperationBuilder C.self_identity_operation_builder
 
 // NewOperation creates a new operation
 func NewOperation() *OperationBuilder {
-	builder := (*OperationBuilder)(C.self_identity_operation_builder_init())
+	builder := C.self_identity_operation_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *OperationBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_identity_operation_builder) {
 		C.self_identity_operation_builder_destroy(
-			(*C.self_identity_operation_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*OperationBuilder)(builder)
 }
 
 // Identifier sets the identifier of the document to target

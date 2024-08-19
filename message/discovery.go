@@ -69,15 +69,15 @@ func (c *DiscoveryRequest) Expires() time.Time {
 
 // NewDiscoveryRequest creates a new discovery request
 func NewDiscoveryRequest() *DiscoveryRequestBuilder {
-	builder := (*DiscoveryRequestBuilder)(C.self_message_content_discovery_request_builder_init())
+	builder := C.self_message_content_discovery_request_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *DiscoveryRequestBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_message_content_discovery_request_builder) {
 		C.self_message_content_discovery_request_builder_destroy(
-			(*C.self_message_content_discovery_request_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*DiscoveryRequestBuilder)(builder)
 }
 
 // KeyPackage sets the key package that will be embedded in the request
@@ -165,15 +165,15 @@ func (c *DiscoveryResponse) Status() ResponseStatus {
 
 // NewDiscoveryResponse creates a new discovery response
 func NewDiscoveryResponse() *DiscoveryResponseBuilder {
-	builder := (*DiscoveryResponseBuilder)(C.self_message_content_discovery_response_builder_init())
+	builder := C.self_message_content_discovery_response_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *DiscoveryResponseBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_message_content_discovery_response_builder) {
 		C.self_message_content_discovery_response_builder_destroy(
-			(*C.self_message_content_discovery_response_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*DiscoveryResponseBuilder)(builder)
 }
 
 // ResponseTo sets the request id that is being responded to

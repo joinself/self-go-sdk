@@ -49,24 +49,32 @@ func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationR
 
 // Type returns the type of credential that presentation is being requested for
 func (c *CredentialPresentationRequest) Type() *credential.PresentationTypeCollection {
-	collection := (*credential.PresentationTypeCollection)(C.self_message_content_credential_presentation_request_presentation_type(
+	collection := C.self_message_content_credential_presentation_request_presentation_type(
 		(*C.self_message_content_credential_presentation_request)(c),
-	))
+	)
 
-	runtime.SetFinalizer(collection, func(collection *credential.PresentationTypeCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			(*C.self_collection_presentation_type)(collection),
+			collection,
 		)
 	})
 
-	return collection
+	return (*credential.PresentationTypeCollection)(collection)
 }
 
 // Details returns details of the requested credential presentations
 func (c *CredentialPresentationRequest) Details() *credential.CredentialPresentationDetailCollection {
-	return (*credential.CredentialPresentationDetailCollection)(C.self_message_content_credential_presentation_request_details(
+	collection := C.self_message_content_credential_presentation_request_details(
 		(*C.self_message_content_credential_presentation_request)(c),
-	))
+	)
+
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_presentation_detail) {
+		C.self_collection_credential_presentation_detail_destroy(
+			collection,
+		)
+	})
+
+	return (*credential.CredentialPresentationDetailCollection)(collection)
 }
 
 // Type returns the time the request expires at
@@ -189,9 +197,17 @@ func (c *CredentialPresentationResponse) Status() ResponseStatus {
 
 // Credentials returns verified credentials that have been asserted by the responder
 func (c *CredentialPresentationResponse) Credentials() *credential.VerifiableCredentialCollection {
-	return (*credential.VerifiableCredentialCollection)(C.self_message_content_credential_presentation_response_verifiable_presentations(
+	collection := C.self_message_content_credential_presentation_response_verifiable_presentations(
 		(*C.self_message_content_credential_presentation_response)(c),
-	))
+	)
+
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+		C.self_collection_verifiable_credential_destroy(
+			collection,
+		)
+	})
+
+	return (*credential.VerifiableCredentialCollection)(collection)
 }
 
 // NewCredentialPresentationResponse creates a new credential presentation response

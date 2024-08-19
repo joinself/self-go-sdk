@@ -28,15 +28,15 @@ type PresentationTypeCollection C.self_collection_presentation_type
 
 // NewPresentation creates a new presentation builder
 func NewPresentation() *PresentationBuilder {
-	builder := (*PresentationBuilder)(C.self_presentation_builder_init())
+	builder := C.self_presentation_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *PresentationBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_presentation_builder) {
 		C.self_presentation_builder_destroy(
-			(*C.self_presentation_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*PresentationBuilder)(builder)
 }
 
 // PresentationType sets the type of presentation
@@ -92,32 +92,32 @@ func (b *PresentationBuilder) Finish() (*Presentation, error) {
 
 // PresentationType returns the type of presentation
 func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection {
-	collection := (*PresentationTypeCollection)(C.self_verifiable_presentation_presentation_type(
+	collection := C.self_verifiable_presentation_presentation_type(
 		(*C.self_verifiable_presentation)(p),
-	))
+	)
 
-	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			(*C.self_collection_presentation_type)(collection),
+			collection,
 		)
 	})
 
-	return collection
+	return (*PresentationTypeCollection)(collection)
 }
 
 // Holder returns the subject of the credential's holder
 func (p *VerifiablePresentation) Holder() *Address {
-	holder := (*Address)(C.self_verifiable_presentation_holder(
+	holder := C.self_verifiable_presentation_holder(
 		(*C.self_verifiable_presentation)(p),
-	))
+	)
 
-	runtime.SetFinalizer(holder, func(address *Address) {
+	runtime.SetFinalizer(holder, func(address *C.self_credential_address) {
 		C.self_credential_address_destroy(
-			(*C.self_credential_address)(address),
+			address,
 		)
 	})
 
-	return holder
+	return (*Address)(holder)
 }
 
 // Credential returns the verifiable credentials contained in the presentation
@@ -126,15 +126,13 @@ func (p *VerifiablePresentation) Credentials() *VerifiableCredentialCollection {
 		(*C.self_verifiable_presentation)(p),
 	)
 
-	c := (*VerifiableCredentialCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *VerifiableCredentialCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			(*C.self_collection_verifiable_credential)(collection),
+			collection,
 		)
 	})
 
-	return c
+	return (*VerifiableCredentialCollection)(collection)
 }
 
 // Validate validates the contents of the presentation and it's signatures
@@ -151,15 +149,15 @@ func (p *VerifiablePresentation) Validate() error {
 }
 
 func NewPresentationTypeCollection() *PresentationTypeCollection {
-	collection := (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
+	collection := C.self_collection_presentation_type_init()
 
-	runtime.SetFinalizer(collection, func(collection *PresentationTypeCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			(*C.self_collection_presentation_type)(collection),
+			collection,
 		)
 	})
 
-	return collection
+	return (*PresentationTypeCollection)(collection)
 }
 
 func newPresentationTypeCollection() *PresentationTypeCollection {

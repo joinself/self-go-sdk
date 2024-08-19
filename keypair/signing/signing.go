@@ -133,15 +133,15 @@ func (p *PublicKey) Bytes() []byte {
 type PublicKeyCollection C.self_collection_signing_public_key
 
 func NewPublicKeyCollection() *PublicKeyCollection {
-	collection := (*PublicKeyCollection)(C.self_collection_signing_public_key_init())
+	collection := C.self_collection_signing_public_key_init()
 
-	runtime.SetFinalizer(collection, func(collection *PublicKeyCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
 		C.self_collection_signing_public_key_destroy(
-			(*C.self_collection_signing_public_key)(collection),
+			collection,
 		)
 	})
 
-	return collection
+	return (*PublicKeyCollection)(collection)
 }
 
 func (c *PublicKeyCollection) Length() int {
@@ -151,16 +151,16 @@ func (c *PublicKeyCollection) Length() int {
 }
 
 func (c *PublicKeyCollection) Get(index int) *PublicKey {
-	publicKey := (*PublicKey)(C.self_collection_signing_public_key_at(
+	publicKey := C.self_collection_signing_public_key_at(
 		(*C.self_collection_signing_public_key)(c),
 		C.ulong(index),
-	))
+	)
 
-	runtime.SetFinalizer(publicKey, func(publicKey *PublicKey) {
+	runtime.SetFinalizer(publicKey, func(publicKey *C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			(*C.self_signing_public_key)(publicKey),
+			publicKey,
 		)
 	})
 
-	return publicKey
+	return (*PublicKey)(publicKey)
 }

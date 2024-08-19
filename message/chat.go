@@ -49,15 +49,15 @@ func (c *Chat) Message() string {
 
 // NewChat constructs a new chat message
 func NewChat() *ChatBuilder {
-	builder := (*ChatBuilder)(C.self_message_content_chat_builder_init())
+	builder := C.self_message_content_chat_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *ChatBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_message_content_chat_builder) {
 		C.self_message_content_chat_builder_destroy(
-			(*C.self_message_content_chat_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*ChatBuilder)(builder)
 }
 
 // Message sets the message on the chat message

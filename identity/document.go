@@ -22,15 +22,15 @@ type Document C.self_identity_document
 
 // NewDocument creates a new identity document
 func NewDocument() *Document {
-	document := (*Document)(C.self_identity_document_init())
+	document := C.self_identity_document_init()
 
-	runtime.SetFinalizer(document, func(document *Document) {
+	runtime.SetFinalizer(document, func(document *C.self_identity_document) {
 		C.self_identity_document_destroy(
-			(*C.self_identity_document)(document),
+			document,
 		)
 	})
 
-	return document
+	return (*Document)(document)
 }
 
 // HasRolesAt returns true if a key had a given set of roles at a time
@@ -77,15 +77,15 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 
 // Create creates a new operation to update the document
 func (d *Document) Create() *OperationBuilder {
-	builder := (*OperationBuilder)(C.self_identity_document_create(
+	builder := C.self_identity_document_create(
 		(*C.self_identity_document)(d),
-	))
+	)
 
-	runtime.SetFinalizer(builder, func(builder *OperationBuilder) {
+	runtime.SetFinalizer(builder, func(builder *C.self_identity_operation_builder) {
 		C.self_identity_operation_builder_destroy(
-			(*C.self_identity_operation_builder)(builder),
+			builder,
 		)
 	})
 
-	return builder
+	return (*OperationBuilder)(builder)
 }

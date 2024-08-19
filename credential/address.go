@@ -18,46 +18,46 @@ import (
 type Address = C.self_credential_address
 
 func AddressAure(address *signing.PublicKey) *Address {
-	a := (*Address)(C.self_credential_address_aure(
+	a := C.self_credential_address_aure(
 		(*C.self_signing_public_key)(address),
-	))
+	)
 
-	runtime.SetFinalizer(a, func(a *Address) {
+	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
 		C.self_credential_address_destroy(
-			(*C.self_credential_address)(a),
+			a,
 		)
 	})
 
-	return a
+	return (*Address)(a)
 }
 
 func AddressAureWithKey(address, key *signing.PublicKey) *Address {
-	a := (*Address)(C.self_credential_address_aure_with_key(
+	a := C.self_credential_address_aure_with_key(
 		(*C.self_signing_public_key)(address),
 		(*C.self_signing_public_key)(key),
-	))
+	)
 
-	runtime.SetFinalizer(a, func(a *Address) {
+	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
 		C.self_credential_address_destroy(
-			(*C.self_credential_address)(a),
+			a,
 		)
 	})
 
-	return a
+	return (*Address)(a)
 }
 
 func AddressKey(address *signing.PublicKey) *Address {
-	a := (*Address)(C.self_credential_address_key(
+	a := C.self_credential_address_key(
 		(*C.self_signing_public_key)(address),
-	))
+	)
 
-	runtime.SetFinalizer(a, func(a *Address) {
+	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
 		C.self_credential_address_destroy(
-			(*C.self_credential_address)(a),
+			a,
 		)
 	})
 
-	return a
+	return (*Address)(a)
 }
 
 func (a *Address) String() string {

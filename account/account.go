@@ -233,15 +233,13 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 		return nil, errors.New("failed to create keypair")
 	}
 
-	c := (*signing.PublicKeyCollection)(collection)
-
-	runtime.SetFinalizer(c, func(collection *signing.PublicKeyCollection) {
+	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
 		C.self_collection_signing_public_key_destroy(
-			(*C.self_collection_signing_public_key)(collection),
+			collection,
 		)
 	})
 
-	return c, nil
+	return (*signing.PublicKeyCollection)(collection), nil
 }
 
 // IdentityList lists identities associated with or owned by the account
