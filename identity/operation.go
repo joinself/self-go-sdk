@@ -36,9 +36,9 @@ type OperationBuilder C.self_identity_operation_builder
 func NewOperation() *OperationBuilder {
 	builder := C.self_identity_operation_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_identity_operation_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_identity_operation_builder) {
 		C.self_identity_operation_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 

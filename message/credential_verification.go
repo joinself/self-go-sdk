@@ -54,9 +54,9 @@ func (c *CredentialVerificationRequest) Type() *credential.CredentialTypeCollect
 		(*C.self_message_content_credential_verification_request)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_type) {
 		C.self_collection_credential_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -78,9 +78,9 @@ func (c *CredentialVerificationRequest) Evidence() *credential.CredentialVerific
 		(*C.self_message_content_credential_verification_request)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_verification_evidence) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_evidence) {
 		C.self_collection_credential_verification_evidence_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -93,9 +93,9 @@ func (c *CredentialVerificationRequest) Parameters() *credential.CredentialVerif
 		(*C.self_message_content_credential_verification_request)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_verification_parameter) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_parameter) {
 		C.self_collection_credential_verification_parameter_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -113,9 +113,9 @@ func (c *CredentialVerificationRequest) Expires() time.Time {
 func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
 	builder := C.self_message_content_credential_verification_request_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_message_content_credential_verification_request_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_credential_verification_request_builder) {
 		C.self_message_content_credential_verification_request_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 
@@ -254,9 +254,9 @@ func (c *CredentialVerificationResponse) Credentials() *credential.VerifiableCre
 		(*C.self_message_content_credential_verification_response)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -267,9 +267,9 @@ func (c *CredentialVerificationResponse) Credentials() *credential.VerifiableCre
 func NewCredentialVerificationResponse() *CredentialVerificationResponseBuilder {
 	builder := C.self_message_content_credential_verification_response_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_message_content_credential_verification_response_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_credential_verification_response_builder) {
 		C.self_message_content_credential_verification_response_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 

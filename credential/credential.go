@@ -42,9 +42,9 @@ type CredentialTypeCollection C.self_collection_credential_type
 func NewCredential() *CredentialBuilder {
 	builder := C.self_credential_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_credential_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_credential_builder) {
 		C.self_credential_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 
@@ -198,9 +198,9 @@ func (c *VerifiableCredential) CredentialType() *CredentialTypeCollection {
 		(*C.self_verifiable_credential)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_type) {
 		C.self_collection_credential_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -213,9 +213,9 @@ func (c *VerifiableCredential) CredentialSubject() *Address {
 		(*C.self_verifiable_credential)(c),
 	)
 
-	runtime.SetFinalizer(subject, func(address *C.self_credential_address) {
+	runtime.SetFinalizer(&subject, func(address **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -253,9 +253,9 @@ func (c *VerifiableCredential) Issuer() *Address {
 		(*C.self_verifiable_credential)(c),
 	)
 
-	runtime.SetFinalizer(issuer, func(address *C.self_credential_address) {
+	runtime.SetFinalizer(&issuer, func(address **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -322,9 +322,9 @@ func (c *VerifiableCredential) Validate() error {
 func NewVerifiableCredentialCollection() *VerifiableCredentialCollection {
 	collection := C.self_collection_verifiable_credential_init()
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -343,9 +343,9 @@ func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
 		C.ulong(index),
 	)
 
-	runtime.SetFinalizer(credential, func(credential *C.self_verifiable_credential) {
+	runtime.SetFinalizer(&credential, func(credential **C.self_verifiable_credential) {
 		C.self_verifiable_credential_destroy(
-			credential,
+			*credential,
 		)
 	})
 
@@ -355,9 +355,9 @@ func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
 func NewCredentialVerificationEvidenceCollection() *CredentialVerificationEvidenceCollection {
 	collection := C.self_collection_credential_verification_evidence_init()
 
-	runtime.SetFinalizer(collection, func(collection *CredentialVerificationEvidenceCollection) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_evidence) {
 		C.self_collection_credential_verification_evidence_destroy(
-			(*C.self_collection_credential_verification_evidence)(collection),
+			*collection,
 		)
 	})
 
@@ -376,9 +376,9 @@ func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVer
 		C.ulong(index),
 	)
 
-	runtime.SetFinalizer(evidence, func(evidence *C.self_credential_verification_evidence) {
+	runtime.SetFinalizer(&evidence, func(evidence **C.self_credential_verification_evidence) {
 		C.self_credential_verification_evidence_destroy(
-			evidence,
+			*evidence,
 		)
 	})
 
@@ -388,9 +388,9 @@ func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVer
 func NewCredentialVerificationParameterCollection() *CredentialVerificationParameterCollection {
 	collection := C.self_collection_credential_verification_parameter_init()
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_verification_parameter) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_parameter) {
 		C.self_collection_credential_verification_parameter_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -409,9 +409,9 @@ func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVe
 		C.ulong(index),
 	)
 
-	runtime.SetFinalizer(parameter, func(parameter *C.self_credential_verification_parameter) {
+	runtime.SetFinalizer(&parameter, func(parameter **C.self_credential_verification_parameter) {
 		C.self_credential_verification_parameter_destroy(
-			parameter,
+			*parameter,
 		)
 	})
 
@@ -421,9 +421,9 @@ func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVe
 func NewCredentialTypeCollection() *CredentialTypeCollection {
 	collection := C.self_collection_credential_type_init()
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_type) {
 		C.self_collection_credential_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -475,9 +475,9 @@ func (c *CredentialVerificationEvidence) Object() *object.Object {
 		(*C.self_credential_verification_evidence)(c),
 	)
 
-	runtime.SetFinalizer(obj, func(obj *C.self_object) {
+	runtime.SetFinalizer(&obj, func(obj **C.self_object) {
 		C.self_object_destroy(
-			obj,
+			*obj,
 		)
 	})
 

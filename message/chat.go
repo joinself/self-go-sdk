@@ -51,9 +51,9 @@ func (c *Chat) Message() string {
 func NewChat() *ChatBuilder {
 	builder := C.self_message_content_chat_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_message_content_chat_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_chat_builder) {
 		C.self_message_content_chat_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 

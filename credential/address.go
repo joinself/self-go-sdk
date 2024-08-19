@@ -22,9 +22,9 @@ func AddressAure(address *signing.PublicKey) *Address {
 		(*C.self_signing_public_key)(address),
 	)
 
-	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
+	runtime.SetFinalizer(&a, func(a **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			a,
+			*a,
 		)
 	})
 
@@ -37,9 +37,9 @@ func AddressAureWithKey(address, key *signing.PublicKey) *Address {
 		(*C.self_signing_public_key)(key),
 	)
 
-	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
+	runtime.SetFinalizer(&a, func(a **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			a,
+			*a,
 		)
 	})
 
@@ -51,9 +51,9 @@ func AddressKey(address *signing.PublicKey) *Address {
 		(*C.self_signing_public_key)(address),
 	)
 
-	runtime.SetFinalizer(a, func(a *C.self_credential_address) {
+	runtime.SetFinalizer(&a, func(a **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			a,
+			*a,
 		)
 	})
 

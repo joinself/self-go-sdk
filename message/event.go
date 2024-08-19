@@ -36,9 +36,9 @@ func NewAnonymousMessage(content *Content) *AnonymousMessage {
 		(*C.self_message_content)(content),
 	)
 
-	runtime.SetFinalizer(anonymousMessage, func(anonymousMessage *C.self_anonymous_message) {
+	runtime.SetFinalizer(&anonymousMessage, func(anonymousMessage **C.self_anonymous_message) {
 		C.self_anonymous_message_destroy(
-			anonymousMessage,
+			*anonymousMessage,
 		)
 	})
 
@@ -84,9 +84,9 @@ func (a *AnonymousMessage) ID() []byte {
 func (a *AnonymousMessage) Content() *Content {
 	content := C.self_anonymous_message_message_content((*C.self_anonymous_message)(a))
 
-	runtime.SetFinalizer(content, func(content *C.self_message_content) {
+	runtime.SetFinalizer(&content, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			content,
+			*content,
 		)
 	})
 
@@ -126,9 +126,9 @@ func (c *Commit) ToAddress() *signing.PublicKey {
 		(*C.self_commit)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -141,9 +141,9 @@ func (c *Commit) FromAddress() *signing.PublicKey {
 		(*C.self_commit)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -170,9 +170,9 @@ func (c *KeyPackage) ToAddress() *signing.PublicKey {
 		(*C.self_key_package)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -185,9 +185,9 @@ func (c *KeyPackage) FromAddress() *signing.PublicKey {
 		(*C.self_key_package)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -220,9 +220,9 @@ func (m *Message) ID() []byte {
 func (m *Message) FromAddress() *signing.PublicKey {
 	address := C.self_message_from_address((*C.self_message)(m))
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -233,9 +233,9 @@ func (m *Message) FromAddress() *signing.PublicKey {
 func (m *Message) ToAddress() *signing.PublicKey {
 	address := C.self_message_to_address((*C.self_message)(m))
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -246,9 +246,9 @@ func (m *Message) ToAddress() *signing.PublicKey {
 func (m *Message) Content() *Content {
 	content := C.self_message_message_content((*C.self_message)(m))
 
-	runtime.SetFinalizer(content, func(content *C.self_message_content) {
+	runtime.SetFinalizer(&content, func(content **C.self_message_content) {
 		C.self_message_content_destroy(
-			content,
+			*content,
 		)
 	})
 
@@ -261,9 +261,9 @@ func (c *Proposal) ToAddress() *signing.PublicKey {
 		(*C.self_proposal)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -276,9 +276,9 @@ func (c *Proposal) FromAddress() *signing.PublicKey {
 		(*C.self_proposal)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -305,9 +305,9 @@ func (c *Welcome) ToAddress() *signing.PublicKey {
 		(*C.self_welcome)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -320,9 +320,9 @@ func (c *Welcome) FromAddress() *signing.PublicKey {
 		(*C.self_welcome)(c),
 	)
 
-	runtime.SetFinalizer(address, func(address *C.self_signing_public_key) {
+	runtime.SetFinalizer(&address, func(address **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			address,
+			*address,
 		)
 	})
 

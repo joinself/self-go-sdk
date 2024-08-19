@@ -51,9 +51,9 @@ func (c *DiscoveryRequest) KeyPackage() *KeyPackage {
 		(*C.self_message_content_discovery_request)(c),
 	)
 
-	runtime.SetFinalizer(keyPackage, func(keyPackage *C.self_key_package) {
+	runtime.SetFinalizer(&keyPackage, func(keyPackage **C.self_key_package) {
 		C.self_key_package_destroy(
-			keyPackage,
+			*keyPackage,
 		)
 	})
 
@@ -71,9 +71,9 @@ func (c *DiscoveryRequest) Expires() time.Time {
 func NewDiscoveryRequest() *DiscoveryRequestBuilder {
 	builder := C.self_message_content_discovery_request_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_message_content_discovery_request_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_discovery_request_builder) {
 		C.self_message_content_discovery_request_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 
@@ -167,9 +167,9 @@ func (c *DiscoveryResponse) Status() ResponseStatus {
 func NewDiscoveryResponse() *DiscoveryResponseBuilder {
 	builder := C.self_message_content_discovery_response_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_message_content_discovery_response_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_discovery_response_builder) {
 		C.self_message_content_discovery_response_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 

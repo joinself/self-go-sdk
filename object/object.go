@@ -69,7 +69,7 @@ func Unencrypted(mime string, data []byte) (*Object, error) {
 		return nil, errors.New("object creation failed")
 	}
 
-	runtime.SetFinalizer(object, func(object **C.self_object) {
+	runtime.SetFinalizer(objectPtr, func(object **C.self_object) {
 		C.self_object_destroy(
 			*object,
 		)

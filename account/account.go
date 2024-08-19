@@ -233,9 +233,9 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 		return nil, errors.New("failed to create keypair")
 	}
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_signing_public_key) {
 		C.self_collection_signing_public_key_destroy(
-			collection,
+			*collection,
 		)
 	})
 

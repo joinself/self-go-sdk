@@ -24,9 +24,9 @@ type Document C.self_identity_document
 func NewDocument() *Document {
 	document := C.self_identity_document_init()
 
-	runtime.SetFinalizer(document, func(document *C.self_identity_document) {
+	runtime.SetFinalizer(&document, func(document **C.self_identity_document) {
 		C.self_identity_document_destroy(
-			document,
+			*document,
 		)
 	})
 
@@ -81,9 +81,9 @@ func (d *Document) Create() *OperationBuilder {
 		(*C.self_identity_document)(d),
 	)
 
-	runtime.SetFinalizer(builder, func(builder *C.self_identity_operation_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_identity_operation_builder) {
 		C.self_identity_operation_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 

@@ -135,9 +135,9 @@ type PublicKeyCollection C.self_collection_signing_public_key
 func NewPublicKeyCollection() *PublicKeyCollection {
 	collection := C.self_collection_signing_public_key_init()
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_signing_public_key) {
+	runtime.SetFinalizer(&collection, func(collectionPtr **C.self_collection_signing_public_key) {
 		C.self_collection_signing_public_key_destroy(
-			collection,
+			*collectionPtr,
 		)
 	})
 
@@ -156,9 +156,9 @@ func (c *PublicKeyCollection) Get(index int) *PublicKey {
 		C.ulong(index),
 	)
 
-	runtime.SetFinalizer(publicKey, func(publicKey *C.self_signing_public_key) {
+	runtime.SetFinalizer(&publicKey, func(publicKey **C.self_signing_public_key) {
 		C.self_signing_public_key_destroy(
-			publicKey,
+			*publicKey,
 		)
 	})
 

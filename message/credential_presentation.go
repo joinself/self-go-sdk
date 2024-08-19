@@ -53,9 +53,9 @@ func (c *CredentialPresentationRequest) Type() *credential.PresentationTypeColle
 		(*C.self_message_content_credential_presentation_request)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -68,9 +68,9 @@ func (c *CredentialPresentationRequest) Details() *credential.CredentialPresenta
 		(*C.self_message_content_credential_presentation_request)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_credential_presentation_detail) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_presentation_detail) {
 		C.self_collection_credential_presentation_detail_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -86,15 +86,15 @@ func (c *CredentialPresentationRequest) Expires() time.Time {
 
 // NewCredentialPresentationRequest creates a new credential presentation request
 func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
-	builder := (*CredentialPresentationRequestBuilder)(C.self_message_content_credential_presentation_request_builder_init())
+	builder := C.self_message_content_credential_presentation_request_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *CredentialPresentationRequestBuilder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_credential_presentation_request_builder) {
 		C.self_message_content_credential_presentation_request_builder_destroy(
-			(*C.self_message_content_credential_presentation_request_builder)(builder),
+			*builder,
 		)
 	})
 
-	return builder
+	return (*CredentialPresentationRequestBuilder)(builder)
 }
 
 // Type sets the type of presentation being requested
@@ -201,9 +201,9 @@ func (c *CredentialPresentationResponse) Credentials() *credential.VerifiableCre
 		(*C.self_message_content_credential_presentation_response)(c),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -212,15 +212,15 @@ func (c *CredentialPresentationResponse) Credentials() *credential.VerifiableCre
 
 // NewCredentialPresentationResponse creates a new credential presentation response
 func NewCredentialPresentationResponse() *CredentialPresentationResponseBuilder {
-	builder := (*CredentialPresentationResponseBuilder)(C.self_message_content_credential_presentation_response_builder_init())
+	builder := C.self_message_content_credential_presentation_response_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *CredentialPresentationResponseBuilder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_message_content_credential_presentation_response_builder) {
 		C.self_message_content_credential_presentation_response_builder_destroy(
-			(*C.self_message_content_credential_presentation_response_builder)(builder),
+			*builder,
 		)
 	})
 
-	return builder
+	return (*CredentialPresentationResponseBuilder)(builder)
 }
 
 // ResponseTo sets the request id that is being responded to

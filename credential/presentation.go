@@ -30,9 +30,9 @@ type PresentationTypeCollection C.self_collection_presentation_type
 func NewPresentation() *PresentationBuilder {
 	builder := C.self_presentation_builder_init()
 
-	runtime.SetFinalizer(builder, func(builder *C.self_presentation_builder) {
+	runtime.SetFinalizer(&builder, func(builder **C.self_presentation_builder) {
 		C.self_presentation_builder_destroy(
-			builder,
+			*builder,
 		)
 	})
 
@@ -96,9 +96,9 @@ func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection 
 		(*C.self_verifiable_presentation)(p),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -111,9 +111,9 @@ func (p *VerifiablePresentation) Holder() *Address {
 		(*C.self_verifiable_presentation)(p),
 	)
 
-	runtime.SetFinalizer(holder, func(address *C.self_credential_address) {
+	runtime.SetFinalizer(&holder, func(address **C.self_credential_address) {
 		C.self_credential_address_destroy(
-			address,
+			*address,
 		)
 	})
 
@@ -126,9 +126,9 @@ func (p *VerifiablePresentation) Credentials() *VerifiableCredentialCollection {
 		(*C.self_verifiable_presentation)(p),
 	)
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_verifiable_credential) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
 		C.self_collection_verifiable_credential_destroy(
-			collection,
+			*collection,
 		)
 	})
 
@@ -151,9 +151,9 @@ func (p *VerifiablePresentation) Validate() error {
 func NewPresentationTypeCollection() *PresentationTypeCollection {
 	collection := C.self_collection_presentation_type_init()
 
-	runtime.SetFinalizer(collection, func(collection *C.self_collection_presentation_type) {
+	runtime.SetFinalizer(&collection, func(collection **C.self_collection_presentation_type) {
 		C.self_collection_presentation_type_destroy(
-			collection,
+			*collection,
 		)
 	})
 
