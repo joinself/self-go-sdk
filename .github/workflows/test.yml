@@ -5,19 +5,29 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux-docker]
     container:
-      image: golang:1.18.2-buster
+      image: golang:1.22.1-bookworm
     steps:
       - name: Setup job
-        uses: joinself/github-actions-public/setup-job@main
+        uses: joinself/github-actions/setup-job@main
+        with:
+          gh-token: ${{ secrets.GH_TOKEN }}
       - name: Test
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
-          curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.4.0/self-omemo_0.4.0_amd64.deb
-          dpkg -i /tmp/self-omemo.deb
-          go test -v ./...
+
+          curl -L -H "Authorization: token ${GH_TOKEN}" -H 'Accept: application/octet-stream' --output self-sdk_0.1.0_amd64.deb https://api.github.com/repos/joinself/self-c-sdk/releases/assets/187170783
+          apt install -y ./self-sdk_0.2.0_amd64.deb
+
+          curl https://gotest-release.s3.amazonaws.com/gotest_linux > /usr/local/bin/gotest
+          chmod +x /usr/local/bin/gotest
+
+          cd account
+          gotest -v
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main

@@ -17,16 +17,21 @@ import (
 )
 
 func testAccount(t testing.TB) (*account.Account, chan *message.Message, chan *message.Welcome) {
-	return testAccountWithPath(t, t.TempDir())
+	return testAccountWithPath(t, ":memory:")
 }
 
 func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *message.Message, chan *message.Welcome) {
 	incomingMsg := make(chan *message.Message, 1024)
 	incomingWel := make(chan *message.Welcome, 1024)
 
+	if path != ":memory:" {
+		path = path + "/self.db"
+	}
+
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
-		StoragePath: path + "/self.db",
+		StoragePath: path,
+		Environment: account.TargetSandbox,
 		LogLevel:    account.LogWarn,
 		Callbacks: account.Callbacks{
 			OnConnect: func() {
