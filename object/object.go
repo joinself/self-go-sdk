@@ -22,7 +22,7 @@ func Encrypted(mime string, data []byte) (*Object, error) {
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
-	dataLen := C.ulong(len(data))
+	dataLen := C.size_t(len(data))
 
 	status := C.self_object_create_encrypted(
 		objectPtr,
@@ -53,7 +53,7 @@ func Unencrypted(mime string, data []byte) (*Object, error) {
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
-	dataLen := C.ulong(len(data))
+	dataLen := C.size_t(len(data))
 
 	status := C.self_object_create_unencrypted(
 		objectPtr,

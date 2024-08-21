@@ -105,7 +105,7 @@ func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{
 	C.self_credential_builder_credential_subject_json(
 		(*C.self_credential_builder)(b),
 		(*C.uint8_t)(claimBuffer),
-		(C.ulong)(claimLength),
+		(C.size_t)(claimLength),
 	)
 
 	return b
@@ -124,7 +124,7 @@ func (b *CredentialBuilder) Issuer(issuerAddress *Address) *CredentialBuilder {
 func (b *CredentialBuilder) ValidFrom(timestamp time.Time) *CredentialBuilder {
 	C.self_credential_builder_valid_from(
 		(*C.self_credential_builder)(b),
-		C.long(timestamp.Unix()),
+		C.int64_t(timestamp.Unix()),
 	)
 	return b
 }
@@ -134,7 +134,7 @@ func (b *CredentialBuilder) SignWith(signer *signing.PublicKey, issuedAt time.Ti
 	C.self_credential_builder_sign_with(
 		(*C.self_credential_builder)(b),
 		(*C.self_signing_public_key)(signer),
-		C.long(issuedAt.Unix()),
+		C.int64_t(issuedAt.Unix()),
 	)
 	return b
 }
@@ -176,7 +176,7 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 	status := C.self_verifiable_credential_decode(
 		verifiableCredentialPtr,
 		(*C.uint8_t)(encodedBuf),
-		(C.ulong)(encodedLen),
+		(C.size_t)(encodedLen),
 	)
 
 	if status > 0 {
@@ -340,7 +340,7 @@ func (c *VerifiableCredentialCollection) Length() int {
 func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
 	credential := C.self_collection_verifiable_credential_at(
 		(*C.self_collection_verifiable_credential)(c),
-		C.ulong(index),
+		C.size_t(index),
 	)
 
 	runtime.SetFinalizer(&credential, func(credential **C.self_verifiable_credential) {
@@ -373,7 +373,7 @@ func (c *CredentialVerificationEvidenceCollection) Length() int {
 func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVerificationEvidence {
 	evidence := C.self_collection_credential_verification_evidence_at(
 		(*C.self_collection_credential_verification_evidence)(c),
-		C.ulong(index),
+		C.size_t(index),
 	)
 
 	runtime.SetFinalizer(&evidence, func(evidence **C.self_credential_verification_evidence) {
@@ -406,7 +406,7 @@ func (c *CredentialVerificationParameterCollection) Length() int {
 func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVerificationParameter {
 	parameter := C.self_collection_credential_verification_parameter_at(
 		(*C.self_collection_credential_verification_parameter)(c),
-		C.ulong(index),
+		C.size_t(index),
 	)
 
 	runtime.SetFinalizer(&parameter, func(parameter **C.self_credential_verification_parameter) {
@@ -443,7 +443,7 @@ func (c *CredentialTypeCollection) Length() int {
 func (c *CredentialTypeCollection) Get(index int) string {
 	return C.GoString(C.self_collection_credential_type_at(
 		(*C.self_collection_credential_type)(c),
-		C.ulong(index),
+		C.size_t(index),
 	))
 }
 

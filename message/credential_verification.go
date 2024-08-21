@@ -165,7 +165,7 @@ func (b *CredentialVerificationRequestBuilder) Parameter(parameterType string, v
 		(*C.self_message_content_credential_verification_request_builder)(b),
 		parameterTypeC,
 		(*C.uint8_t)(valueBuf),
-		(C.ulong)(valueLen),
+		(C.size_t)(valueLen),
 	)
 
 	C.free(unsafe.Pointer(parameterTypeC))
@@ -178,7 +178,7 @@ func (b *CredentialVerificationRequestBuilder) Parameter(parameterType string, v
 func (b *CredentialVerificationRequestBuilder) Expires(expires time.Time) *CredentialVerificationRequestBuilder {
 	C.self_message_content_credential_verification_request_builder_expires(
 		(*C.self_message_content_credential_verification_request_builder)(b),
-		C.long(expires.Unix()),
+		C.int64_t(expires.Unix()),
 	)
 	return b
 }

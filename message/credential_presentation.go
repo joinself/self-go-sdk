@@ -125,7 +125,7 @@ func (b *CredentialPresentationRequestBuilder) Details(credentialType *credentia
 func (b *CredentialPresentationRequestBuilder) Expires(expires time.Time) *CredentialPresentationRequestBuilder {
 	C.self_message_content_credential_presentation_request_builder_expires(
 		(*C.self_message_content_credential_presentation_request_builder)(b),
-		C.long(expires.Unix()),
+		C.int64_t(expires.Unix()),
 	)
 	return b
 }

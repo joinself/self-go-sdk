@@ -153,7 +153,7 @@ func (c *PublicKeyCollection) Length() int {
 func (c *PublicKeyCollection) Get(index int) *PublicKey {
 	publicKey := C.self_collection_signing_public_key_at(
 		(*C.self_collection_signing_public_key)(c),
-		C.ulong(index),
+		C.size_t(index),
 	)
 
 	runtime.SetFinalizer(&publicKey, func(publicKey **C.self_signing_public_key) {

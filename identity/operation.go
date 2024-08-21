@@ -59,7 +59,7 @@ func (b *OperationBuilder) Identifier(address *signing.PublicKey) *OperationBuil
 func (b *OperationBuilder) Sequence(sequence uint32) *OperationBuilder {
 	C.self_identity_operation_builder_sequence(
 		(*C.self_identity_operation_builder)(b),
-		C.uint(sequence),
+		C.uint32_t(sequence),
 	)
 
 	return b
@@ -69,7 +69,7 @@ func (b *OperationBuilder) Sequence(sequence uint32) *OperationBuilder {
 func (b *OperationBuilder) Timestamp(timestamp time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_timestamp(
 		(*C.self_identity_operation_builder)(b),
-		C.long(timestamp.Unix()),
+		C.int64_t(timestamp.Unix()),
 	)
 
 	return b
@@ -83,7 +83,7 @@ func (b *OperationBuilder) Previous(previousHash []byte) *OperationBuilder {
 	C.self_identity_operation_builder_previous(
 		(*C.self_identity_operation_builder)(b),
 		(*C.uint8_t)(previousBuf),
-		C.ulong(previousLen),
+		C.size_t(previousLen),
 	)
 
 	C.free(previousBuf)
@@ -98,13 +98,13 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 		C.self_identity_operation_builder_signing_grant_embedded(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_signing_public_key)(pk),
-			C.ulong(roles),
+			C.uint64_t(roles),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_grant_embedded(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_exchange_public_key)(pk),
-			C.ulong(roles),
+			C.uint64_t(roles),
 		)
 	}
 
@@ -115,10 +115,10 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 func (b *OperationBuilder) GrantReferenced(method uint16, controller *signing.PublicKey, key *signing.PublicKey, roles Role) *OperationBuilder {
 	C.self_identity_operation_builder_signing_grant_referenced(
 		(*C.self_identity_operation_builder)(b),
-		C.ushort(method),
+		C.uint16_t(method),
 		(*C.self_signing_public_key)(controller),
 		(*C.self_signing_public_key)(key),
-		C.ulong(roles),
+		C.uint64_t(roles),
 	)
 
 	return b
@@ -131,13 +131,13 @@ func (b *OperationBuilder) Modify(key keypair.PublicKey, roles Role) *OperationB
 		C.self_identity_operation_builder_signing_modify(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_signing_public_key)(pk),
-			C.ulong(roles),
+			C.uint64_t(roles),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_modify(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_exchange_public_key)(pk),
-			C.ulong(roles),
+			C.uint64_t(roles),
 		)
 	}
 
@@ -151,13 +151,13 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 		C.self_identity_operation_builder_signing_revoke(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_signing_public_key)(pk),
-			C.long(effectiveFrom.Unix()),
+			C.int64_t(effectiveFrom.Unix()),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_revoke(
 			(*C.self_identity_operation_builder)(b),
 			(*C.self_exchange_public_key)(pk),
-			C.long(effectiveFrom.Unix()),
+			C.int64_t(effectiveFrom.Unix()),
 		)
 	}
 
@@ -168,7 +168,7 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 func (b *OperationBuilder) Recover(effectiveFrom time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_recover(
 		(*C.self_identity_operation_builder)(b),
-		C.long(effectiveFrom.Unix()),
+		C.int64_t(effectiveFrom.Unix()),
 	)
 
 	return b
@@ -178,7 +178,7 @@ func (b *OperationBuilder) Recover(effectiveFrom time.Time) *OperationBuilder {
 func (b *OperationBuilder) Deactivate(effectiveFrom time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_deactivate(
 		(*C.self_identity_operation_builder)(b),
-		C.long(effectiveFrom.Unix()),
+		C.int64_t(effectiveFrom.Unix()),
 	)
 
 	return b

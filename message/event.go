@@ -56,7 +56,7 @@ func DecodeAnonymousMessage(data []byte) (*AnonymousMessage, error) {
 	status := C.self_anonymous_message_decode(
 		anonymousMessagePtr,
 		(*C.uint8_t)(dataBuf),
-		C.ulong(dataLen),
+		C.size_t(dataLen),
 	)
 
 	if status > 0 {

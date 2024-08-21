@@ -93,7 +93,7 @@ func (b *DiscoveryRequestBuilder) KeyPackage(keyPackage *KeyPackage) *DiscoveryR
 func (b *DiscoveryRequestBuilder) Expires(expires time.Time) *DiscoveryRequestBuilder {
 	C.self_message_content_discovery_request_builder_expires(
 		(*C.self_message_content_discovery_request_builder)(b),
-		C.long(expires.Unix()),
+		C.int64_t(expires.Unix()),
 	)
 	return b
 }

@@ -530,7 +530,7 @@ func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, exp
 	status := C.self_account_connection_negotiate_out_of_band(
 		a.account,
 		(*C.self_signing_public_key)(asAddress),
-		C.long(expires.Unix()),
+		C.int64_t(expires.Unix()),
 		keyPackagePtr,
 	)
 

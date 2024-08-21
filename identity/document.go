@@ -40,15 +40,15 @@ func (d *Document) HasRolesAt(key keypair.PublicKey, roles Role, at time.Time) b
 		return bool(C.self_identity_document_signing_key_roles_at(
 			(*C.self_identity_document)(d),
 			(*C.self_signing_public_key)(pk),
-			C.ulong(roles),
-			C.long(at.Unix()),
+			C.uint64_t(roles),
+			C.int64_t(at.Unix()),
 		))
 	case *exchange.PublicKey:
 		return bool(C.self_identity_document_exchange_key_roles_at(
 			(*C.self_identity_document)(d),
 			(*C.self_exchange_public_key)(pk),
-			C.ulong(roles),
-			C.long(at.Unix()),
+			C.uint64_t(roles),
+			C.int64_t(at.Unix()),
 		))
 	default:
 		return false
@@ -62,13 +62,13 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 		return bool(C.self_identity_document_signing_key_valid_at(
 			(*C.self_identity_document)(d),
 			(*C.self_signing_public_key)(pk),
-			C.long(at.Unix()),
+			C.int64_t(at.Unix()),
 		))
 	case *exchange.PublicKey:
 		return bool(C.self_identity_document_exchange_key_valid_at(
 			(*C.self_identity_document)(d),
 			(*C.self_exchange_public_key)(pk),
-			C.long(at.Unix()),
+			C.int64_t(at.Unix()),
 		))
 	default:
 		return false

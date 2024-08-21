@@ -173,7 +173,7 @@ func (c *PresentationTypeCollection) Length() int {
 func (c *PresentationTypeCollection) Get(index int) string {
 	return C.GoString(C.self_collection_presentation_type_at(
 		(*C.self_collection_presentation_type)(c),
-		C.ulong(index),
+		C.size_t(index),
 	))
 }
 
