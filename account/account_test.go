@@ -1,7 +1,9 @@
 package account_test
 
 import (
+	"crypto/rand"
 	"errors"
+	"os"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -12,6 +14,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/credential"
 	"github.com/joinself/self-go-sdk-next/identity"
 	"github.com/joinself/self-go-sdk-next/message"
+	"github.com/joinself/self-go-sdk-next/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -243,6 +246,8 @@ func TestAccountIdentity(t *testing.T) {
 	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleAuthentication, time.Now()))
 	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleMessaging, time.Now()))
 
+	now := time.Now()
+
 	operation = document.
 		Create().
 		Timestamp(time.Now().Add(time.Second)).
@@ -256,13 +261,44 @@ func TestAccountIdentity(t *testing.T) {
 	document, err = alice.IdentityResolve(identityKey)
 	require.Nil(t, err)
 
-	now := time.Now()
-
 	// we have removed the authentication role, but this won't be reflected immediately upon
 	// querying, as we recently queried for this identity.
 	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleVerification, now))
 	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleMessaging, now))
 	assert.True(t, document.HasRolesAt(multiroleKey, identity.RoleAuthentication, now))
+}
+
+func TestAccountObject(t *testing.T) {
+	alice, _, _ := testAccount(t)
+
+	asAddress, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	data := make([]byte, 1024)
+	rand.Read(data)
+
+	encryptedObject, err := object.Encrypted(
+		"application/octet-stream",
+		data,
+	)
+
+	require.Nil(t, err)
+
+	err = alice.ObjectUpload(
+		asAddress,
+		encryptedObject,
+		false,
+	)
+
+	require.Nil(t, err)
+
+	err = alice.ObjectDownload(
+		asAddress,
+		encryptedObject,
+	)
+
+	require.Nil(t, err)
+	assert.Equal(t, data, encryptedObject.Data())
 }
 
 func TestAccountCredentials(t *testing.T) {
@@ -418,6 +454,36 @@ func TestAccountPersistence(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		<-aliceInbox
 	}
+}
+
+func TestAccountDiscovery(t *testing.T) {
+	alice, _, _ := testAccount(t)
+
+	// alice opens an inbox
+	address, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	keyPackage, err := alice.ConnectionNegotiateOutOfBand(
+		address,
+		time.Now().Add(time.Hour*99999),
+	)
+
+	require.Nil(t, err)
+
+	// generate a discovery request
+	content, err := message.NewDiscoveryRequest().
+		Expires(time.Now().Add(time.Hour * 99999)).
+		KeyPackage(keyPackage).
+		Finish()
+
+	require.Nil(t, err)
+
+	anonymousMessage := message.NewAnonymousMessage(content)
+
+	qrCode, err := anonymousMessage.EncodeToQR(message.QREncodingSVG)
+	require.Nil(t, err)
+
+	os.WriteFile("/tmp/qr.svg", qrCode, 0644)
 }
 
 func TestAccountSocketReconnect(t *testing.T) {

@@ -225,7 +225,7 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 	status := C.self_account_keychain_signing_associated_with(
 		a.account,
 		(*C.self_signing_public_key)(address),
-		C.ulong(roles),
+		C.uint64_t(roles),
 		collectionPtr,
 	)
 

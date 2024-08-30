@@ -20,8 +20,10 @@ import (
 )
 
 var (
+	CredentialTypeEmail                = newCredentialTypeCollection().Append("VerifiableCredential").Append("EmailCredential")
 	CredentialTypePassport             = newCredentialTypeCollection().Append("VerifiableCredential").Append("PassportCredential")
 	CredentialTypeLiveness             = newCredentialTypeCollection().Append("VerifiableCredential").Append("LivenessCredential")
+	CredentialTypeProfileName          = newCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileNameCredential")
 	CredentialTypeProfileImage         = newCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileImageCredential")
 	CredentialTypeApplicationPublisher = newCredentialTypeCollection().Append("VerifiableCredential").Append("ApplicationPublisherCredential")
 )

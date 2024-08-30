@@ -17,7 +17,8 @@ import (
 var (
 	PresentationTypePassport             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("PassportPresentation")
 	PresentationTypeLiveness             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("LivenessPresentation")
-	PresentationTypeProfileImage         = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfileImagePresentation")
+	PresentationTypeProfile              = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfilePresentation")
+	PresentationTypeContactDetails       = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ContactDetailsPresentation")
 	PresentationTypeApplicationPublisher = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ApplicationPublisherPresentation")
 )
 
