@@ -9,16 +9,37 @@ package exchange
 */
 import "C"
 import (
+	"runtime"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair"
 )
 
-type PublicKey C.self_exchange_public_key
+type PublicKey struct {
+	ptr *C.self_exchange_public_key
+}
+
+func newExchangePublicKey(ptr *C.self_exchange_public_key) *PublicKey {
+	p := &PublicKey{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(p, func(p *PublicKey) {
+		C.self_exchange_public_key_destroy(
+			p.ptr,
+		)
+	})
+
+	return p
+}
+
+func exchangePublicKeyPtr(p *PublicKey) *C.self_exchange_public_key {
+	return p.ptr
+}
 
 // FromAddress converts a hex address to a public key
 func FromAddress(hex string) *PublicKey {
-	var public *C.self_exchange_public_key
+	var publicKey *C.self_exchange_public_key
 
 	hexBuf := (*C.uint8_t)(C.CBytes([]byte(hex)))
 	hexLen := C.size_t(len(hex))
@@ -28,7 +49,7 @@ func FromAddress(hex string) *PublicKey {
 	}()
 
 	status := C.self_exchange_public_key_decode(
-		&public,
+		&publicKey,
 		hexBuf,
 		hexLen,
 	)
@@ -37,7 +58,7 @@ func FromAddress(hex string) *PublicKey {
 		return nil
 	}
 
-	return (*PublicKey)(public)
+	return newExchangePublicKey(publicKey)
 }
 
 // Type returns the type of key
@@ -47,17 +68,46 @@ func (p *PublicKey) Type() keypair.KeyType {
 
 // String returns the hex encoded address of a public key
 func (p *PublicKey) String() string {
-	encoded := make([]byte, 66)
+	encodedPtr := C.CBytes(make([]byte, 66))
+	defer C.free(encodedPtr)
 
 	status := C.self_exchange_public_key_encode(
-		(*C.self_exchange_public_key)(p),
-		(*C.uint8_t)(unsafe.Pointer(&encoded[0])),
-		C.size_t(len(encoded)),
+		p.ptr,
+		(*C.uint8_t)(encodedPtr),
+		66,
 	)
 
 	if status > 0 {
 		panic("invalid key conversion!")
 	}
 
-	return *(*string)(unsafe.Pointer(&encoded))
+	encoded := C.GoBytes(
+		encodedPtr,
+		66,
+	)
+
+	return string(encoded)
+}
+
+// Bytes returns the raw bytes of the address
+func (p *PublicKey) Bytes() []byte {
+	bytesPtr := C.CBytes(make([]byte, 33))
+	defer C.free(bytesPtr)
+
+	status := C.self_exchange_public_key_as_bytes(
+		p.ptr,
+		(*C.uint8_t)(bytesPtr),
+		33,
+	)
+
+	if status > 0 {
+		panic("invalid key conversion!")
+	}
+
+	bytes := C.GoBytes(
+		bytesPtr,
+		33,
+	)
+
+	return bytes
 }

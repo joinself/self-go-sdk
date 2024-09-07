@@ -29,27 +29,52 @@ const (
 	RoleMessaging      Role = C.MESSAGING
 )
 
-type Operation C.self_identity_operation
-type OperationBuilder C.self_identity_operation_builder
+type Operation struct {
+	ptr *C.self_identity_operation
+}
 
-// NewOperation creates a new operation
-func NewOperation() *OperationBuilder {
-	builder := C.self_identity_operation_builder_init()
+func newOperation(ptr *C.self_identity_operation) *Operation {
+	o := &Operation{
+		ptr: ptr,
+	}
 
-	runtime.SetFinalizer(&builder, func(builder **C.self_identity_operation_builder) {
-		C.self_identity_operation_builder_destroy(
-			*builder,
+	runtime.SetFinalizer(o, func(o *Operation) {
+		C.self_identity_operation_destroy(
+			o.ptr,
 		)
 	})
 
-	return (*OperationBuilder)(builder)
+	return o
+}
+
+type OperationBuilder struct {
+	ptr *C.self_identity_operation_builder
+}
+
+func newOperationBuilder(ptr *C.self_identity_operation_builder) *OperationBuilder {
+	b := &OperationBuilder{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(b, func(b *OperationBuilder) {
+		C.self_identity_operation_builder_destroy(
+			b.ptr,
+		)
+	})
+
+	return b
+}
+
+// NewOperation creates a new operation
+func NewOperation() *OperationBuilder {
+	return newOperationBuilder(C.self_identity_operation_builder_init())
 }
 
 // Identifier sets the identifier of the document to target
 func (b *OperationBuilder) Identifier(address *signing.PublicKey) *OperationBuilder {
 	C.self_identity_operation_builder_id(
-		(*C.self_identity_operation_builder)(b),
-		(*C.self_signing_public_key)(address),
+		b.ptr,
+		signingPublicKeyPtr(address),
 	)
 
 	return b
@@ -58,7 +83,7 @@ func (b *OperationBuilder) Identifier(address *signing.PublicKey) *OperationBuil
 // Identifier sets the identifier of the document to target
 func (b *OperationBuilder) Sequence(sequence uint32) *OperationBuilder {
 	C.self_identity_operation_builder_sequence(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		C.uint32_t(sequence),
 	)
 
@@ -68,7 +93,7 @@ func (b *OperationBuilder) Sequence(sequence uint32) *OperationBuilder {
 // Timestamp sets the timestamp of the operation
 func (b *OperationBuilder) Timestamp(timestamp time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_timestamp(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		C.int64_t(timestamp.Unix()),
 	)
 
@@ -81,7 +106,7 @@ func (b *OperationBuilder) Previous(previousHash []byte) *OperationBuilder {
 	previousLen := len(previousHash)
 
 	C.self_identity_operation_builder_previous(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		(*C.uint8_t)(previousBuf),
 		C.size_t(previousLen),
 	)
@@ -96,14 +121,14 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 	switch pk := key.(type) {
 	case *signing.PublicKey:
 		C.self_identity_operation_builder_signing_grant_embedded(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_signing_public_key)(pk),
+			b.ptr,
+			signingPublicKeyPtr(pk),
 			C.uint64_t(roles),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_grant_embedded(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_exchange_public_key)(pk),
+			b.ptr,
+			exchangePublicKeyPtr(pk),
 			C.uint64_t(roles),
 		)
 	}
@@ -114,10 +139,10 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 // GrantReferenced grants roles to a key controlled by another identity
 func (b *OperationBuilder) GrantReferenced(method uint16, controller *signing.PublicKey, key *signing.PublicKey, roles Role) *OperationBuilder {
 	C.self_identity_operation_builder_signing_grant_referenced(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		C.uint16_t(method),
-		(*C.self_signing_public_key)(controller),
-		(*C.self_signing_public_key)(key),
+		signingPublicKeyPtr(controller),
+		signingPublicKeyPtr(key),
 		C.uint64_t(roles),
 	)
 
@@ -129,14 +154,14 @@ func (b *OperationBuilder) Modify(key keypair.PublicKey, roles Role) *OperationB
 	switch pk := key.(type) {
 	case *signing.PublicKey:
 		C.self_identity_operation_builder_signing_modify(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_signing_public_key)(pk),
+			b.ptr,
+			signingPublicKeyPtr(pk),
 			C.uint64_t(roles),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_modify(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_exchange_public_key)(pk),
+			b.ptr,
+			exchangePublicKeyPtr(pk),
 			C.uint64_t(roles),
 		)
 	}
@@ -149,14 +174,14 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 	switch pk := key.(type) {
 	case *signing.PublicKey:
 		C.self_identity_operation_builder_signing_revoke(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_signing_public_key)(pk),
+			b.ptr,
+			signingPublicKeyPtr(pk),
 			C.int64_t(effectiveFrom.Unix()),
 		)
 	case *exchange.PublicKey:
 		C.self_identity_operation_builder_exchange_revoke(
-			(*C.self_identity_operation_builder)(b),
-			(*C.self_exchange_public_key)(pk),
+			b.ptr,
+			exchangePublicKeyPtr(pk),
 			C.int64_t(effectiveFrom.Unix()),
 		)
 	}
@@ -167,7 +192,7 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 // Recover recovers an identity, revoking all existing keys
 func (b *OperationBuilder) Recover(effectiveFrom time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_recover(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		C.int64_t(effectiveFrom.Unix()),
 	)
 
@@ -177,7 +202,7 @@ func (b *OperationBuilder) Recover(effectiveFrom time.Time) *OperationBuilder {
 // Deactivate permanently deactivates the identity
 func (b *OperationBuilder) Deactivate(effectiveFrom time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_deactivate(
-		(*C.self_identity_operation_builder)(b),
+		b.ptr,
 		C.int64_t(effectiveFrom.Unix()),
 	)
 
@@ -187,8 +212,8 @@ func (b *OperationBuilder) Deactivate(effectiveFrom time.Time) *OperationBuilder
 // SignWith specifies which key to sign the operation with
 func (b *OperationBuilder) SignWith(signer *signing.PublicKey) *OperationBuilder {
 	C.self_identity_operation_builder_sign_with(
-		(*C.self_identity_operation_builder)(b),
-		(*C.self_signing_public_key)(signer),
+		b.ptr,
+		signingPublicKeyPtr(signer),
 	)
 
 	return b
@@ -196,19 +221,12 @@ func (b *OperationBuilder) SignWith(signer *signing.PublicKey) *OperationBuilder
 
 // Finish finalizes the operation and prepares it for execution
 func (b *OperationBuilder) Finish() *Operation {
-	var operation *C.self_identity_operation
-	operationPtr := &operation
+	var ptr *C.self_identity_operation
 
 	C.self_identity_operation_builder_finish(
-		(*C.self_identity_operation_builder)(b),
-		operationPtr,
+		b.ptr,
+		&ptr,
 	)
 
-	runtime.SetFinalizer(operationPtr, func(operation **C.self_identity_operation) {
-		C.self_identity_operation_destroy(
-			*operation,
-		)
-	})
-
-	return (*Operation)(*operationPtr)
+	return newOperation(ptr)
 }

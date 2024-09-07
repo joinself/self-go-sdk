@@ -130,9 +130,11 @@ func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
 //export goOnMessage
 func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
 	runtime.SetFinalizer(&msg, func(msg **C.self_message) {
-		C.self_message_destroy(
-			*msg,
-		)
+		/*
+			C.self_message_destroy(
+				*msg,
+			)
+		*/
 	})
 
 	(*Account)(user_data).callbacks.OnMessage(
@@ -144,9 +146,11 @@ func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
 //export goOnCommit
 func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
 	runtime.SetFinalizer(&commit, func(commit **C.self_commit) {
-		C.self_commit_destroy(
-			*commit,
-		)
+		/*
+			C.self_commit_destroy(
+				*commit,
+			)
+		*/
 	})
 
 	account := (*Account)(user_data)
@@ -164,9 +168,11 @@ func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
 //export goOnKeyPackage
 func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t) {
 	runtime.SetFinalizer(&keyPackage, func(keyPackage **C.self_key_package) {
-		C.self_key_package_destroy(
-			*keyPackage,
-		)
+		/*
+			C.self_key_package_destroy(
+				*keyPackage,
+			)
+		*/
 	})
 
 	account := (*Account)(user_data)
@@ -213,9 +219,11 @@ func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
 //export goOnWelcome
 func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 	runtime.SetFinalizer(&welcome, func(welcome **C.self_welcome) {
-		C.self_welcome_destroy(
-			*welcome,
-		)
+		/*
+			C.self_welcome_destroy(
+				*welcome,
+			)
+		*/
 	})
 
 	account := (*Account)(user_data)

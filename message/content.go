@@ -8,11 +8,17 @@ package message
 #include <stdlib.h>
 */
 import "C"
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
-type Content C.self_message_content
 type Type int
 type ResponseStatus int
+
+type Content struct {
+	ptr *C.self_message_content
+}
 
 const (
 	TypeUnknown                        Type           = 1<<63 - 1
@@ -36,6 +42,20 @@ const (
 	ResponseStatusNotAcceptable        ResponseStatus = C.RESPONSE_STATUS_NOT_ACCEPTABLE
 	ResponseStatusConflict             ResponseStatus = C.RESPONSE_STATUS_CONFLICT
 )
+
+func newContent(ptr *C.self_message_content) *Content {
+	c := &Content{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(&c, func(c *Content) {
+		C.self_message_content_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
 
 func ContentType(message *Message) Type {
 	content := C.self_message_message_content((*C.self_message)(message))
@@ -66,7 +86,7 @@ func ContentType(message *Message) Type {
 
 func (c *Content) ID() []byte {
 	return C.GoBytes(
-		unsafe.Pointer(C.self_message_content_id((*C.self_message_content)(c))),
+		unsafe.Pointer(C.self_message_content_id(c.ptr)),
 		20,
 	)
 }

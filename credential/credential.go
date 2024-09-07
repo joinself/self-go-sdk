@@ -20,53 +20,152 @@ import (
 )
 
 var (
-	CredentialTypeEmail                = newCredentialTypeCollection().Append("VerifiableCredential").Append("EmailCredential")
-	CredentialTypePassport             = newCredentialTypeCollection().Append("VerifiableCredential").Append("PassportCredential")
-	CredentialTypeLiveness             = newCredentialTypeCollection().Append("VerifiableCredential").Append("LivenessCredential")
-	CredentialTypeProfileName          = newCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileNameCredential")
-	CredentialTypeProfileImage         = newCredentialTypeCollection().Append("VerifiableCredential").Append("ProfileImageCredential")
-	CredentialTypeApplicationPublisher = newCredentialTypeCollection().Append("VerifiableCredential").Append("ApplicationPublisherCredential")
+	CredentialTypeEmail                = []string{"VerifiableCredential", "EmailCredential"}
+	CredentialTypePassport             = []string{"VerifiableCredential", "PassportCredential"}
+	CredentialTypeLiveness             = []string{"VerifiableCredential", "LivenessCredential"}
+	CredentialTypeProfileName          = []string{"VerifiableCredential", "ProfileNameCredential"}
+	CredentialTypeProfileImage         = []string{"VerifiableCredential", "ProfileImageCredential"}
+	CredentialTypeApplicationPublisher = []string{"VerifiableCredential", "ApplicationPublisherCredential"}
 )
 
-type Credential C.self_credential
-type CredentialBuilder C.self_credential_builder
-type VerifiableCredential C.self_verifiable_credential
-type VerifiableCredentialCollection C.self_collection_verifiable_credential
-type CredentialPresentationDetail C.self_credential_presentation_detail
-type CredentialPresentationDetailCollection C.self_collection_credential_presentation_detail
-type CredentialVerificationEvidence C.self_credential_verification_evidence
-type CredentialVerificationParameter C.self_credential_verification_parameter
-type CredentialVerificationEvidenceCollection C.self_collection_credential_verification_evidence
-type CredentialVerificationParameterCollection C.self_collection_credential_verification_parameter
-type CredentialTypeCollection C.self_collection_credential_type
+// Credential an unsigned credential
+type Credential struct {
+	ptr *C.self_credential
+}
 
-// NewCredential creates a new credential builder
-func NewCredential() *CredentialBuilder {
-	builder := C.self_credential_builder_init()
+func newCredential(ptr *C.self_credential) *Credential {
+	c := &Credential{
+		ptr: ptr,
+	}
 
-	runtime.SetFinalizer(&builder, func(builder **C.self_credential_builder) {
-		C.self_credential_builder_destroy(
-			*builder,
+	runtime.SetFinalizer(c, func(c *Credential) {
+		C.self_credential_destroy(
+			c.ptr,
 		)
 	})
 
-	return (*CredentialBuilder)(builder)
+	return c
+}
+
+type CredentialBuilder struct {
+	ptr *C.self_credential_builder
+}
+
+func newCredentialBuilder(ptr *C.self_credential_builder) *CredentialBuilder {
+	b := &CredentialBuilder{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(b, func(b *CredentialBuilder) {
+		C.self_credential_builder_destroy(
+			b.ptr,
+		)
+	})
+
+	return b
+}
+
+type VerifiableCredential struct {
+	ptr *C.self_verifiable_credential
+}
+
+func newVerifiableCredential(ptr *C.self_verifiable_credential) *VerifiableCredential {
+	c := &VerifiableCredential{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *VerifiableCredential) {
+		C.self_verifiable_credential_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+type CredentialPresentationDetail struct {
+	ptr *C.self_credential_presentation_detail
+}
+
+func newCredentialPresentationDetail(ptr *C.self_credential_presentation_detail) *CredentialPresentationDetail {
+	c := &CredentialPresentationDetail{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialPresentationDetail) {
+		// TODO add this
+		/*
+			C.self_credential_presentation_detail_destroy(
+				c.ptr,
+			)
+		*/
+	})
+
+	return c
+}
+
+type CredentialVerificationEvidence struct {
+	ptr *C.self_credential_verification_evidence
+}
+
+func newCredentialVerificationEvidence(ptr *C.self_credential_verification_evidence) *CredentialVerificationEvidence {
+	c := &CredentialVerificationEvidence{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialVerificationEvidence) {
+		C.self_credential_verification_evidence_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+type CredentialVerificationParameter struct {
+	ptr *C.self_credential_verification_parameter
+}
+
+func newCredentialVerificationParameter(ptr *C.self_credential_verification_parameter) *CredentialVerificationParameter {
+	c := &CredentialVerificationParameter{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialVerificationParameter) {
+		C.self_credential_verification_parameter_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+// NewCredential creates a new credential builder
+func NewCredential() *CredentialBuilder {
+	return newCredentialBuilder(C.self_credential_builder_init())
 }
 
 // CredentialType sets the type of credential
-func (b *CredentialBuilder) CredentialType(credentialType *CredentialTypeCollection) *CredentialBuilder {
+func (b *CredentialBuilder) CredentialType(credentialType []string) *CredentialBuilder {
+	collection := toCredentialTypeCollection(credentialType)
+
 	C.self_credential_builder_credential_type(
-		(*C.self_credential_builder)(b),
-		(*C.self_collection_credential_type)(credentialType),
+		b.ptr,
+		collection,
 	)
+
+	C.self_collection_credential_type_destroy(
+		collection,
+	)
+
 	return b
 }
 
 // CredentialSubject sets the address of the credential's subject
 func (b *CredentialBuilder) CredentialSubject(subjectAddress *Address) *CredentialBuilder {
 	C.self_credential_builder_credential_subject(
-		(*C.self_credential_builder)(b),
-		(*C.self_credential_address)(subjectAddress),
+		b.ptr,
+		subjectAddress.ptr,
 	)
 	return b
 }
@@ -82,7 +181,7 @@ func (b *CredentialBuilder) CredentialSubjectClaim(claimKey, claimValue string) 
 	}()
 
 	C.self_credential_builder_credential_subject_claim(
-		(*C.self_credential_builder)(b),
+		b.ptr,
 		key,
 		value,
 	)
@@ -105,7 +204,7 @@ func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{
 	}()
 
 	C.self_credential_builder_credential_subject_json(
-		(*C.self_credential_builder)(b),
+		b.ptr,
 		(*C.uint8_t)(claimBuffer),
 		(C.size_t)(claimLength),
 	)
@@ -116,8 +215,8 @@ func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{
 // Issuer sets the address of the credential's issuer
 func (b *CredentialBuilder) Issuer(issuerAddress *Address) *CredentialBuilder {
 	C.self_credential_builder_issuer(
-		(*C.self_credential_builder)(b),
-		(*C.self_credential_address)(issuerAddress),
+		b.ptr,
+		issuerAddress.ptr,
 	)
 	return b
 }
@@ -125,7 +224,7 @@ func (b *CredentialBuilder) Issuer(issuerAddress *Address) *CredentialBuilder {
 // ValidFrom sets the point of validity for the credential
 func (b *CredentialBuilder) ValidFrom(timestamp time.Time) *CredentialBuilder {
 	C.self_credential_builder_valid_from(
-		(*C.self_credential_builder)(b),
+		b.ptr,
 		C.int64_t(timestamp.Unix()),
 	)
 	return b
@@ -134,8 +233,8 @@ func (b *CredentialBuilder) ValidFrom(timestamp time.Time) *CredentialBuilder {
 // SignWith signs the credential
 func (b *CredentialBuilder) SignWith(signer *signing.PublicKey, issuedAt time.Time) *CredentialBuilder {
 	C.self_credential_builder_sign_with(
-		(*C.self_credential_builder)(b),
-		(*C.self_signing_public_key)(signer),
+		b.ptr,
+		signingPublicKeyPtr(signer),
 		C.int64_t(issuedAt.Unix()),
 	)
 	return b
@@ -144,29 +243,21 @@ func (b *CredentialBuilder) SignWith(signer *signing.PublicKey, issuedAt time.Ti
 // Finish generates and prepares the credential for being signed by an account
 func (b *CredentialBuilder) Finish() (*Credential, error) {
 	var credential *C.self_credential
-	credentialPtr := &credential
 
 	status := C.self_credential_builder_finish(
-		(*C.self_credential_builder)(b),
-		credentialPtr,
+		b.ptr,
+		&credential,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create credential")
 	}
 
-	runtime.SetFinalizer(credentialPtr, func(credential **C.self_credential) {
-		C.self_credential_destroy(
-			*credential,
-		)
-	})
-
-	return (*Credential)(*credentialPtr), nil
+	return newCredential(credential), nil
 }
 
 func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential, error) {
 	var verifiableCredential *C.self_verifiable_credential
-	verifiableCredentialPtr := &verifiableCredential
 
 	encodedBuf := C.CBytes(encodedCredential)
 	encodedLen := len(encodedCredential)
@@ -176,7 +267,7 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 	}()
 
 	status := C.self_verifiable_credential_decode(
-		verifiableCredentialPtr,
+		&verifiableCredential,
 		(*C.uint8_t)(encodedBuf),
 		(C.size_t)(encodedLen),
 	)
@@ -185,43 +276,29 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 		return nil, errors.New("decode credential failed")
 	}
 
-	runtime.SetFinalizer(verifiableCredentialPtr, func(verifiableCredential **C.self_verifiable_credential) {
-		C.self_verifiable_credential_destroy(
-			*verifiableCredential,
-		)
-	})
-
-	return (*VerifiableCredential)(*verifiableCredentialPtr), nil
+	return newVerifiableCredential(verifiableCredential), nil
 }
 
 // CredentialType returns the type of credential
-func (c *VerifiableCredential) CredentialType() *CredentialTypeCollection {
+func (c *VerifiableCredential) CredentialType() []string {
 	collection := C.self_verifiable_credential_credential_type(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 	)
 
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_type) {
-		C.self_collection_credential_type_destroy(
-			*collection,
-		)
-	})
+	credentials := fromCredentialTypeCollection(collection)
 
-	return (*CredentialTypeCollection)(collection)
+	C.self_collection_credential_type_destroy(
+		collection,
+	)
+
+	return credentials
 }
 
 // CredentialSubject returns the subject of the credential's address
 func (c *VerifiableCredential) CredentialSubject() *Address {
-	subject := C.self_verifiable_credential_credential_subject(
-		(*C.self_verifiable_credential)(c),
-	)
-
-	runtime.SetFinalizer(&subject, func(address **C.self_credential_address) {
-		C.self_credential_address_destroy(
-			*address,
-		)
-	})
-
-	return (*Address)(subject)
+	return newAddress(C.self_verifiable_credential_credential_subject(
+		c.ptr,
+	))
 }
 
 // CredentialSubject returns the subject of the credential's address
@@ -229,7 +306,7 @@ func (c *VerifiableCredential) CredentialSubjectClaim(claimKey string) (string, 
 	key := C.CString(claimKey)
 
 	value := C.self_verifiable_credential_credential_subject_claim(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 		key,
 	)
 
@@ -251,23 +328,15 @@ func (c *VerifiableCredential) CredentialSubjectClaim(claimKey string) (string, 
 
 // Issuer returns the address of the credential's issuer
 func (c *VerifiableCredential) Issuer() *Address {
-	issuer := C.self_verifiable_credential_issuer(
-		(*C.self_verifiable_credential)(c),
-	)
-
-	runtime.SetFinalizer(&issuer, func(address **C.self_credential_address) {
-		C.self_credential_address_destroy(
-			*address,
-		)
-	})
-
-	return (*Address)(issuer)
+	return newAddress(C.self_verifiable_credential_issuer(
+		c.ptr,
+	))
 }
 
 // ValidFrom returns the time period that the credential is valid from
 func (c *VerifiableCredential) ValidFrom() time.Time {
 	validFrom := C.self_verifiable_credential_valid_from(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 	)
 
 	return time.Unix(int64(validFrom), 0)
@@ -276,7 +345,7 @@ func (c *VerifiableCredential) ValidFrom() time.Time {
 // Created returns the time that the credential was created
 func (c *VerifiableCredential) Created() time.Time {
 	created := C.self_verifiable_credential_created(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 	)
 
 	return time.Unix(int64(created), 0)
@@ -288,7 +357,7 @@ func (c *VerifiableCredential) Encode() ([]byte, error) {
 	encodedCredentialBufferPtr := &encodedCredentialBuffer
 
 	status := C.self_verifiable_credential_encode(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 		encodedCredentialBufferPtr,
 	)
 
@@ -311,7 +380,7 @@ func (c *VerifiableCredential) Encode() ([]byte, error) {
 // Validate validates the contents of the credential and it's signatures
 func (c *VerifiableCredential) Validate() error {
 	status := C.self_verifiable_credential_validate(
-		(*C.self_verifiable_credential)(c),
+		c.ptr,
 	)
 
 	if status > 0 {
@@ -321,152 +390,11 @@ func (c *VerifiableCredential) Validate() error {
 	return nil
 }
 
-func NewVerifiableCredentialCollection() *VerifiableCredentialCollection {
-	collection := C.self_collection_verifiable_credential_init()
-
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
-		C.self_collection_verifiable_credential_destroy(
-			*collection,
-		)
-	})
-
-	return (*VerifiableCredentialCollection)(collection)
-}
-
-func (c *VerifiableCredentialCollection) Length() int {
-	return int(C.self_collection_verifiable_credential_len(
-		(*C.self_collection_verifiable_credential)(c),
-	))
-}
-
-func (c *VerifiableCredentialCollection) Get(index int) *VerifiableCredential {
-	credential := C.self_collection_verifiable_credential_at(
-		(*C.self_collection_verifiable_credential)(c),
-		C.size_t(index),
-	)
-
-	runtime.SetFinalizer(&credential, func(credential **C.self_verifiable_credential) {
-		C.self_verifiable_credential_destroy(
-			*credential,
-		)
-	})
-
-	return (*VerifiableCredential)(credential)
-}
-
-func NewCredentialVerificationEvidenceCollection() *CredentialVerificationEvidenceCollection {
-	collection := C.self_collection_credential_verification_evidence_init()
-
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_evidence) {
-		C.self_collection_credential_verification_evidence_destroy(
-			*collection,
-		)
-	})
-
-	return (*CredentialVerificationEvidenceCollection)(collection)
-}
-
-func (c *CredentialVerificationEvidenceCollection) Length() int {
-	return int(C.self_collection_credential_verification_evidence_len(
-		(*C.self_collection_credential_verification_evidence)(c),
-	))
-}
-
-func (c *CredentialVerificationEvidenceCollection) Get(index int) *CredentialVerificationEvidence {
-	evidence := C.self_collection_credential_verification_evidence_at(
-		(*C.self_collection_credential_verification_evidence)(c),
-		C.size_t(index),
-	)
-
-	runtime.SetFinalizer(&evidence, func(evidence **C.self_credential_verification_evidence) {
-		C.self_credential_verification_evidence_destroy(
-			*evidence,
-		)
-	})
-
-	return (*CredentialVerificationEvidence)(evidence)
-}
-
-func NewCredentialVerificationParameterCollection() *CredentialVerificationParameterCollection {
-	collection := C.self_collection_credential_verification_parameter_init()
-
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_verification_parameter) {
-		C.self_collection_credential_verification_parameter_destroy(
-			*collection,
-		)
-	})
-
-	return (*CredentialVerificationParameterCollection)(collection)
-}
-
-func (c *CredentialVerificationParameterCollection) Length() int {
-	return int(C.self_collection_credential_verification_parameter_len(
-		(*C.self_collection_credential_verification_parameter)(c),
-	))
-}
-
-func (c *CredentialVerificationParameterCollection) Get(index int) *CredentialVerificationParameter {
-	parameter := C.self_collection_credential_verification_parameter_at(
-		(*C.self_collection_credential_verification_parameter)(c),
-		C.size_t(index),
-	)
-
-	runtime.SetFinalizer(&parameter, func(parameter **C.self_credential_verification_parameter) {
-		C.self_credential_verification_parameter_destroy(
-			*parameter,
-		)
-	})
-
-	return (*CredentialVerificationParameter)(parameter)
-}
-
-func NewCredentialTypeCollection() *CredentialTypeCollection {
-	collection := C.self_collection_credential_type_init()
-
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_credential_type) {
-		C.self_collection_credential_type_destroy(
-			*collection,
-		)
-	})
-
-	return (*CredentialTypeCollection)(collection)
-}
-
-func newCredentialTypeCollection() *CredentialTypeCollection {
-	return (*CredentialTypeCollection)(C.self_collection_credential_type_init())
-}
-
-func (c *CredentialTypeCollection) Length() int {
-	return int(C.self_collection_credential_type_len(
-		(*C.self_collection_credential_type)(c),
-	))
-}
-
-func (c *CredentialTypeCollection) Get(index int) string {
-	return C.GoString(C.self_collection_credential_type_at(
-		(*C.self_collection_credential_type)(c),
-		C.size_t(index),
-	))
-}
-
-func (c *CredentialTypeCollection) Append(element string) *CredentialTypeCollection {
-	elementC := C.CString(element)
-
-	C.self_collection_credential_type_append(
-		(*C.self_collection_credential_type)(c),
-		elementC,
-	)
-
-	C.free(unsafe.Pointer(elementC))
-
-	return c
-}
-
 // EvidenceType returns the evidence type
 func (c *CredentialVerificationEvidence) EvidenceType() string {
 	return C.GoString(
 		C.self_credential_verification_evidence_evidence_type(
-			(*C.self_credential_verification_evidence)(c),
+			c.ptr,
 		),
 	)
 }
@@ -474,7 +402,7 @@ func (c *CredentialVerificationEvidence) EvidenceType() string {
 // Object returns the object that makes up the content of the evidence
 func (c *CredentialVerificationEvidence) Object() *object.Object {
 	obj := C.self_credential_verification_evidence_object(
-		(*C.self_credential_verification_evidence)(c),
+		c.ptr,
 	)
 
 	runtime.SetFinalizer(&obj, func(obj **C.self_object) {
@@ -490,7 +418,7 @@ func (c *CredentialVerificationEvidence) Object() *object.Object {
 func (c *CredentialVerificationParameter) ParameterType() string {
 	return C.GoString(
 		C.self_credential_verification_parameter_parameter_type(
-			(*C.self_credential_verification_parameter)(c),
+			c.ptr,
 		),
 	)
 }
@@ -499,10 +427,84 @@ func (c *CredentialVerificationParameter) ParameterType() string {
 func (c *CredentialVerificationParameter) Value() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_credential_verification_parameter_value_buf(
-			(*C.self_credential_verification_parameter)(c),
+			c.ptr,
 		)),
 		(C.int)(C.self_credential_verification_parameter_value_len(
-			(*C.self_credential_verification_parameter)(c),
+			c.ptr,
 		)),
 	)
+}
+
+func toCredentialTypeCollection(credentialType []string) *C.self_collection_credential_type {
+	collection := C.self_collection_credential_type_init()
+
+	for i := 0; i < len(credentialType); i++ {
+		typ := C.CString(credentialType[i])
+
+		C.self_collection_credential_type_append(
+			collection,
+			typ,
+		)
+
+		C.free(unsafe.Pointer(typ))
+	}
+
+	return collection
+}
+
+func fromCredentialTypeCollection(collection *C.self_collection_credential_type) []string {
+	collectionLen := int(C.self_collection_credential_type_len(
+		collection,
+	))
+
+	credentialType := make([]string, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_type_at(
+			collection,
+			C.size_t(i),
+		)
+
+		credentialType[i] = C.GoString(ptr)
+	}
+
+	return credentialType
+}
+
+func fromVerifiableCredentialCollection(collection *C.self_collection_verifiable_credential) []*VerifiableCredential {
+	collectionLen := int(C.self_collection_verifiable_credential_len(
+		collection,
+	))
+
+	credentials := make([]*VerifiableCredential, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_verifiable_credential_at(
+			collection,
+			C.size_t(i),
+		)
+
+		credentials[i] = newVerifiableCredential(ptr)
+	}
+
+	return credentials
+}
+
+func fromPresentationDetailCollection(collection *C.self_collection_credential_presentation_detail) []*CredentialPresentationDetail {
+	collectionLen := int(C.self_collection_credential_presentation_detail_len(
+		collection,
+	))
+
+	details := make([]*CredentialPresentationDetail, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_presentation_detail_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialPresentationDetail(ptr)
+	}
+
+	return details
 }

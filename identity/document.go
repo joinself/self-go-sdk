@@ -17,20 +17,38 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
+//go:linkname signingPublicKeyPtr signing.signingPublicKeyPtr
+func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
+
+//go:linkname exchangePublicKeyPtr exchange.exchangePublicKeyPtr
+func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
+
 // Document a collection of public keys tied to an identity
-type Document C.self_identity_document
+type Document struct {
+	ptr *C.self_identity_document
+}
 
-// NewDocument creates a new identity document
-func NewDocument() *Document {
-	document := C.self_identity_document_init()
+func newDocument(ptr *C.self_identity_document) *Document {
+	d := &Document{
+		ptr: ptr,
+	}
 
-	runtime.SetFinalizer(&document, func(document **C.self_identity_document) {
+	runtime.SetFinalizer(d, func(d *Document) {
 		C.self_identity_document_destroy(
-			*document,
+			d.ptr,
 		)
 	})
 
-	return (*Document)(document)
+	return d
+}
+
+func documentPtr(d *Document) *C.self_identity_document {
+	return d.ptr
+}
+
+// NewDocument creates a new identity document
+func NewDocument() *Document {
+	return newDocument(C.self_identity_document_init())
 }
 
 // HasRolesAt returns true if a key had a given set of roles at a time
@@ -38,15 +56,15 @@ func (d *Document) HasRolesAt(key keypair.PublicKey, roles Role, at time.Time) b
 	switch pk := key.(type) {
 	case *signing.PublicKey:
 		return bool(C.self_identity_document_signing_key_roles_at(
-			(*C.self_identity_document)(d),
-			(*C.self_signing_public_key)(pk),
+			d.ptr,
+			signingPublicKeyPtr(pk),
 			C.uint64_t(roles),
 			C.int64_t(at.Unix()),
 		))
 	case *exchange.PublicKey:
 		return bool(C.self_identity_document_exchange_key_roles_at(
-			(*C.self_identity_document)(d),
-			(*C.self_exchange_public_key)(pk),
+			d.ptr,
+			exchangePublicKeyPtr(pk),
 			C.uint64_t(roles),
 			C.int64_t(at.Unix()),
 		))
@@ -60,14 +78,14 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 	switch pk := key.(type) {
 	case *signing.PublicKey:
 		return bool(C.self_identity_document_signing_key_valid_at(
-			(*C.self_identity_document)(d),
-			(*C.self_signing_public_key)(pk),
+			d.ptr,
+			signingPublicKeyPtr(pk),
 			C.int64_t(at.Unix()),
 		))
 	case *exchange.PublicKey:
 		return bool(C.self_identity_document_exchange_key_valid_at(
-			(*C.self_identity_document)(d),
-			(*C.self_exchange_public_key)(pk),
+			d.ptr,
+			exchangePublicKeyPtr(pk),
 			C.int64_t(at.Unix()),
 		))
 	default:
@@ -77,15 +95,7 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 
 // Create creates a new operation to update the document
 func (d *Document) Create() *OperationBuilder {
-	builder := C.self_identity_document_create(
-		(*C.self_identity_document)(d),
-	)
-
-	runtime.SetFinalizer(&builder, func(builder **C.self_identity_operation_builder) {
-		C.self_identity_operation_builder_destroy(
-			*builder,
-		)
-	})
-
-	return (*OperationBuilder)(builder)
+	return newOperationBuilder(C.self_identity_document_create(
+		d.ptr,
+	))
 }
