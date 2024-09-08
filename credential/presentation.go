@@ -15,45 +15,89 @@ import (
 )
 
 var (
-	PresentationTypePassport             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("PassportPresentation")
-	PresentationTypeLiveness             = newPresentationTypeCollection().Append("VerifiablePresentation").Append("LivenessPresentation")
-	PresentationTypeProfile              = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ProfilePresentation")
-	PresentationTypeContactDetails       = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ContactDetailsPresentation")
-	PresentationTypeApplicationPublisher = newPresentationTypeCollection().Append("VerifiablePresentation").Append("ApplicationPublisherPresentation")
+	PresentationTypePassport             = []string{"VerifiablePresentation", "PassportPresentation"}
+	PresentationTypeLiveness             = []string{"VerifiablePresentation", "LivenessPresentation"}
+	PresentationTypeProfile              = []string{"VerifiablePresentation", "ProfilePresentation"}
+	PresentationTypeContactDetails       = []string{"VerifiablePresentation", "ContactDetailsPresentation"}
+	PresentationTypeApplicationPublisher = []string{"VerifiablePresentation", "ApplicationPublisherPresentation"}
 )
 
-type Presentation C.self_presentation
-type PresentationBuilder C.self_presentation_builder
-type VerifiablePresentation C.self_verifiable_presentation
-type PresentationTypeCollection C.self_collection_presentation_type
+type Presentation struct {
+	ptr *C.self_presentation
+}
 
-// NewPresentation creates a new presentation builder
-func NewPresentation() *PresentationBuilder {
-	builder := C.self_presentation_builder_init()
+func newPresentation(ptr *C.self_presentation) *Presentation {
+	p := &Presentation{
+		ptr: ptr,
+	}
 
-	runtime.SetFinalizer(&builder, func(builder **C.self_presentation_builder) {
-		C.self_presentation_builder_destroy(
-			*builder,
+	runtime.SetFinalizer(p, func(b *Presentation) {
+		C.self_presentation_destroy(
+			p.ptr,
 		)
 	})
 
-	return (*PresentationBuilder)(builder)
+	return p
+}
+
+func presentationPtr(p *Presentation) *C.self_presentation {
+	return p.ptr
+}
+
+type PresentationBuilder struct {
+	ptr *C.self_presentation_builder
+}
+
+func newPresentationBuilder(ptr *C.self_presentation_builder) *PresentationBuilder {
+	b := &PresentationBuilder{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(b, func(b *PresentationBuilder) {
+		C.self_presentation_builder_destroy(
+			b.ptr,
+		)
+	})
+
+	return b
+}
+
+type VerifiablePresentation struct {
+	ptr *C.self_verifiable_presentation
+}
+
+func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *VerifiablePresentation {
+	return &VerifiablePresentation{
+		ptr: ptr,
+	}
+}
+
+// NewPresentation creates a new presentation builder
+func NewPresentation() *PresentationBuilder {
+	return newPresentationBuilder(C.self_presentation_builder_init())
 }
 
 // PresentationType sets the type of presentation
-func (b *PresentationBuilder) Presentationtype(presentationType *PresentationTypeCollection) *PresentationBuilder {
+func (b *PresentationBuilder) Presentationtype(presentationType []string) *PresentationBuilder {
+	collection := toPresentationTypeCollection(presentationType)
+
 	C.self_presentation_builder_presentation_type(
-		(*C.self_presentation_builder)(b),
-		(*C.self_collection_presentation_type)(presentationType),
+		b.ptr,
+		collection,
 	)
+
+	C.self_collection_presentation_type_destroy(
+		collection,
+	)
+
 	return b
 }
 
 // Holder sets the address of the credentials holder/bearer
 func (b *PresentationBuilder) Holder(holderAddress *Address) *PresentationBuilder {
 	C.self_presentation_builder_holder(
-		(*C.self_presentation_builder)(b),
-		(*C.self_credential_address)(holderAddress),
+		b.ptr,
+		holderAddress.ptr,
 	)
 	return b
 }
@@ -61,8 +105,8 @@ func (b *PresentationBuilder) Holder(holderAddress *Address) *PresentationBuilde
 // CredentialAdd adds a verifiable credential to the presentation
 func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *PresentationBuilder {
 	C.self_presentation_builder_credential_add(
-		(*C.self_presentation_builder)(b),
-		(*C.self_verifiable_credential)(credential),
+		b.ptr,
+		credential.ptr,
 	)
 
 	return b
@@ -71,75 +115,52 @@ func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *P
 // Finish generates and prepares the presentation for being signed by an account
 func (b *PresentationBuilder) Finish() (*Presentation, error) {
 	var presentation *C.self_presentation
-	presentationPtr := &presentation
 
 	status := C.self_presentation_builder_finish(
-		(*C.self_presentation_builder)(b),
-		presentationPtr,
+		b.ptr,
+		&presentation,
 	)
 
 	if status > 0 {
 		return nil, errors.New("failed to create presentation")
 	}
 
-	runtime.SetFinalizer(presentationPtr, func(presentation **C.self_presentation) {
-		C.self_presentation_destroy(
-			*presentation,
-		)
-	})
-
-	return (*Presentation)(*presentationPtr), nil
+	return newPresentation(presentation), nil
 }
 
 // PresentationType returns the type of presentation
-func (p *VerifiablePresentation) PresentationType() *PresentationTypeCollection {
+func (p *VerifiablePresentation) PresentationType() []string {
 	collection := C.self_verifiable_presentation_presentation_type(
-		(*C.self_verifiable_presentation)(p),
+		p.ptr,
 	)
 
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_presentation_type) {
-		C.self_collection_presentation_type_destroy(
-			*collection,
-		)
-	})
+	presentationType := fromPresentationTypeCollection(collection)
 
-	return (*PresentationTypeCollection)(collection)
+	C.self_collection_presentation_type_destroy(
+		collection,
+	)
+
+	return presentationType
 }
 
 // Holder returns the subject of the credential's holder
 func (p *VerifiablePresentation) Holder() *Address {
-	holder := C.self_verifiable_presentation_holder(
-		(*C.self_verifiable_presentation)(p),
-	)
-
-	runtime.SetFinalizer(&holder, func(address **C.self_credential_address) {
-		C.self_credential_address_destroy(
-			*address,
-		)
-	})
-
-	return (*Address)(holder)
+	return newAddress(C.self_verifiable_presentation_holder(
+		p.ptr,
+	))
 }
 
 // Credential returns the verifiable credentials contained in the presentation
-func (p *VerifiablePresentation) Credentials() *VerifiableCredentialCollection {
-	collection := C.self_verifiable_presentation_credentials(
-		(*C.self_verifiable_presentation)(p),
-	)
-
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_verifiable_credential) {
-		C.self_collection_verifiable_credential_destroy(
-			*collection,
-		)
-	})
-
-	return (*VerifiableCredentialCollection)(collection)
+func (p *VerifiablePresentation) Credentials() []*VerifiableCredential {
+	return fromVerifiableCredentialCollection(C.self_verifiable_presentation_credentials(
+		p.ptr,
+	))
 }
 
 // Validate validates the contents of the presentation and it's signatures
 func (p *VerifiablePresentation) Validate() error {
 	status := C.self_verifiable_presentation_validate(
-		(*C.self_verifiable_presentation)(p),
+		p.ptr,
 	)
 
 	if status > 0 {
@@ -149,44 +170,64 @@ func (p *VerifiablePresentation) Validate() error {
 	return nil
 }
 
-func NewPresentationTypeCollection() *PresentationTypeCollection {
-	collection := C.self_collection_presentation_type_init()
+// Encode returns a json encoded verifiable presentation
+func (p *VerifiablePresentation) Encode() ([]byte, error) {
+	var encodedPresentationBuffer *C.self_encoded_buffer
+	encodedPresentationBufferPtr := &encodedPresentationBuffer
 
-	runtime.SetFinalizer(&collection, func(collection **C.self_collection_presentation_type) {
-		C.self_collection_presentation_type_destroy(
-			*collection,
-		)
-	})
-
-	return (*PresentationTypeCollection)(collection)
-}
-
-func newPresentationTypeCollection() *PresentationTypeCollection {
-	return (*PresentationTypeCollection)(C.self_collection_presentation_type_init())
-}
-
-func (c *PresentationTypeCollection) Length() int {
-	return int(C.self_collection_presentation_type_len(
-		(*C.self_collection_presentation_type)(c),
-	))
-}
-
-func (c *PresentationTypeCollection) Get(index int) string {
-	return C.GoString(C.self_collection_presentation_type_at(
-		(*C.self_collection_presentation_type)(c),
-		C.size_t(index),
-	))
-}
-
-func (c *PresentationTypeCollection) Append(element string) *PresentationTypeCollection {
-	elementC := C.CString(element)
-
-	C.self_collection_presentation_type_append(
-		(*C.self_collection_presentation_type)(c),
-		elementC,
+	status := C.self_verifiable_presentation_encode(
+		p.ptr,
+		encodedPresentationBufferPtr,
 	)
 
-	C.free(unsafe.Pointer(elementC))
+	if status > 0 {
+		return nil, errors.New("failed to encode presentation")
+	}
 
-	return c
+	encodedPresentation := C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(*encodedPresentationBufferPtr)),
+		C.int(C.self_encoded_buffer_len(*encodedPresentationBufferPtr)),
+	)
+
+	C.self_encoded_buffer_destroy(
+		*encodedPresentationBufferPtr,
+	)
+
+	return encodedPresentation, nil
+}
+
+func toPresentationTypeCollection(presentationType []string) *C.self_collection_presentation_type {
+	collection := C.self_collection_presentation_type_init()
+
+	for i := 0; i < len(presentationType); i++ {
+		typ := C.CString(presentationType[i])
+
+		C.self_collection_presentation_type_append(
+			collection,
+			typ,
+		)
+
+		C.free(unsafe.Pointer(typ))
+	}
+
+	return collection
+}
+
+func fromPresentationTypeCollection(collection *C.self_collection_presentation_type) []string {
+	collectionLen := int(C.self_collection_presentation_type_len(
+		collection,
+	))
+
+	presentationType := make([]string, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_presentation_type_at(
+			collection,
+			C.size_t(i),
+		)
+
+		presentationType[i] = C.GoString(ptr)
+	}
+
+	return presentationType
 }

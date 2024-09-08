@@ -15,12 +15,31 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair"
 )
 
-type PublicKey C.self_signing_public_key
+type PublicKey struct {
+	ptr *C.self_signing_public_key
+}
+
+func newSigningPublicKey(ptr *C.self_signing_public_key) *PublicKey {
+	p := &PublicKey{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(p, func(p *PublicKey) {
+		C.self_signing_public_key_destroy(
+			p.ptr,
+		)
+	})
+
+	return p
+}
+
+func signingPublicKeyPtr(p *PublicKey) *C.self_signing_public_key {
+	return p.ptr
+}
 
 // FromAddress converts a hex address to a public key
 func FromAddress(hex string) *PublicKey {
-	var public *C.self_signing_public_key
-	publicPtr := &public
+	var ptr *C.self_signing_public_key
 
 	hexBuf := (*C.uint8_t)(C.CBytes([]byte(hex)))
 	hexLen := C.size_t(len(hex))
@@ -30,7 +49,7 @@ func FromAddress(hex string) *PublicKey {
 	}()
 
 	status := C.self_signing_public_key_decode(
-		publicPtr,
+		&ptr,
 		hexBuf,
 		hexLen,
 	)
@@ -39,19 +58,12 @@ func FromAddress(hex string) *PublicKey {
 		return nil
 	}
 
-	runtime.SetFinalizer(publicPtr, func(public **C.self_signing_public_key) {
-		C.self_signing_public_key_destroy(
-			*public,
-		)
-	})
-
-	return (*PublicKey)(*publicPtr)
+	return newSigningPublicKey(ptr)
 }
 
 // FromBytes constructs a public key from bytes
 func FromBytes(data []byte) *PublicKey {
-	var public *C.self_signing_public_key
-	publicPtr := &public
+	var ptr *C.self_signing_public_key
 
 	dataBuf := (*C.uint8_t)(C.CBytes(data))
 	dataLen := C.size_t(len(data))
@@ -61,7 +73,7 @@ func FromBytes(data []byte) *PublicKey {
 	}()
 
 	status := C.self_signing_public_key_from_bytes(
-		publicPtr,
+		&ptr,
 		dataBuf,
 		dataLen,
 	)
@@ -70,13 +82,7 @@ func FromBytes(data []byte) *PublicKey {
 		return nil
 	}
 
-	runtime.SetFinalizer(publicPtr, func(public **C.self_signing_public_key) {
-		C.self_signing_public_key_destroy(
-			*public,
-		)
-	})
-
-	return (*PublicKey)(*publicPtr)
+	return newSigningPublicKey(ptr)
 }
 
 // Type returns the type of key
@@ -90,7 +96,7 @@ func (p *PublicKey) String() string {
 	defer C.free(encodedPtr)
 
 	status := C.self_signing_public_key_encode(
-		(*C.self_signing_public_key)(p),
+		p.ptr,
 		(*C.uint8_t)(encodedPtr),
 		66,
 	)
@@ -113,7 +119,7 @@ func (p *PublicKey) Bytes() []byte {
 	defer C.free(bytesPtr)
 
 	status := C.self_signing_public_key_as_bytes(
-		(*C.self_signing_public_key)(p),
+		p.ptr,
 		(*C.uint8_t)(bytesPtr),
 		33,
 	)
@@ -130,37 +136,36 @@ func (p *PublicKey) Bytes() []byte {
 	return bytes
 }
 
-type PublicKeyCollection C.self_collection_signing_public_key
-
-func NewPublicKeyCollection() *PublicKeyCollection {
+/*
+func toPublicKeyCollection(keys []*PublicKey) *C.self_collection_signing_public_key {
 	collection := C.self_collection_signing_public_key_init()
 
-	runtime.SetFinalizer(&collection, func(collectionPtr **C.self_collection_signing_public_key) {
-		C.self_collection_signing_public_key_destroy(
-			*collectionPtr,
+	for i := 0; i < len(keys); i++ {
+		C.self_collection_signing_public_key_append(
+			collection,
+			keys[i].ptr,
 		)
-	})
+	}
 
-	return (*PublicKeyCollection)(collection)
+	return collection
 }
+*/
 
-func (c *PublicKeyCollection) Length() int {
-	return int(C.self_collection_signing_public_key_len(
-		(*C.self_collection_signing_public_key)(c),
+func fromSigningPublicKeyCollection(collection *C.self_collection_signing_public_key) []*PublicKey {
+	collectionLen := int(C.self_collection_signing_public_key_len(
+		collection,
 	))
-}
 
-func (c *PublicKeyCollection) Get(index int) *PublicKey {
-	publicKey := C.self_collection_signing_public_key_at(
-		(*C.self_collection_signing_public_key)(c),
-		C.size_t(index),
-	)
+	keys := make([]*PublicKey, collectionLen)
 
-	runtime.SetFinalizer(&publicKey, func(publicKey **C.self_signing_public_key) {
-		C.self_signing_public_key_destroy(
-			*publicKey,
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_signing_public_key_at(
+			collection,
+			C.size_t(i),
 		)
-	})
 
-	return (*PublicKey)(publicKey)
+		keys[i] = newSigningPublicKey(ptr)
+	}
+
+	return keys
 }

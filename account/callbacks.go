@@ -97,7 +97,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -108,6 +107,24 @@ import (
 
 var responseOffset int64
 var responseCallbacks sync.Map
+
+//go:linkname newContent github.com/joinself/self-go-sdk-next/message.newContent
+func newContent(m *C.self_message_content) *message.Content
+
+//go:linkname newMessage github.com/joinself/self-go-sdk-next/message.newMessage
+func newMessage(e *C.self_message) *message.Message
+
+//go:linkname newCommit github.com/joinself/self-go-sdk-next/message.newCommit
+func newCommit(e *C.self_commit) *message.Commit
+
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/message.newKeyPackage
+func newKeyPackage(e *C.self_key_package) *message.KeyPackage
+
+//go:linkname newProposal github.com/joinself/self-go-sdk-next/message.newProposal
+func newProposal(e *C.self_proposal) *message.Proposal
+
+//go:linkname newWelcome github.com/joinself/self-go-sdk-next/message.newWelcome
+func newWelcome(e *C.self_welcome) *message.Welcome
 
 func accountCallbacks() *C.self_account_callbacks {
 	return C.account_callbacks()
@@ -129,32 +146,22 @@ func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
 
 //export goOnMessage
 func goOnMessage(user_data unsafe.Pointer, msg *C.cself_message_t) {
-	runtime.SetFinalizer(&msg, func(msg **C.self_message) {
-		C.self_message_destroy(
-			*msg,
-		)
-	})
+	account := (*Account)(user_data)
 
-	(*Account)(user_data).callbacks.OnMessage(
-		(*Account)(user_data),
-		(*message.Message)(msg),
+	account.callbacks.OnMessage(
+		account,
+		newMessage(msg),
 	)
 }
 
 //export goOnCommit
 func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
-	runtime.SetFinalizer(&commit, func(commit **C.self_commit) {
-		C.self_commit_destroy(
-			*commit,
-		)
-	})
-
 	account := (*Account)(user_data)
 
 	if account.callbacks.OnCommit != nil {
 		account.callbacks.OnCommit(
 			(*Account)(user_data),
-			(*message.Commit)(commit),
+			newCommit(commit),
 		)
 
 		return
@@ -163,47 +170,26 @@ func goOnCommit(user_data unsafe.Pointer, commit *C.cself_commit_t) {
 
 //export goOnKeyPackage
 func goOnKeyPackage(user_data unsafe.Pointer, keyPackage *C.cself_key_package_t) {
-	runtime.SetFinalizer(&keyPackage, func(keyPackage **C.self_key_package) {
-		C.self_key_package_destroy(
-			*keyPackage,
-		)
-	})
-
 	account := (*Account)(user_data)
 
 	if account.callbacks.OnKeyPackage != nil {
 		account.callbacks.OnKeyPackage(
-			(*Account)(user_data),
-			(*message.KeyPackage)(keyPackage),
+			account,
+			newKeyPackage(keyPackage),
 		)
 
 		return
-	}
-
-	_, err := account.ConnectionEstablish(
-		(*signing.PublicKey)(C.self_key_package_to_address(keyPackage)),
-		(*message.KeyPackage)(keyPackage),
-	)
-
-	if err != nil {
-		panic(err)
 	}
 }
 
 //export goOnProposal
 func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
-	runtime.SetFinalizer(&proposal, func(proposal **C.self_proposal) {
-		C.self_proposal_destroy(
-			*proposal,
-		)
-	})
-
 	account := (*Account)(user_data)
 
 	if account.callbacks.OnProposal != nil {
 		account.callbacks.OnProposal(
-			(*Account)(user_data),
-			(*message.Proposal)(proposal),
+			account,
+			newProposal(proposal),
 		)
 
 		return
@@ -212,30 +198,15 @@ func goOnProposal(user_data unsafe.Pointer, proposal *C.cself_proposal_t) {
 
 //export goOnWelcome
 func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
-	runtime.SetFinalizer(&welcome, func(welcome **C.self_welcome) {
-		C.self_welcome_destroy(
-			*welcome,
-		)
-	})
-
 	account := (*Account)(user_data)
 
 	if account.callbacks.OnWelcome != nil {
 		account.callbacks.OnWelcome(
-			(*Account)(user_data),
-			(*message.Welcome)(welcome),
+			account,
+			newWelcome(welcome),
 		)
 
 		return
-	}
-
-	_, err := account.ConnectionAccept(
-		(*signing.PublicKey)(C.self_welcome_to_address(welcome)),
-		(*message.Welcome)(welcome),
-	)
-
-	if err != nil {
-		panic(err)
 	}
 }
 
@@ -284,8 +255,8 @@ func accountMessageSendAsync(account *Account, toAddress *signing.PublicKey, con
 
 	C.c_self_account_message_send_async(
 		account.account,
-		(*C.self_signing_public_key)(toAddress),
-		(*C.self_message_content)(content),
+		signingPublicKeyPtr(toAddress),
+		contentPtr(content),
 		unsafe.Pointer(&offset),
 	)
 }

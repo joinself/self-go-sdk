@@ -14,18 +14,37 @@ import (
 	"unsafe"
 )
 
-type Object C.self_object
+type Object struct {
+	ptr *C.self_object
+}
+
+func newObject(ptr *C.self_object) *Object {
+	o := &Object{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(o, func(o *Object) {
+		C.self_object_destroy(
+			o.ptr,
+		)
+	})
+
+	return o
+}
+
+func objectPtr(o *Object) *C.self_object {
+	return o.ptr
+}
 
 func Encrypted(mime string, data []byte) (*Object, error) {
 	var object *C.self_object
-	objectPtr := &object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.size_t(len(data))
 
 	status := C.self_object_create_encrypted(
-		objectPtr,
+		&object,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
 		dataLen,
@@ -38,25 +57,18 @@ func Encrypted(mime string, data []byte) (*Object, error) {
 		return nil, errors.New("object creation failed")
 	}
 
-	runtime.SetFinalizer(objectPtr, func(object **C.self_object) {
-		C.self_object_destroy(
-			*object,
-		)
-	})
-
-	return (*Object)(*objectPtr), nil
+	return newObject(object), nil
 }
 
 func Unencrypted(mime string, data []byte) (*Object, error) {
 	var object *C.self_object
-	objectPtr := &object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.size_t(len(data))
 
 	status := C.self_object_create_unencrypted(
-		objectPtr,
+		&object,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
 		dataLen,
@@ -69,20 +81,14 @@ func Unencrypted(mime string, data []byte) (*Object, error) {
 		return nil, errors.New("object creation failed")
 	}
 
-	runtime.SetFinalizer(objectPtr, func(object **C.self_object) {
-		C.self_object_destroy(
-			*object,
-		)
-	})
-
-	return (*Object)(*objectPtr), nil
+	return newObject(object), nil
 }
 
 // Id returns the id hash of the encrypted data
 func (o *Object) Id() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_object_id(
-			(*C.self_object)(o),
+			o.ptr,
 		)),
 		32,
 	)
@@ -92,7 +98,7 @@ func (o *Object) Id() []byte {
 func (o *Object) MimeType() string {
 	return C.GoString(
 		C.self_object_mime(
-			(*C.self_object)(o),
+			o.ptr,
 		),
 	)
 }
@@ -100,7 +106,7 @@ func (o *Object) MimeType() string {
 // Key returns the objects encryption key or nil if not present
 func (o *Object) Key() []byte {
 	key := C.self_object_key(
-		(*C.self_object)(o),
+		o.ptr,
 	)
 
 	if key == nil {
@@ -117,10 +123,10 @@ func (o *Object) Key() []byte {
 func (o *Object) Data() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_object_data_buf(
-			(*C.self_object)(o),
+			o.ptr,
 		)),
 		C.int(C.self_object_data_len(
-			(*C.self_object)(o),
+			o.ptr,
 		)),
 	)
 }
