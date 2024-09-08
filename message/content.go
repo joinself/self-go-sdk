@@ -48,13 +48,17 @@ func newContent(ptr *C.self_message_content) *Content {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(&c, func(c *Content) {
+	runtime.SetFinalizer(c, func(c *Content) {
 		C.self_message_content_destroy(
 			c.ptr,
 		)
 	})
 
 	return c
+}
+
+func contentPtr(c *Content) *C.self_message_content {
+	return c.ptr
 }
 
 func ContentType(message *Message) Type {

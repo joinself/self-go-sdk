@@ -23,7 +23,7 @@ func newChat(ptr *C.self_message_content_chat) *Chat {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(&c, func(c *Chat) {
+	runtime.SetFinalizer(c, func(c *Chat) {
 		C.self_message_content_chat_destroy(
 			c.ptr,
 		)
@@ -41,7 +41,7 @@ func newChatBuilder(ptr *C.self_message_content_chat_builder) *ChatBuilder {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(&c, func(c *ChatBuilder) {
+	runtime.SetFinalizer(c, func(c *ChatBuilder) {
 		C.self_message_content_chat_builder_destroy(
 			c.ptr,
 		)

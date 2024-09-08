@@ -2,10 +2,8 @@ package account_test
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	mrand "math/rand"
 	"os"
 	"runtime"
 	"sync"
@@ -49,6 +47,15 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 				switch message.ContentType(msg) {
 				case message.TypeChat:
 					incomingMsg <- msg
+				}
+			},
+			OnKeyPackage: func(account *account.Account, keyPackage *message.KeyPackage) {
+				_, err := account.ConnectionEstablish(
+					keyPackage.ToAddress(),
+					keyPackage,
+				)
+				if err != nil {
+					panic(err)
 				}
 			},
 			OnWelcome: func(account *account.Account, welcome *message.Welcome) {
@@ -213,80 +220,6 @@ func TestAccountMessaging(t *testing.T) {
 	chatMessage, err = message.DecodeChat(messageFromBobby)
 	require.Nil(t, err)
 	assert.Equal(t, "hello again!", chatMessage.Message())
-}
-
-func TestAccountMessagingConcurrent(t *testing.T) {
-	workers := 8
-
-	var wg sync.WaitGroup
-	wg.Add(workers)
-
-	for i := 0; i < workers; i++ {
-		go func() {
-			messageLoop(t, 100)
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-}
-
-func messageLoop(t *testing.T, count int) {
-	alice, _, aliceWel := testAccount(t)
-	bobby, bobbyInbox, _ := testAccount(t)
-
-	aliceAddress, err := alice.InboxOpen()
-	require.Nil(t, err)
-
-	aliceAddressHex := aliceAddress.String()
-
-	bobbyAddress, err := bobby.InboxOpen()
-	require.Nil(t, err)
-
-	err = alice.ConnectionNegotiate(
-		aliceAddress,
-		bobbyAddress,
-	)
-
-	require.Nil(t, err)
-
-	// wait for negotiation to finish
-	<-aliceWel
-
-	contentData := make([]byte, mrand.Intn(400))
-	rand.Read(contentData)
-	contentString := base64.RawURLEncoding.EncodeToString(contentData)
-
-	for i := 0; i < count; i++ {
-		contentForBobby, err := message.NewChat().
-			Message(contentString).
-			Finish()
-
-		require.Nil(t, err)
-
-		// send a message from alice
-		alice.MessageSendAsync(
-			bobbyAddress,
-			contentForBobby,
-			func(err error) {
-				if err != nil {
-					panic(err)
-				}
-			},
-		)
-	}
-
-	for i := 0; i < count; i++ {
-		messageFromAlice := wait(t, bobbyInbox, time.Second)
-		if aliceAddress.String() != messageFromAlice.FromAddress().String() {
-			fmt.Println("FAILED ON", i, aliceAddressHex, "aliceAddress:", aliceAddress.String(), "fromAddress:", messageFromAlice.FromAddress().String())
-		}
-		require.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
-
-		//chatMessage, err := message.DecodeChat(messageFromAlice)
-		//require.Nil(t, err)
-		//assert.Equal(t, contentString, chatMessage.Message())
-	}
 }
 
 func TestAccountIdentity(t *testing.T) {

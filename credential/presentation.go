@@ -40,6 +40,10 @@ func newPresentation(ptr *C.self_presentation) *Presentation {
 	return p
 }
 
+func presentationPtr(p *Presentation) *C.self_presentation {
+	return p.ptr
+}
+
 type PresentationBuilder struct {
 	ptr *C.self_presentation_builder
 }
@@ -60,6 +64,12 @@ func newPresentationBuilder(ptr *C.self_presentation_builder) *PresentationBuild
 
 type VerifiablePresentation struct {
 	ptr *C.self_verifiable_presentation
+}
+
+func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *VerifiablePresentation {
+	return &VerifiablePresentation{
+		ptr: ptr,
+	}
 }
 
 // NewPresentation creates a new presentation builder

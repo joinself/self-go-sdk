@@ -24,7 +24,7 @@ const (
 	QREncodingUnicode QREncoding = C.QR_UNICODE
 )
 
-//go:linkname newSigningPublicKey signing.newSigningPublicKey
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
 func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
 
 type AnonymousMessage struct {
@@ -81,6 +81,10 @@ func newKeyPackage(ptr *C.self_key_package) *KeyPackage {
 	return e
 }
 
+func keyPackagePtr(k *KeyPackage) *C.self_key_package {
+	return k.ptr
+}
+
 type Message struct {
 	ptr *C.self_message
 }
@@ -133,6 +137,10 @@ func newWelcome(ptr *C.self_welcome) *Welcome {
 	})
 
 	return e
+}
+
+func welcomePtr(w *Welcome) *C.self_welcome {
+	return w.ptr
 }
 
 func NewAnonymousMessage(content *Content) *AnonymousMessage {

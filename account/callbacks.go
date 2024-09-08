@@ -108,22 +108,22 @@ import (
 var responseOffset int64
 var responseCallbacks sync.Map
 
-//go:linkname newContent message.newContent
+//go:linkname newContent github.com/joinself/self-go-sdk-next/message.newContent
 func newContent(m *C.self_message_content) *message.Content
 
-//go:linkname newMessage message.newMessage
+//go:linkname newMessage github.com/joinself/self-go-sdk-next/message.newMessage
 func newMessage(e *C.self_message) *message.Message
 
-//go:linkname newCommit message.newCommit
+//go:linkname newCommit github.com/joinself/self-go-sdk-next/message.newCommit
 func newCommit(e *C.self_commit) *message.Commit
 
-//go:linkname newKeyPackage message.newKeyPackage
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/message.newKeyPackage
 func newKeyPackage(e *C.self_key_package) *message.KeyPackage
 
-//go:linkname newProposal message.newProposal
+//go:linkname newProposal github.com/joinself/self-go-sdk-next/message.newProposal
 func newProposal(e *C.self_proposal) *message.Proposal
 
-//go:linkname newWelcome message.newWelcome
+//go:linkname newWelcome github.com/joinself/self-go-sdk-next/message.newWelcome
 func newWelcome(e *C.self_welcome) *message.Welcome
 
 func accountCallbacks() *C.self_account_callbacks {

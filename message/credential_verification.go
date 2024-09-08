@@ -18,7 +18,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/object"
 )
 
-//go:linkname objectPtr object.objectPtr
+//go:linkname objectPtr github.com/joinself/self-go-sdk-next/object.objectPtr
 func objectPtr(ptr *object.Object) *C.self_object
 
 type CredentialVerificationRequest struct {

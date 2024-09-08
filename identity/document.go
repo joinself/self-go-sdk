@@ -17,10 +17,10 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
-//go:linkname signingPublicKeyPtr signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
-//go:linkname exchangePublicKeyPtr exchange.exchangePublicKeyPtr
+//go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/exchange.exchangePublicKeyPtr
 func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
 
 // Document a collection of public keys tied to an identity
@@ -28,7 +28,7 @@ type Document struct {
 	ptr *C.self_identity_document
 }
 
-func newDocument(ptr *C.self_identity_document) *Document {
+func newIdentityDocument(ptr *C.self_identity_document) *Document {
 	d := &Document{
 		ptr: ptr,
 	}
@@ -42,13 +42,13 @@ func newDocument(ptr *C.self_identity_document) *Document {
 	return d
 }
 
-func documentPtr(d *Document) *C.self_identity_document {
+func identityDocumentPtr(d *Document) *C.self_identity_document {
 	return d.ptr
 }
 
 // NewDocument creates a new identity document
 func NewDocument() *Document {
-	return newDocument(C.self_identity_document_init())
+	return newIdentityDocument(C.self_identity_document_init())
 }
 
 // HasRolesAt returns true if a key had a given set of roles at a time

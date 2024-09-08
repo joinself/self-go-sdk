@@ -47,6 +47,10 @@ func newOperation(ptr *C.self_identity_operation) *Operation {
 	return o
 }
 
+func operationPtr(o *Operation) *C.self_identity_operation {
+	return o.ptr
+}
+
 type OperationBuilder struct {
 	ptr *C.self_identity_operation_builder
 }

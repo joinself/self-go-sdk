@@ -151,7 +151,7 @@ func toPublicKeyCollection(keys []*PublicKey) *C.self_collection_signing_public_
 }
 */
 
-func fromPublicKeyColleciton(collection *C.self_collection_signing_public_key) []*PublicKey {
+func fromSigningPublicKeyCollection(collection *C.self_collection_signing_public_key) []*PublicKey {
 	collectionLen := int(C.self_collection_signing_public_key_len(
 		collection,
 	))

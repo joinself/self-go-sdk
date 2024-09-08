@@ -28,7 +28,7 @@ var (
 	CredentialTypeApplicationPublisher = []string{"VerifiableCredential", "ApplicationPublisherCredential"}
 )
 
-//go:linkname newObject object.newObject
+//go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
 // Credential an unsigned credential
@@ -48,6 +48,10 @@ func newCredential(ptr *C.self_credential) *Credential {
 	})
 
 	return c
+}
+
+func credentialPtr(c *Credential) *C.self_credential {
+	return c.ptr
 }
 
 type CredentialBuilder struct {
@@ -84,6 +88,10 @@ func newVerifiableCredential(ptr *C.self_verifiable_credential) *VerifiableCrede
 	})
 
 	return c
+}
+
+func verifiableCredentialPtr(v *VerifiableCredential) *C.self_verifiable_credential {
+	return v.ptr
 }
 
 type CredentialPresentationDetail struct {

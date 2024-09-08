@@ -43,58 +43,58 @@ func unpin(pointer *Account) {
 	mu.Unlock()
 }
 
-//go:linkname newSigningPublicKey signing.newSigningPublicKey
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
 func newSigningPublicKey(ptr *C.self_signing_public_key) *signing.PublicKey
 
-//go:linkname signingPublicKeyPtr signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
-//go:linkname newExchangePublicKey exchange.newExchangePublicKey
+//go:linkname newExchangePublicKey github.com/joinself/self-go-sdk-next/keypair/exchange.newExchangePublicKey
 func newExchangePublicKey(ptr *C.self_exchange_public_key) *exchange.PublicKey
 
-//go:linkname exchangePublicKeyPtr exchange.exchangePublicKeyPtr
+//go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/exchange.exchangePublicKeyPtr
 func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
 
-//go:linkname newIdentityDocument identity.newIdentityDocument
+//go:linkname newIdentityDocument github.com/joinself/self-go-sdk-next/identity.newIdentityDocument
 func newIdentityDocument(ptr *C.self_identity_document) *identity.Document
 
-//go:linkname operationPtr identity.operationPtr
+//go:linkname operationPtr github.com/joinself/self-go-sdk-next/identity.operationPtr
 func operationPtr(o *identity.Operation) *C.self_identity_operation
 
-//go:linkname credentialPtr credential.credentialPtr
+//go:linkname credentialPtr github.com/joinself/self-go-sdk-next/credential.credentialPtr
 func credentialPtr(c *credential.Credential) *C.self_credential
 
-//go:linkname presentationPtr credential.presentationPtr
+//go:linkname presentationPtr github.com/joinself/self-go-sdk-next/credential.presentationPtr
 func presentationPtr(c *credential.Presentation) *C.self_presentation
 
-//go:linkname newVerfiablePresentation credential.newVerfiablePresentation
+//go:linkname newVerfiablePresentation github.com/joinself/self-go-sdk-next/credential.newVerfiablePresentation
 func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *credential.VerifiablePresentation
 
-//go:linkname newVerifiableCredential credential.newVerifiableCredential
+//go:linkname newVerifiableCredential github.com/joinself/self-go-sdk-next/credential.newVerifiableCredential
 func newVerifiableCredential(ptr *C.self_verifiable_credential) *credential.VerifiableCredential
 
-//go:linkname verifiableCredentialPtr credential.verifiableCredentialPtr
+//go:linkname verifiableCredentialPtr github.com/joinself/self-go-sdk-next/credential.verifiableCredentialPtr
 func verifiableCredentialPtr(v *credential.VerifiableCredential) *C.self_verifiable_credential
 
-//go:linkname objectPtr object.objectPtr
+//go:linkname objectPtr github.com/joinself/self-go-sdk-next/object.objectPtr
 func objectPtr(o *object.Object) *C.self_object
 
-//go:linkname keyPackagePtr message.keyPackagePtr
+//go:linkname keyPackagePtr github.com/joinself/self-go-sdk-next/message.keyPackagePtr
 func keyPackagePtr(k *message.KeyPackage) *C.self_key_package
 
-//go:linkname welcomePtr message.welcomePtr
+//go:linkname welcomePtr github.com/joinself/self-go-sdk-next/message.welcomePtr
 func welcomePtr(w *message.Welcome) *C.self_welcome
 
-//go:linkname contentPtr message.contentPtr
+//go:linkname contentPtr github.com/joinself/self-go-sdk-next/message.contentPtr
 func contentPtr(c *message.Content) *C.self_message_content
 
-//go:linkname fromSigningPublicKeyCollection signing.fromSigningPublicKeyCollection
+//go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk-next/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
-//go:linkname fromVerifiableCredentialCollection credential.fromVerifiableCredentialCollection
+//go:linkname fromVerifiableCredentialCollection github.com/joinself/self-go-sdk-next/credential.fromVerifiableCredentialCollection
 func fromVerifiableCredentialCollection(ptr *C.self_collection_verifiable_credential) []*credential.VerifiableCredential
 
-//go:linkname toCredentialTypeCollection credential.toCredentialTypeCollection
+//go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk-next/credential.toCredentialTypeCollection
 func toCredentialTypeCollection(c []string) *C.self_collection_credential_type
 
 // Account a self account

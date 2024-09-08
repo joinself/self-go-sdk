@@ -15,7 +15,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
-//go:linkname signingPublicKeyPtr keypair.signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
 type Address struct {
@@ -27,7 +27,7 @@ func newAddress(ptr *C.self_credential_address) *Address {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(&a, func(a *Address) {
+	runtime.SetFinalizer(a, func(a *Address) {
 		C.self_credential_address_destroy(
 			a.ptr,
 		)
