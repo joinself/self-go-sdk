@@ -511,3 +511,41 @@ func fromPresentationDetailCollection(collection *C.self_collection_credential_p
 
 	return details
 }
+
+func fromCredentialVerificationEvidenceCollection(collection *C.self_collection_credential_verification_evidence) []*CredentialVerificationEvidence {
+	collectionLen := int(C.self_collection_credential_verification_evidence_len(
+		collection,
+	))
+
+	details := make([]*CredentialVerificationEvidence, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_verification_evidence_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialVerificationEvidence(ptr)
+	}
+
+	return details
+}
+
+func fromCredentialVerificationParameterCollection(collection *C.self_collection_credential_verification_parameter) []*CredentialVerificationParameter {
+	collectionLen := int(C.self_collection_credential_verification_parameter_len(
+		collection,
+	))
+
+	details := make([]*CredentialVerificationParameter, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_verification_parameter_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialVerificationParameter(ptr)
+	}
+
+	return details
+}
