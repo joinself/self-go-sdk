@@ -124,7 +124,7 @@ func newCredentialPresentationResponseBuilder(ptr *C.self_message_content_creden
 
 // DecodeCredentialPresentationRequest decodes a message to a credential presentation request
 func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationRequest, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var credentialPresentationRequestContent *C.self_message_content_credential_presentation_request
 
@@ -247,7 +247,7 @@ func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
 
 // DecodeCredentialPresentationResponse decodes a message to a credential presentation response
 func DecodeCredentialPresentationResponse(msg *Message) (*CredentialPresentationResponse, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var credentialPresentationResponseContent *C.self_message_content_credential_presentation_response
 

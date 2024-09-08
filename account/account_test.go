@@ -315,9 +315,9 @@ func TestAccountIdentity(t *testing.T) {
 
 	keys, err := alice.KeychainSigningAssociatedWith(identityKey, identity.RoleInvocation)
 	require.Nil(t, err)
-	assert.Equal(t, keys.Length(), 1)
+	assert.Equal(t, len(keys), 1)
 
-	invocationKey = keys.Get(0)
+	invocationKey = keys[0]
 	require.NotNil(t, invocationKey)
 
 	document, err := alice.IdentityResolve(identityKey)
@@ -391,34 +391,34 @@ func TestAccountCredentials(t *testing.T) {
 
 	aliceIdentifiers, err := alice.IdentityList()
 	require.Nil(t, err)
-	require.Equal(t, aliceIdentifiers.Length(), 1)
+	require.Len(t, aliceIdentifiers, 1)
 
 	aliceKeys, err := alice.KeychainSigningAssociatedWith(
-		aliceIdentifiers.Get(0),
+		aliceIdentifiers[0],
 		identity.RoleAssertion,
 	)
 	require.Nil(t, err)
-	require.Equal(t, aliceKeys.Length(), 1)
+	require.Len(t, aliceKeys, 1)
 
 	bobbyIdentifiers, err := bobby.IdentityList()
 	require.Nil(t, err)
-	require.Equal(t, bobbyIdentifiers.Length(), 1)
+	require.Len(t, bobbyIdentifiers, 1)
 
 	bobbyKeys, err := bobby.KeychainSigningAssociatedWith(
-		bobbyIdentifiers.Get(0),
+		bobbyIdentifiers[0],
 		identity.RoleAssertion,
 	)
 	require.Nil(t, err)
-	require.Equal(t, bobbyKeys.Length(), 1)
+	require.Len(t, bobbyKeys, 1)
 
 	// generate a credential for bobby, issued by alice
 	passportCredential, err := credential.NewCredential().
 		CredentialType(credential.CredentialTypePassport).
-		CredentialSubject(credential.AddressAure(bobbyIdentifiers.Get(0))).
+		CredentialSubject(credential.AddressAure(bobbyIdentifiers[0])).
 		CredentialSubjectClaim("firstName", "bobby").
-		Issuer(credential.AddressAure(aliceIdentifiers.Get(0))).
+		Issuer(credential.AddressAure(aliceIdentifiers[0])).
 		ValidFrom(time.Now()).
-		SignWith(aliceKeys.Get(0), time.Now()).
+		SignWith(aliceKeys[0], time.Now()).
 		Finish()
 
 	require.Nil(t, err)
@@ -444,17 +444,17 @@ func TestAccountCredentials(t *testing.T) {
 	// retrieve the credential from bobbys account
 	verifiableCredentials, err := bobby.CredentialLookupByCredentialType(credential.CredentialTypePassport)
 	require.Nil(t, err)
-	require.Equal(t, 1, verifiableCredentials.Length())
+	require.Len(t, verifiableCredentials, 1)
 
 	passportPresentation, err := credential.NewPresentation().
 		Presentationtype(credential.PresentationTypePassport).
 		Holder(
 			credential.AddressAureWithKey(
-				bobbyIdentifiers.Get(0),
-				bobbyKeys.Get(0),
+				bobbyIdentifiers[0],
+				bobbyKeys[0],
 			),
 		).
-		CredentialAdd(verifiableCredentials.Get(0)).
+		CredentialAdd(verifiableCredentials[0]).
 		Finish()
 
 	require.Nil(t, err)
@@ -466,7 +466,7 @@ func TestAccountCredentials(t *testing.T) {
 	require.Nil(t, err)
 
 	credentials := passportVerifiablePresentation.Credentials()
-	assert.Equal(t, 1, credentials.Length())
+	assert.Len(t, credentials, 1)
 }
 
 func TestAccountPersistence(t *testing.T) {

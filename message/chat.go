@@ -52,7 +52,7 @@ func newChatBuilder(ptr *C.self_message_content_chat_builder) *ChatBuilder {
 
 // DeocodeChat decodes a chat message
 func DecodeChat(msg *Message) (*Chat, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var chatContent *C.self_message_content_chat
 

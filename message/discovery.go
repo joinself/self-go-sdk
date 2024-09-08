@@ -89,7 +89,7 @@ func newDiscoveryResponseBuilder(ptr *C.self_message_content_discovery_response_
 
 // DecodeDiscoveryRequest decodes a message to a discovery request
 func DecodeDiscoveryRequest(msg *Message) (*DiscoveryRequest, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var discoveryRequestContent *C.self_message_content_discovery_request
 
@@ -162,7 +162,7 @@ func (b *DiscoveryRequestBuilder) Finish() (*Content, error) {
 
 // DecodeDiscoveryResponse decodes a message to a discovery response
 func DecodeDiscoveryResponse(msg *Message) (*DiscoveryResponse, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var discoveryResponseContent *C.self_message_content_discovery_response
 

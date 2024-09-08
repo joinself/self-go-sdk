@@ -15,7 +15,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 )
 
-//go:linkname signingPublicKeyPtr signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr keypair.signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
 type Address struct {

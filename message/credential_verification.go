@@ -18,6 +18,9 @@ import (
 	"github.com/joinself/self-go-sdk-next/object"
 )
 
+//go:linkname objectPtr object.objectPtr
+func objectPtr(ptr *object.Object) *C.self_object
+
 type CredentialVerificationRequest struct {
 	ptr *C.self_message_content_credential_verification_request
 }
@@ -92,7 +95,7 @@ func newCredentialVerificationResponseBuilder(ptr *C.self_message_content_creden
 
 // DecodeCredentialVerificationRequest decodes a message to a credential verification request
 func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationRequest, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var credentialVerificationRequestContent *C.self_message_content_credential_verification_request
 
@@ -222,7 +225,7 @@ func (b *CredentialVerificationRequestBuilder) Evidence(evidenceType string, evi
 	C.self_message_content_credential_verification_request_builder_evidence(
 		b.ptr,
 		evidenceTypeC,
-		(*C.self_object)(evidence),
+		objectPtr(evidence),
 	)
 
 	C.free(unsafe.Pointer(evidenceTypeC))
@@ -276,7 +279,7 @@ func (b *CredentialVerificationRequestBuilder) Finish() (*Content, error) {
 
 // DecodeCredentialVerificationResponse decodes a message to a credential verification response
 func DecodeCredentialVerificationResponse(msg *Message) (*CredentialVerificationResponse, error) {
-	content := C.self_message_message_content((*C.self_message)(msg))
+	content := C.self_message_message_content(msg.ptr)
 
 	var credentialVerificationResponseContent *C.self_message_content_credential_verification_response
 

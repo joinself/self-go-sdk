@@ -28,6 +28,9 @@ var (
 	CredentialTypeApplicationPublisher = []string{"VerifiableCredential", "ApplicationPublisherCredential"}
 )
 
+//go:linkname newObject object.newObject
+func newObject(ptr *C.self_object) *object.Object
+
 // Credential an unsigned credential
 type Credential struct {
 	ptr *C.self_credential
@@ -401,17 +404,9 @@ func (c *CredentialVerificationEvidence) EvidenceType() string {
 
 // Object returns the object that makes up the content of the evidence
 func (c *CredentialVerificationEvidence) Object() *object.Object {
-	obj := C.self_credential_verification_evidence_object(
+	return newObject(C.self_credential_verification_evidence_object(
 		c.ptr,
-	)
-
-	runtime.SetFinalizer(&obj, func(obj **C.self_object) {
-		C.self_object_destroy(
-			*obj,
-		)
-	})
-
-	return (*object.Object)(obj)
+	))
 }
 
 // ParameterType returns the parameter type

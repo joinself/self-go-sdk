@@ -58,7 +58,7 @@ func newContent(ptr *C.self_message_content) *Content {
 }
 
 func ContentType(message *Message) Type {
-	content := C.self_message_message_content((*C.self_message)(message))
+	content := C.self_message_message_content(message.ptr)
 
 	switch C.self_message_content_type_of(content) {
 	case C.CONTENT_CUSTOM:
