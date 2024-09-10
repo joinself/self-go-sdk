@@ -23,3 +23,8 @@ _examples/.env
 self.db
 self.db-shm
 self.db-wal
+
+examples/credentials/credentials
+examples/credentials/storage
+examples/discovery/discovery
+examples/discovery/storage
