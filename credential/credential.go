@@ -104,12 +104,9 @@ func newCredentialPresentationDetail(ptr *C.self_credential_presentation_detail)
 	}
 
 	runtime.SetFinalizer(c, func(c *CredentialPresentationDetail) {
-		// TODO add this
-		/*
-			C.self_credential_presentation_detail_destroy(
-				c.ptr,
-			)
-		*/
+		C.self_credential_presentation_detail_destroy(
+			c.ptr,
+		)
 	})
 
 	return c
@@ -312,7 +309,7 @@ func (c *VerifiableCredential) CredentialSubject() *Address {
 	))
 }
 
-// CredentialSubject returns the subject of the credential's address
+// CredentialSubjectClaim returns the one of the claims about the subject
 func (c *VerifiableCredential) CredentialSubjectClaim(claimKey string) (string, bool) {
 	key := C.CString(claimKey)
 
@@ -337,11 +334,45 @@ func (c *VerifiableCredential) CredentialSubjectClaim(claimKey string) (string, 
 	return string(claimValue), true
 }
 
+// CredentialSubjectClaims returns all of the claims about the subject
+func (c *VerifiableCredential) CredentialSubjectClaims() (map[string]interface{}, error) {
+	var claims map[string]interface{}
+
+	value := C.self_verifiable_credential_credential_subject_json(
+		c.ptr,
+	)
+
+	claimValue := C.GoBytes(
+		unsafe.Pointer(C.self_credential_claim_value_buf(value)),
+		C.int(C.self_credential_claim_value_len(value)),
+	)
+
+	C.self_credential_claim_value_destroy(value)
+
+	return claims, json.Unmarshal(claimValue, &claims)
+}
+
 // Issuer returns the address of the credential's issuer
 func (c *VerifiableCredential) Issuer() *Address {
 	return newAddress(C.self_verifiable_credential_issuer(
 		c.ptr,
 	))
+}
+
+// Signer returns the address of the credential's signer
+func (c *VerifiableCredential) Signer() (*Address, error) {
+	var signerAddress *C.self_credential_address
+
+	status := C.self_verifiable_credential_signer(
+		c.ptr,
+		&signerAddress,
+	)
+
+	if status > 0 {
+		return nil, errors.New("invalid signer address")
+	}
+
+	return newAddress(signerAddress), nil
 }
 
 // ValidFrom returns the time period that the credential is valid from
