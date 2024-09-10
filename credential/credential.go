@@ -264,6 +264,7 @@ func (b *CredentialBuilder) Finish() (*Credential, error) {
 	return newCredential(credential), nil
 }
 
+// DecodeVerifiableCredential decodes a verifiable credential from it's json form
 func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential, error) {
 	var verifiableCredential *C.self_verifiable_credential
 

@@ -143,12 +143,14 @@ func welcomePtr(w *Welcome) *C.self_welcome {
 	return w.ptr
 }
 
+// NewAnonymousMessage creates a new anonymous message from content
 func NewAnonymousMessage(content *Content) *AnonymousMessage {
 	return newAnonymousMessage(C.self_anonymous_message_init(
 		content.ptr,
 	))
 }
 
+// DecodeAnonymousMessage decodes an anonymous message
 func DecodeAnonymousMessage(data []byte) (*AnonymousMessage, error) {
 	var anonymousMessage *C.self_anonymous_message
 

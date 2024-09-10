@@ -47,12 +47,14 @@ func newAddress(ptr *C.self_credential_address) *Address {
 	return a
 }
 
+// AddressAure creates a new aure method address
 func AddressAure(address *signing.PublicKey) *Address {
 	return newAddress(C.self_credential_address_aure(
 		signingPublicKeyPtr(address),
 	))
 }
 
+// AddressAureWithKey creates a new aure method address with a signing key
 func AddressAureWithKey(address, key *signing.PublicKey) *Address {
 	return newAddress(C.self_credential_address_aure_with_key(
 		signingPublicKeyPtr(address),
@@ -60,12 +62,14 @@ func AddressAureWithKey(address, key *signing.PublicKey) *Address {
 	))
 }
 
+// AddressKey creates a new key method address
 func AddressKey(address *signing.PublicKey) *Address {
 	return newAddress(C.self_credential_address_key(
 		signingPublicKeyPtr(address),
 	))
 }
 
+// Method returns the method of the address
 func (a *Address) Method() Method {
 	switch C.self_credential_address_method(a.ptr) {
 	case C.METHOD_AURE:
@@ -77,10 +81,12 @@ func (a *Address) Method() Method {
 	}
 }
 
+// Address returs the address key of the address
 func (a *Address) Address() *signing.PublicKey {
 	return newSigningPublicKey(C.self_credential_address_address(a.ptr))
 }
 
+// SigningKey returns the signing key of the address
 func (a *Address) SigningKey() *signing.PublicKey {
 	sk := C.self_credential_address_signing_key(a.ptr)
 	if sk == nil {
@@ -90,6 +96,7 @@ func (a *Address) SigningKey() *signing.PublicKey {
 	return newSigningPublicKey(sk)
 }
 
+// String encodes the address to a string
 func (a *Address) String() string {
 	encodedAddressBuffer := C.self_credential_address_encode(
 		a.ptr,
