@@ -176,8 +176,8 @@ func main() {
 
 		// create a new request and store a reference to it
 		content, err = message.NewCredentialPresentationRequest().
-			Details(credential.LivenessCredential, "livenessImageHash").
-			Details(credential.EmailCredential, "emailAddress").
+			Details(credential.CredentialTypeLiveness, "livenessImageHash").
+			Details(credential.CredentialTypeEmail, "emailAddress").
 			Finish()
 
 		if err != nil {
