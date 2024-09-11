@@ -20,8 +20,8 @@ jobs:
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
 
-          curl -L -H "Authorization: token ${GH_TOKEN}" -H 'Accept: application/octet-stream' --output self-sdk_0.12.0_amd64.deb https://api.github.com/repos/joinself/self-c-sdk/releases/assets/191755046
-          apt install -y ./self-sdk_0.12.0_amd64.deb
+          curl -L -H "Authorization: token ${GH_TOKEN}" -H 'Accept: application/octet-stream' --output self-sdk_0.14.0_amd64.deb https://api.github.com/repos/joinself/self-c-sdk/releases/assets/192012870
+          apt install -y ./self-sdk_0.14.0_amd64.deb
 
           curl https://gotest-release.s3.amazonaws.com/gotest_linux > /usr/local/bin/gotest
           chmod +x /usr/local/bin/gotest
