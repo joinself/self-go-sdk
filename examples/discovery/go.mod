@@ -4,12 +4,11 @@ go 1.22.1
 
 require (
 	github.com/charmbracelet/log v0.4.0
-	github.com/joinself/self-go-sdk-next v0.0.0-20240908211452-472f030a703a
+	github.com/joinself/self-go-sdk-next v0.0.0-20240912062740-35ee72519693
 )
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/btcsuite/btcd/btcutil v1.1.5 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
