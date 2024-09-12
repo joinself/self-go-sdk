@@ -19,6 +19,14 @@ The official Self SDK for Go.
 go get github.com/joinself/self-go-sdk
 ```
 
+## Examples
+
+
+
+## Documentation
+
+
+
 ## Support
 
 Looking for help? Reach out to us at [support@joinself.com](mailto:support@joinself.com)
