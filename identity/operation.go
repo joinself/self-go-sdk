@@ -1,9 +1,9 @@
 package identity
 
 /*
-#cgo LDFLAGS: -lstdc++ -lm -ldl -Wl,--allow-multiple-definition
-#cgo darwin LDFLAGS: -lself_sdk
-#cgo linux LDFLAGS: -lself_sdk
+#cgo LDFLAGS: -lstdc++ -lm -ldl
+#cgo darwin LDFLAGS: -lself_sdk -framework CoreFoundation -framework SystemConfiguration
+#cgo linux LDFLAGS: -lself_sdk -Wl,--allow-multiple-definition
 #include <self-sdk.h>
 #include <stdlib.h>
 */

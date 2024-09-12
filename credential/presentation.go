@@ -1,8 +1,8 @@
 package credential
 
 /*
-#cgo LDFLAGS: -lstdc++ -lm -ldl -Wl,--allow-multiple-definition
-#cgo darwin LDFLAGS: -lself_sdk
+#cgo LDFLAGS: -lstdc++ -lm -ldl
+#cgo darwin LDFLAGS: -lself_sdk -framework CoreFoundation -framework SystemConfiguration
 #cgo linux LDFLAGS: -lself_sdk
 #include <self-sdk.h>
 #include <stdlib.h>
