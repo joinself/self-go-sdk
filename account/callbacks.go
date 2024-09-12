@@ -2,7 +2,7 @@ package account
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
-#cgo darwin LDFLAGS: -lself_sdk
+#cgo darwin LDFLAGS: -lself_sdk -framework CoreFoundation -framework SystemConfiguration
 #cgo linux LDFLAGS: -lself_sdk -Wl,--allow-multiple-definition
 #include <self-sdk.h>
 #include <stdlib.h>
@@ -25,39 +25,39 @@ extern void goOnWelcome(void*, cself_welcome_t*);
 extern void goOnLog(self_log_entry*);
 extern void goOnResponse(void*, self_status);
 
-void c_on_connect(void* user_data) {
+static void c_on_connect(void* user_data) {
   goOnConnect(user_data);
 }
 
-void c_on_disconnect(void* user_data, self_status reason) {
+static void c_on_disconnect(void* user_data, self_status reason) {
   goOnDisconnect(user_data, reason);
 }
 
-void c_on_message(void *user_data, self_message *message) {
+static void c_on_message(void *user_data, self_message *message) {
   goOnMessage(user_data, message);
 }
 
-void c_on_commit(void *user_data, self_commit *commit) {
+static void c_on_commit(void *user_data, self_commit *commit) {
   goOnCommit(user_data, commit);
 }
 
-void c_on_key_package(void *user_data, self_key_package *key_package) {
+static void c_on_key_package(void *user_data, self_key_package *key_package) {
   goOnKeyPackage(user_data, key_package);
 }
 
-void c_on_proposal(void *user_data, self_proposal *proposal) {
+static void c_on_proposal(void *user_data, self_proposal *proposal) {
   goOnProposal(user_data, proposal);
 }
 
-void c_on_welcome(void *user_data, self_welcome *welcome) {
+static void c_on_welcome(void *user_data, self_welcome *welcome) {
 	goOnWelcome(user_data, welcome);
 }
 
-void c_on_log(self_log_entry *entry) {
+static void c_on_log(self_log_entry *entry) {
 	goOnLog(entry);
 }
 
-self_account_callbacks *account_callbacks() {
+static self_account_callbacks *account_callbacks() {
 	self_account_callbacks *callbacks = malloc(sizeof(self_account_callbacks));
 
 	callbacks->on_connect = c_on_connect;
@@ -72,11 +72,11 @@ self_account_callbacks *account_callbacks() {
 	return callbacks;
 }
 
-void c_on_response(void *user_data, self_status response) {
+static void c_on_response(void *user_data, self_status response) {
 	goOnResponse(user_data, response);
 }
 
-void c_self_account_message_send_async(
+static void c_self_account_message_send_async(
 	struct self_account *account,
     const struct self_signing_public_key *to_address,
     const struct self_message_content *content,
