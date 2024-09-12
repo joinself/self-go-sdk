@@ -1,9 +1,9 @@
 package object
 
 /*
-#cgo LDFLAGS: -lstdc++ -lm -ldl -Wl,--allow-multiple-definition
+#cgo LDFLAGS: -lstdc++ -lm -ldl
 #cgo darwin LDFLAGS: -lself_sdk
-#cgo linux LDFLAGS: -lself_sdk
+#cgo linux LDFLAGS: -lself_sdk -Wl,--allow-multiple-definition
 #include <self-sdk.h>
 #include <stdlib.h>
 */
