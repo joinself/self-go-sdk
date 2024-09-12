@@ -231,3 +231,22 @@ func fromPresentationTypeCollection(collection *C.self_collection_presentation_t
 
 	return presentationType
 }
+
+func fromVerifiablePresentationCollection(collection *C.self_collection_verifiable_presentation) []*VerifiablePresentation {
+	collectionLen := int(C.self_collection_verifiable_presentation_len(
+		collection,
+	))
+
+	presentations := make([]*VerifiablePresentation, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_verifiable_presentation_at(
+			collection,
+			C.size_t(i),
+		)
+
+		presentations[i] = newVerfiablePresentation(ptr)
+	}
+
+	return presentations
+}

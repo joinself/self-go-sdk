@@ -61,6 +61,7 @@ func contentPtr(c *Content) *C.self_message_content {
 	return c.ptr
 }
 
+// ContentType get the content type of the message
 func ContentType(message *Message) Type {
 	content := C.self_message_message_content(message.ptr)
 
@@ -88,6 +89,7 @@ func ContentType(message *Message) Type {
 	}
 }
 
+// ID returns the unique id of the message
 func (c *Content) ID() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_message_content_id(c.ptr)),

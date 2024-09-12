@@ -36,6 +36,7 @@ func objectPtr(o *Object) *C.self_object {
 	return o.ptr
 }
 
+// Encrypted creates a new encrypted object intended for sharing with others from some data
 func Encrypted(mime string, data []byte) (*Object, error) {
 	var object *C.self_object
 
@@ -60,6 +61,7 @@ func Encrypted(mime string, data []byte) (*Object, error) {
 	return newObject(object), nil
 }
 
+// Unencrypted creates a new unencrypted object intended to be stored to the accounts local storage
 func Unencrypted(mime string, data []byte) (*Object, error) {
 	var object *C.self_object
 

@@ -21,12 +21,12 @@ import (
 type Role uint64
 
 const (
-	RoleAssertion      Role = C.ASSERTION
-	RoleAuthentication Role = C.AUTHENTICATION
-	RoleVerification   Role = C.VERIFICATION
-	RoleInvocation     Role = C.INVOCATION
-	RoleDelegation     Role = C.DELEGATION
-	RoleMessaging      Role = C.MESSAGING
+	RoleAssertion      Role = C.KEY_ROLE_ASSERTION
+	RoleAuthentication Role = C.KEY_ROLE_AUTHENTICATION
+	RoleVerification   Role = C.KEY_ROLE_VERIFICATION
+	RoleInvocation     Role = C.KEY_ROLE_INVOCATION
+	RoleDelegation     Role = C.KEY_ROLE_DELEGATION
+	RoleMessaging      Role = C.KEY_ROLE_MESSAGING
 )
 
 type Operation struct {

@@ -136,6 +136,14 @@ func (p *PublicKey) Bytes() []byte {
 	return bytes
 }
 
+// Matches compares two public keys
+func (p *PublicKey) Matches(target *PublicKey) bool {
+	return bool(C.self_signing_public_key_matches(
+		p.ptr,
+		target.ptr,
+	))
+}
+
 /*
 func toPublicKeyCollection(keys []*PublicKey) *C.self_collection_signing_public_key {
 	collection := C.self_collection_signing_public_key_init()
