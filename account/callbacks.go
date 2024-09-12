@@ -2,7 +2,7 @@ package account
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
-#cgo darwin LDFLAGS: -lself_sdk -framework CoreFoundation -framework SystemConfiguration
+#cgo darwin LDFLAGS: -lself_sdk -framework CoreFoundation -framework SystemConfiguration -framework Security
 #cgo linux LDFLAGS: -lself_sdk
 #include <self-sdk.h>
 #include <stdlib.h>
