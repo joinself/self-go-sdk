@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/joinself/self-go-sdk-next/account"
 	"github.com/joinself/self-go-sdk-next/credential"
-	"github.com/joinself/self-go-sdk-next/identity"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/message"
 )
@@ -87,11 +86,36 @@ func main() {
 						log.Warn(
 							"received response to unknown request",
 							"requestId", hex.EncodeToString(msg.ID()),
+							"responseTo", hex.EncodeToString(discoveryResponse.ResponseTo()),
 						)
 						return
 					}
 
 					completer.(chan *signing.PublicKey) <- msg.FromAddress()
+				case message.TypeCredentialPresentationResponse:
+					log.Info(
+						"received response to credential presentation request",
+						"from", msg.FromAddress().String(),
+						"requestId", hex.EncodeToString(msg.ID()),
+					)
+
+					credentialPresentationResponse, err := message.DecodeCredentialPresentationResponse(msg)
+					if err != nil {
+						log.Warn("failed to decode discovery response", "error", err)
+						return
+					}
+
+					completer, ok := requests.LoadAndDelete(hex.EncodeToString(credentialPresentationResponse.ResponseTo()))
+					if !ok {
+						log.Warn(
+							"received response to unknown request",
+							"requestId", hex.EncodeToString(msg.ID()),
+							"responseTo", hex.EncodeToString(credentialPresentationResponse.ResponseTo()),
+						)
+						return
+					}
+
+					completer.(chan *message.CredentialPresentationResponse) <- credentialPresentationResponse
 				}
 			},
 		},
@@ -176,6 +200,7 @@ func main() {
 
 		// create a new request and store a reference to it
 		content, err = message.NewCredentialPresentationRequest().
+			Type([]string{"VerifiablePresentation", "CustomPresentation"}).
 			Details(credential.CredentialTypeLiveness, "livenessImageHash").
 			Details(credential.CredentialTypeEmail, "emailAddress").
 			Finish()
@@ -226,22 +251,24 @@ func main() {
 					continue
 				}
 
-				if c.Issuer().Method() == credential.MethodKey {
-					// this was issued by a standalone key, so we can't check if it has been revoked
-					continue
-				}
+				// TODO check issuer identity, this is not working as keys are not setup
+				// correctly on the verify service...
+				/*
+					if c.Issuer().Method() == credential.MethodAure {
 
-				// check the issuer was valid at the time of issuance
-				document, err := selfAccount.IdentityResolve(c.Issuer().Address())
-				if err != nil {
-					log.Warn("failed to resolve credential issuer", "error", err)
-					continue
-				}
+						// check the issuer was valid at the time of issuance
+						document, err := selfAccount.IdentityResolve(c.Issuer().Address())
+						if err != nil {
+							log.Warn("failed to resolve credential issuer", "error", err)
+							continue
+						}
 
-				if !document.HasRolesAt(c.Issuer().SigningKey(), identity.RoleAssertion, c.Created()) {
-					log.Warn("credential signing key was not valid at the time of issuance")
-					continue
-				}
+						if !document.HasRolesAt(c.Issuer().SigningKey(), identity.RoleAssertion, c.Created()) {
+							log.Warn("credential signing key was not valid at the time of issuance")
+							continue
+						}
+					}
+				*/
 
 				claims, err := c.CredentialSubjectClaims()
 				if err != nil {
