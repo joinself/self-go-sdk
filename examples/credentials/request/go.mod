@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/charmbracelet/log v0.4.0
-	github.com/joinself/self-go-sdk-next v0.0.0-20240912103502-308557a28bf6
+	github.com/joinself/self-go-sdk-next v0.0.0-20240924024107-13fa974acab6
 )
 
 require (
