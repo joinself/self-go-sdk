@@ -173,7 +173,7 @@ func main() {
 
 		log.Info(
 			"received response to discovery request",
-			"requestId", "requestId", hex.EncodeToString(content.ID()),
+			"requestId", hex.EncodeToString(content.ID()),
 		)
 	}
 }
