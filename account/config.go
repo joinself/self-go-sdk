@@ -26,9 +26,9 @@ var (
 	defaultRpcDevelop     = "http://127.0.0.1:8080/"
 	defaultObjectDevelop  = "http://127.0.0.1:8090/"
 	defaultMessageDevelop = "ws://127.0.0.1:9000/"
-	defaultRpcSandbox     = "https://rpc.next.sandbox.joinself.com/"
-	defaultObjectSandbox  = "https://object.next.sandbox.joinself.com/"
-	defaultMessageSandbox = "wss://message.next.sandbox.joinself.com/"
+	defaultRpcSandbox     = "https://rpc.sandbox.joinself.com/"
+	defaultObjectSandbox  = "https://object.sandbox.joinself.com/"
+	defaultMessageSandbox = "wss://message.sandbox.joinself.com/"
 )
 
 // Config stores config for an account
