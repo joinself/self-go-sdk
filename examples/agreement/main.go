@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/go-pdf/fpdf"
 	"github.com/joinself/self-go-sdk-next/account"
 	"github.com/joinself/self-go-sdk-next/credential"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
@@ -201,21 +202,36 @@ func main() {
 		responderAddress := <-discoveryCompleter
 
 		// Read the terms.pdf file
-		data, err := os.ReadFile("sample.pdf")
+		pdf := fpdf.New("P", "mm", "A4", "")
+		pdf.AddPage()
+		pdf.SetFont("Arial", "B", 16)
+		pdf.Cell(40, 10, "Agreement")
+
+		agreementBuf := bytes.NewBuffer(make([]byte, 1024))
+
+		err = pdf.Output(agreementBuf)
 		if err != nil {
-			log.Fatal("failed to read terms.pdf file", "error", err)
+			log.Fatal("failed to build agreement pdf", "error", err.Error())
 		}
 
 		agreementTerms, err := object.Encrypted(
 			"application/pdf",
-			data,
+			agreementBuf.Bytes(),
 		)
+
+		if err != nil {
+			log.Error("failed to encrypt object", "error", err)
+		}
 
 		err = selfAccount.ObjectUpload(
 			inboxAddress,
 			agreementTerms,
 			false,
 		)
+
+		if err != nil {
+			log.Error("failed to upload object", "error", err)
+		}
 
 		// create a credential to serve as our agreement
 		// the subject of our credential will be ourselves,
@@ -226,14 +242,18 @@ func main() {
 			CredentialType([]string{"VerifiableCredential", "AgreementCredential"}).
 			CredentialSubject(credential.AddressKey(responderAddress)).
 			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
-			Issuer(credential.AddressKey(responderAddress)).
+			Issuer(credential.AddressKey(inboxAddress)).
 			ValidFrom(time.Now()).
 			SignWith(inboxAddress, time.Now()).
 			Finish()
 
+		if err != nil {
+			log.Error("failed to create credential", "error", err)
+		}
+
 		signedAgreementCredential, err := selfAccount.CredentialIssue(unsignedAgreementCredential)
 		if err != nil {
-			log.Error("failed to issue credential", "error", fmt.Sprintf("%+v", err))
+			log.Error("failed to issue credential", "error", err)
 		}
 
 		// create a new request and store a reference to it

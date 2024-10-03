@@ -24,6 +24,8 @@ self.db
 self.db-shm
 self.db-wal
 
+examples/agreement/agreement
+examples/agreement/storage
 examples/credentials/request/request
 examples/credentials/request/storage
 examples/discovery/discovery
