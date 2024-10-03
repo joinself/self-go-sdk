@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -95,30 +96,30 @@ func main() {
 					}
 
 					completer.(chan *signing.PublicKey) <- msg.FromAddress()
-				case message.TypeCredentialPresentationResponse:
+				case message.TypeCredentialVerificationResponse:
 					log.Info(
-						"received response to credential presentation request",
+						"received response to credential verification request",
 						"from", msg.FromAddress().String(),
 						"requestId", hex.EncodeToString(msg.ID()),
 					)
 
-					credentialPresentationResponse, err := message.DecodeCredentialPresentationResponse(msg)
+					credentialVerificationResponse, err := message.DecodeCredentialVerificationResponse(msg)
 					if err != nil {
 						log.Warn("failed to decode discovery response", "error", err)
 						return
 					}
 
-					completer, ok := requests.LoadAndDelete(hex.EncodeToString(credentialPresentationResponse.ResponseTo()))
+					completer, ok := requests.LoadAndDelete(hex.EncodeToString(credentialVerificationResponse.ResponseTo()))
 					if !ok {
 						log.Warn(
 							"received response to unknown request",
 							"requestId", hex.EncodeToString(msg.ID()),
-							"responseTo", hex.EncodeToString(credentialPresentationResponse.ResponseTo()),
+							"responseTo", hex.EncodeToString(credentialVerificationResponse.ResponseTo()),
 						)
 						return
 					}
 
-					completer.(chan *message.CredentialPresentationResponse) <- credentialPresentationResponse
+					completer.(chan *message.CredentialVerificationResponse) <- credentialVerificationResponse
 				}
 			},
 		},
@@ -283,7 +284,8 @@ func main() {
 
 		response := <-verificationCompleter
 
-		println(response.Status())
+		log.Info("Response received with status", response.Status())
+		os.Exit(1)
 		/*
 			// validate the presentations and the
 			for _, p := range response.Presentations() {
