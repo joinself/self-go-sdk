@@ -43,6 +43,31 @@ const (
 	ResponseStatusConflict             ResponseStatus = C.RESPONSE_STATUS_CONFLICT
 )
 
+func (s ResponseStatus) String() string {
+	switch s {
+	case ResponseStatusOk:
+		return "Ok"
+	case ResponseStatusAccepted:
+		return "Accepted"
+	case ResponseStatusCreated:
+		return "Created"
+	case ResponseStatusBadRequest:
+		return "Bad Request"
+	case ResponseStatusUnauthorized:
+		return "Unauthorized"
+	case ResponseStatusForbidden:
+		return "Forbidden"
+	case ResponseStatusNotFound:
+		return "Not Found"
+	case ResponseStatusNotAcceptable:
+		return "Not Acceptable"
+	case ResponseStatusConflict:
+		return "Conflict"
+	default:
+		return "Unknown"
+	}
+}
+
 func newContent(ptr *C.self_message_content) *Content {
 	c := &Content{
 		ptr: ptr,
