@@ -284,7 +284,7 @@ func main() {
 
 		response := <-verificationCompleter
 
-		log.Info("Response received with status", response.Status())
+		log.Info("Response received with status", "status", response.Status())
 		os.Exit(1)
 		/*
 			// validate the presentations and the
