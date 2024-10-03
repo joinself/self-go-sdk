@@ -234,8 +234,6 @@ func main() {
 			log.Error("failed to upload object", "error", err)
 		}
 
-		validFrom := time.Now()
-
 		// create a credential to serve as our agreement
 		// the subject of our credential will be ourselves,
 		// signifying our agreement to the terms.
@@ -247,7 +245,7 @@ func main() {
 			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
 			Issuer(credential.AddressKey(inboxAddress)).
 			ValidFrom(time.Now()).
-			SignWith(inboxAddress, validFrom).
+			SignWith(inboxAddress, time.Now()).
 			Finish()
 
 		if err != nil {
@@ -264,7 +262,7 @@ func main() {
 			Type([]string{"VerifiableCredential", "AgreementCredential"}).
 			Evidence("terms", agreementTerms).
 			Proof(signedAgreementCredential).
-			Expires(validFrom.Add(time.Hour * 24)).
+			Expires(time.Now().Add(time.Hour * 24)).
 			Finish()
 
 		if err != nil {
@@ -295,7 +293,7 @@ func main() {
 			}
 
 			// check that the credential is not yet valid for use
-			if c.ValidFrom().After(validFrom) {
+			if c.ValidFrom().After(time.Now()) {
 				log.Warn("credential is intended to be used in the future")
 				continue
 			}
