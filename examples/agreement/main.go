@@ -234,6 +234,8 @@ func main() {
 			log.Error("failed to upload object", "error", err)
 		}
 
+		validFrom := time.Now()
+
 		// create a credential to serve as our agreement
 		// the subject of our credential will be ourselves,
 		// signifying our agreement to the terms.
@@ -245,7 +247,7 @@ func main() {
 			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
 			Issuer(credential.AddressKey(inboxAddress)).
 			ValidFrom(time.Now()).
-			SignWith(inboxAddress, time.Now()).
+			SignWith(inboxAddress, validFrom).
 			Finish()
 
 		if err != nil {
@@ -262,7 +264,7 @@ func main() {
 			Type([]string{"VerifiableCredential", "AgreementCredential"}).
 			Evidence("terms", agreementTerms).
 			Proof(signedAgreementCredential).
-			Expires(time.Now().Add(time.Hour * 24)).
+			Expires(validFrom.Add(time.Hour * 24)).
 			Finish()
 
 		if err != nil {
@@ -285,51 +287,19 @@ func main() {
 		response := <-verificationCompleter
 
 		log.Info("Response received with status", "status", response.Status())
-		os.Exit(1)
-		/*
-			// validate the presentations and the
-			for _, p := range response.Presentations() {
-				err = p.Validate()
-				if err != nil {
-					log.Warn("failed to validate presentation", "error", err)
-					continue
-				}
-
-				// check the presentation references the address we are communicating with
-				if !p.Holder().Address().Matches(responderAddress) {
-					log.Warn("recevied a presentation response for a different holder address")
-					continue
-				}
-
-				for _, c := range p.Credentials() {
-					err = c.Validate()
-					if err != nil {
-						log.Warn("failed to validate credential", "error", err)
-						continue
-					}
-
-					// check that the credential is not yet valid for use
-					if c.ValidFrom().After(time.Now()) {
-						log.Warn("credential is intended to be used in the future")
-						continue
-					}
-
-					claims, err := c.CredentialSubjectClaims()
-					if err != nil {
-						log.Warn("failed to parse credential claims", "error", err)
-						continue
-					}
-
-					for k, v := range claims {
-						log.Info(
-							"credential value",
-							"credentialType", c.CredentialType(),
-							"field", k,
-							"value", v,
-						)
-					}
-				}
+		for _, c := range response.Credentials() {
+			err = c.Validate()
+			if err != nil {
+				log.Warn("failed to validate credential", "error", err)
+				continue
 			}
-		*/
+
+			// check that the credential is not yet valid for use
+			if c.ValidFrom().After(validFrom) {
+				log.Warn("credential is intended to be used in the future")
+				continue
+			}
+		}
+		os.Exit(1)
 	}
 }
