@@ -12,6 +12,8 @@ import (
 	"errors"
 	"runtime"
 	"unsafe"
+
+	"github.com/joinself/self-go-sdk-next/object"
 )
 
 type Chat struct {
@@ -73,6 +75,38 @@ func (c *Chat) Message() string {
 	return C.GoString(C.self_message_content_chat_message(c.ptr))
 }
 
+// Referencing returns the id the message is replying to
+func (c *Chat) Referencing() []byte {
+	referencing := C.self_message_content_chat_referencing(c.ptr)
+
+	// TODO fix this in c sdk
+	if uintptr(unsafe.Pointer(referencing)) == 0x1 {
+		return nil
+	}
+
+	return C.GoBytes(
+		unsafe.Pointer(referencing),
+		20,
+	)
+}
+
+// Attachments returns the attachments
+func (c *Chat) Attachments() []*object.Object {
+	collection := C.self_message_content_chat_attachments(c.ptr)
+
+	var attachments []*object.Object
+
+	for i := 0; i < int(C.self_collection_object_len(collection)); i++ {
+		attachments = append(attachments, newObject(
+			C.self_collection_object_at(collection, C.size_t(i)),
+		))
+	}
+
+	C.self_collection_object_destroy(collection)
+
+	return attachments
+}
+
 // NewChat constructs a new chat message
 func NewChat() *ChatBuilder {
 	return newChatBuilder(C.self_message_content_chat_builder_init())
@@ -88,6 +122,30 @@ func (b *ChatBuilder) Message(msg string) *ChatBuilder {
 	)
 
 	C.free(unsafe.Pointer(cMsg))
+
+	return b
+}
+
+// Reference references a message in the chat
+func (b *ChatBuilder) Reference(messageID []byte) *ChatBuilder {
+	cID := C.CBytes(messageID)
+
+	C.self_message_content_chat_builder_reference(
+		b.ptr,
+		(*C.uint8_t)(cID),
+	)
+
+	C.free(unsafe.Pointer(cID))
+
+	return b
+}
+
+// Attach attaches an object to the message
+func (b *ChatBuilder) Attach(attachment *object.Object) *ChatBuilder {
+	C.self_message_content_chat_builder_attach(
+		b.ptr,
+		objectPtr(attachment),
+	)
 
 	return b
 }
