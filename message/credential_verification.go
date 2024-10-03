@@ -18,6 +18,9 @@ import (
 	"github.com/joinself/self-go-sdk-next/object"
 )
 
+//go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
+func newObject(ptr *C.self_object) *object.Object
+
 //go:linkname objectPtr github.com/joinself/self-go-sdk-next/object.objectPtr
 func objectPtr(ptr *object.Object) *C.self_object
 
