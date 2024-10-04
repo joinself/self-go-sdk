@@ -351,7 +351,6 @@ func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (
 	)
 
 	if status > 0 {
-		fmt.Println("status", status)
 		return nil, errors.New("failed to issue credential")
 	}
 
