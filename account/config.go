@@ -73,7 +73,7 @@ func (c *Config) defaults() {
 		c.LogLevel = LogError
 	}
 
-	if c.Environment != TargetProduction && c.Environment != TargetSandbox {
+	if c.Environment == nil {
 		c.Environment = TargetSandbox
 	}
 }
