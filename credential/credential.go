@@ -200,7 +200,7 @@ func (b *CredentialBuilder) CredentialSubjectClaim(claimKey, claimValue string) 
 // CredentialSubjectClaims adds a collection of claims about the subject to te credential
 func (b *CredentialBuilder) CredentialSubjectClaims(claims map[string]interface{}) *CredentialBuilder {
 	claim, err := json.Marshal(claims)
-	if err == nil {
+	if err != nil {
 		return b
 	}
 
