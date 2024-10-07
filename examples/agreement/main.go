@@ -234,6 +234,29 @@ func main() {
 			log.Error("failed to upload object", "error", err)
 		}
 
+		// create the body of the credential agreement
+		claims := make(map[string]interface{})
+
+		// the id of our unencrypted object is the SHA3 hash of our terms
+		claims["termsHash"] = hex.EncodeToString(agreementTerms.Id())
+
+		// TODO we can support different signatory types [signatory, witness, promisee, promisor, etc]
+		// OR we leave that up to the content of the terms to define?
+		aliceParty := map[string]string{
+			"type": "signatory",
+			"id":   inboxAddress.String(),
+		}
+
+		bobbyParty := map[string]string{
+			"type": "signatory",
+			"id":   responderAddress.String(),
+		}
+
+		// when validating the agreement, any validator will be
+		// required to ensure they have been presented signed
+		// credentials for all parties
+		claims["parties"] = []map[string]string{aliceParty, bobbyParty}
+
 		// create a credential to serve as our agreement
 		// the subject of our credential will be ourselves,
 		// signifying our agreement to the terms.
@@ -242,7 +265,8 @@ func main() {
 		unsignedAgreementCredential, err := credential.NewCredential().
 			CredentialType([]string{"VerifiableCredential", "AgreementCredential"}).
 			CredentialSubject(credential.AddressKey(responderAddress)).
-			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
+			CredentialSubjectClaims(claims).
+			// CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
 			Issuer(credential.AddressKey(inboxAddress)).
 			ValidFrom(time.Now()).
 			SignWith(inboxAddress, time.Now()).
@@ -293,9 +317,61 @@ func main() {
 			}
 
 			// check that the credential is not yet valid for use
-			if c.ValidFrom().After(time.Now()) {
-				log.Warn("credential is intended to be used in the future")
+			/*
+				if c.ValidFrom().After(time.Now()) {
+					log.Warn("credential is intended to be used in the future")
+					continue
+				}
+			*/
+
+			claims, err := c.CredentialSubjectClaims()
+			if err != nil {
+				log.Warn("failed to parse credential claims", "error", err)
 				continue
+			}
+
+			parties, ok := claims["parties"].([]interface{})
+			if !ok {
+				log.Warn("parties claim is not an array")
+				continue
+			}
+
+			var isIssued, isSigner bool
+
+			for _, subject := range parties {
+				subjectDetails, ok := subject.(map[string]interface{})
+				if !ok {
+					log.Warn("subject is not an object")
+					continue
+				}
+
+				subjectType, ok := subjectDetails["type"].(string)
+				if !ok || subjectType != "signatory" {
+					continue
+				}
+
+				subjectID, ok := subjectDetails["id"].(string)
+				if !ok {
+					log.Warn("subject id is not a string")
+					continue
+				}
+
+				// check if the agreement issuer (alice) is provided in the agreement
+				if subjectID == inboxAddress.String() {
+					isIssued = true
+				}
+
+				// check if the responder is included as a signer in the agreement
+				if subjectID == responderAddress.String() {
+					isSigner = true
+				}
+			}
+
+			if isIssued && isSigner {
+				log.Info("Agreement is valid and signed by both parties")
+				selfAccount.CredentialStore(c)
+			} else {
+				log.Warn("Agreement is not valid or not signed by both parties")
 			}
 		}
 		os.Exit(1)
