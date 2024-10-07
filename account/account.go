@@ -244,6 +244,27 @@ func (a *Account) KeychainSigningCreate() (*signing.PublicKey, error) {
 	return newSigningPublicKey(address), nil
 }
 
+// KeychainSigningImport imports an existing ed25519 signing keypair
+func (a *Account) KeychainSigningImport(seed []byte) (*signing.PublicKey, error) {
+	var address *C.self_signing_public_key
+
+	seedBuf := C.CBytes(seed)
+
+	status := C.self_account_keychain_signing_import(
+		a.account,
+		(*C.uint8_t)(seedBuf),
+		&address,
+	)
+
+	C.free(seedBuf)
+
+	if status > 0 {
+		return nil, errors.New("failed to create keypair")
+	}
+
+	return newSigningPublicKey(address), nil
+}
+
 // KeychainExchangeCreate creates a new exchange keypair
 func (a *Account) KeychainExchangeCreate() (*exchange.PublicKey, error) {
 	var address *C.self_exchange_public_key
@@ -469,12 +490,54 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 	return newVerfiablePresentation(verifiablePresentation), nil
 }
 
+// VerifyChallenge requests a unique signed challenge over a given public key
+func (a *Account) VerifyChallenge(asAddress *signing.PublicKey) ([]byte, error) {
+	var challengeBuf *C.self_encoded_buffer
+
+	status := C.self_account_verify_challenge(
+		a.account,
+		signingPublicKeyPtr(asAddress),
+		&challengeBuf,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to issue credential")
+	}
+
+	challenge := C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(challengeBuf)),
+		C.int(C.self_encoded_buffer_len(challengeBuf)),
+	)
+
+	C.self_encoded_buffer_destroy(challengeBuf)
+
+	return challenge, nil
+}
+
 // InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
 
 	status := C.self_account_inbox_open(
 		a.account,
+		0,
+		&address,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to open inbox")
+	}
+
+	return newSigningPublicKey(address), nil
+}
+
+// InboxOpen opens a new inbox that can be used to send and receive messages
+func (a *Account) InboxOpenWithExpiry(expires time.Time) (*signing.PublicKey, error) {
+	var address *C.self_signing_public_key
+
+	status := C.self_account_inbox_open(
+		a.account,
+		C.int64_t(expires.Unix()),
 		&address,
 	)
 
@@ -532,11 +595,12 @@ func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Objec
 
 // ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
 // package to the recipient, which they will use to invite us to an encrypted group
-func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress *signing.PublicKey) error {
+func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress *signing.PublicKey, expires time.Time) error {
 	status := C.self_account_connection_negotiate(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		signingPublicKeyPtr(withAddress),
+		C.int64_t(expires.Unix()),
 	)
 
 	if status > 0 {

@@ -78,9 +78,7 @@ func (c *Chat) Message() string {
 // Referencing returns the id the message is replying to
 func (c *Chat) Referencing() []byte {
 	referencing := C.self_message_content_chat_referencing(c.ptr)
-
-	// TODO fix this in c sdk
-	if uintptr(unsafe.Pointer(referencing)) == 0x1 {
+	if referencing == nil {
 		return nil
 	}
 
