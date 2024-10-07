@@ -115,9 +115,9 @@ func New(cfg *Config) (*Account, error) {
 
 	cfg.defaults()
 
-	rpcURLBuf := C.CString(cfg.rpcURL())
-	objectURLBuf := C.CString(cfg.objectURL())
-	messagingURLBuf := C.CString(cfg.messageURL())
+	rpcURLBuf := C.CString(cfg.Environment.Rpc)
+	objectURLBuf := C.CString(cfg.Environment.Object)
+	messagingURLBuf := C.CString(cfg.Environment.Message)
 	storagePathBuf := C.CString(cfg.StoragePath)
 	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))
 	storageKeyLen := C.size_t(len(cfg.StorageKey))
@@ -189,9 +189,9 @@ func (a *Account) Configure(cfg *Config) error {
 
 	cfg.defaults()
 
-	rpcURLBuf := C.CString(cfg.rpcURL())
-	objectURLBuf := C.CString(cfg.objectURL())
-	messagingURLBuf := C.CString(cfg.messageURL())
+	rpcURLBuf := C.CString(cfg.Environment.Rpc)
+	objectURLBuf := C.CString(cfg.Environment.Object)
+	messagingURLBuf := C.CString(cfg.Environment.Message)
 	storagePathBuf := C.CString(cfg.StoragePath)
 	storageKeyBuf := (*C.uint8_t)(C.CBytes(cfg.StorageKey))
 	storageKeyLen := C.size_t(len(cfg.StorageKey))
