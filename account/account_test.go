@@ -131,6 +131,7 @@ func TestAccountMessaging(t *testing.T) {
 	err = alice.ConnectionNegotiate(
 		aliceAddress,
 		bobbyAddress,
+		time.Now().Add(time.Hour),
 	)
 
 	require.Nil(t, err)
@@ -207,6 +208,7 @@ func TestAccountMessaging(t *testing.T) {
 
 	require.Nil(t, err)
 
+	start := time.Now()
 	err = bobby.MessageSend(
 		aliceAddress,
 		contentForAlice,
@@ -216,6 +218,8 @@ func TestAccountMessaging(t *testing.T) {
 
 	messageFromBobby = wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	fmt.Println("sent and received in", time.Since(start))
 
 	chatMessage, err = message.DecodeChat(messageFromBobby)
 	require.Nil(t, err)
@@ -291,7 +295,7 @@ func TestAccountObject(t *testing.T) {
 	data := make([]byte, 1024)
 	rand.Read(data)
 
-	encryptedObject, err := object.Encrypted(
+	encryptedObject, err := object.New(
 		"application/octet-stream",
 		data,
 	)
@@ -418,6 +422,7 @@ func TestAccountPersistence(t *testing.T) {
 	err = alice.ConnectionNegotiate(
 		aliceAddress,
 		bobbyAddress,
+		time.Now().Add(time.Hour),
 	)
 
 	require.Nil(t, err)
