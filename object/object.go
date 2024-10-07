@@ -36,15 +36,15 @@ func objectPtr(o *Object) *C.self_object {
 	return o.ptr
 }
 
-// Encrypted creates a new encrypted object intended for sharing with others from some data
-func Encrypted(mime string, data []byte) (*Object, error) {
+// New creates a new intended for sharing with others or storing to the accounts local storage
+func New(mime string, data []byte) (*Object, error) {
 	var object *C.self_object
 
 	mimeType := C.CString(mime)
 	dataBuf := C.CBytes(data)
 	dataLen := C.size_t(len(data))
 
-	status := C.self_object_create_encrypted(
+	status := C.self_object_create(
 		&object,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
@@ -61,35 +61,20 @@ func Encrypted(mime string, data []byte) (*Object, error) {
 	return newObject(object), nil
 }
 
-// Unencrypted creates a new unencrypted object intended to be stored to the accounts local storage
-func Unencrypted(mime string, data []byte) (*Object, error) {
-	var object *C.self_object
-
-	mimeType := C.CString(mime)
-	dataBuf := C.CBytes(data)
-	dataLen := C.size_t(len(data))
-
-	status := C.self_object_create_unencrypted(
-		&object,
-		mimeType,
-		(*C.uint8_t)(dataBuf),
-		dataLen,
-	)
-
-	C.free(unsafe.Pointer(mimeType))
-	C.free(dataBuf)
-
-	if status > 0 {
-		return nil, errors.New("object creation failed")
-	}
-
-	return newObject(object), nil
-}
-
-// Id returns the id hash of the encrypted data
+// Id returns the hash of the encrypted data
 func (o *Object) Id() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_object_id(
+			o.ptr,
+		)),
+		32,
+	)
+}
+
+// Hash returns the hash of the unencrypted data
+func (o *Object) Hash() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_object_hash(
 			o.ptr,
 		)),
 		32,
@@ -117,7 +102,7 @@ func (o *Object) Key() []byte {
 
 	return C.GoBytes(
 		unsafe.Pointer(key),
-		32,
+		44,
 	)
 }
 
