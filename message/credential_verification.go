@@ -132,20 +132,20 @@ func (c *CredentialVerificationRequest) Type() []string {
 }
 
 // Proof returns associated verifiable credential proof to support the verification request
-func (c *CredentialVerificationRequest) Proof() []*credential.VerifiableCredential {
+func (c *CredentialVerificationRequest) Proof() []*credential.VerifiablePresentation {
 	collection := C.self_message_content_credential_verification_request_proof(
 		c.ptr,
 	)
 
-	credentials := fromVerifiableCredentialCollection(
+	presentations := fromVerifiablePresentationCollection(
 		collection,
 	)
 
-	C.self_collection_verifiable_credential_destroy(
+	C.self_collection_verifiable_presentation_destroy(
 		collection,
 	)
 
-	return credentials
+	return presentations
 }
 
 // Evidence returns associated data to be used as evidence to support the verification request
@@ -213,10 +213,10 @@ func (b *CredentialVerificationRequestBuilder) Type(credentialType []string) *Cr
 }
 
 // Proof attaches proof to the credential verification request
-func (b *CredentialVerificationRequestBuilder) Proof(proof *credential.VerifiableCredential) *CredentialVerificationRequestBuilder {
+func (b *CredentialVerificationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialVerificationRequestBuilder {
 	C.self_message_content_credential_verification_request_builder_proof(
 		b.ptr,
-		verifiableCredentialPtr(proof),
+		verifiablePresentationPtr(proof),
 	)
 	return b
 }

@@ -72,13 +72,17 @@ func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *VerifiablePr
 	}
 }
 
+func verifiablePresentationPtr(v *VerifiablePresentation) *C.self_verifiable_presentation {
+	return v.ptr
+}
+
 // NewPresentation creates a new presentation builder
 func NewPresentation() *PresentationBuilder {
 	return newPresentationBuilder(C.self_presentation_builder_init())
 }
 
 // PresentationType sets the type of presentation
-func (b *PresentationBuilder) Presentationtype(presentationType []string) *PresentationBuilder {
+func (b *PresentationBuilder) PresentationType(presentationType []string) *PresentationBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_presentation_builder_presentation_type(

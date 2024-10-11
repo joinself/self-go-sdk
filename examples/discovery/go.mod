@@ -7,6 +7,8 @@ require (
 	github.com/joinself/self-go-sdk-next v0.0.0-20240927162642-31e47ff7143e
 )
 
+replace github.com/joinself/self-go-sdk-next => ../../
+
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect

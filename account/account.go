@@ -76,6 +76,9 @@ func newVerifiableCredential(ptr *C.self_verifiable_credential) *credential.Veri
 //go:linkname verifiableCredentialPtr github.com/joinself/self-go-sdk-next/credential.verifiableCredentialPtr
 func verifiableCredentialPtr(v *credential.VerifiableCredential) *C.self_verifiable_credential
 
+//go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk-next/credential.verifiablePresentationPtr
+func verifiablePresentationPtr(v *credential.VerifiablePresentation) *C.self_verifiable_presentation
+
 //go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
@@ -97,8 +100,14 @@ func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) [
 //go:linkname fromVerifiableCredentialCollection github.com/joinself/self-go-sdk-next/credential.fromVerifiableCredentialCollection
 func fromVerifiableCredentialCollection(ptr *C.self_collection_verifiable_credential) []*credential.VerifiableCredential
 
+//go:linkname fromVerifiablePresentationCollection github.com/joinself/self-go-sdk-next/credential.fromVerifiablePresentationCollection
+func fromVerifiablePresentationCollection(ptr *C.self_collection_verifiable_presentation) []*credential.VerifiablePresentation
+
 //go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk-next/credential.toCredentialTypeCollection
 func toCredentialTypeCollection(c []string) *C.self_collection_credential_type
+
+//go:linkname toPresentationTypeCollection github.com/joinself/self-go-sdk-next/credential.toPresentationTypeCollection
+func toPresentationTypeCollection(c []string) *C.self_collection_presentation_type
 
 // Account a self account
 type Account struct {
@@ -361,6 +370,20 @@ func (a *Account) IdentityExecute(operation *identity.Operation) error {
 	return nil
 }
 
+// IdentitySign signs an operation that can later be executed
+func (a *Account) IdentitySign(operation *identity.Operation) error {
+	status := C.self_account_identity_sign(
+		a.account,
+		operationPtr(operation),
+	)
+
+	if status > 0 {
+		return errors.New("failed to sign operation")
+	}
+
+	return nil
+}
+
 // CredentialIssue signs and issues a verifiable credential
 func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (*credential.VerifiableCredential, error) {
 	var verifiableCredential *C.self_verifiable_credential
@@ -403,7 +426,7 @@ func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) ([]*creden
 	)
 
 	if status > 0 {
-		return nil, errors.New("failed to store credential")
+		return nil, errors.New("failed to lookup credential")
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -428,7 +451,7 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) ([]*creden
 	)
 
 	if status > 0 {
-		return nil, errors.New("failed to store credential")
+		return nil, errors.New("failed to lookup credential")
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -442,7 +465,7 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) ([]*creden
 	return credentials, nil
 }
 
-// CredentialLookupBySubject looks up credentials matching a specific credential type
+// CredentialLookupByCredentialType looks up credentials matching a specific credential type
 func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
 
@@ -455,7 +478,7 @@ func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*
 	)
 
 	if status > 0 {
-		return nil, errors.New("failed to store credential")
+		return nil, errors.New("failed to lookup credential")
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -488,6 +511,76 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 	}
 
 	return newVerfiablePresentation(verifiablePresentation), nil
+}
+
+// PresentationStore stores a verifiable presentation
+func (a *Account) PresentationStore(verifiedPresentation *credential.VerifiablePresentation) error {
+	status := C.self_account_presentation_store(
+		a.account,
+		verifiablePresentationPtr(verifiedPresentation),
+	)
+
+	if status > 0 {
+		return errors.New("failed to store presentation")
+	}
+
+	return nil
+}
+
+// PresentationLookupByHolder looks up presentations inteded for a specific holder
+func (a *Account) PresentationLookupByHolder(holder *signing.PublicKey) ([]*credential.VerifiablePresentation, error) {
+	var collection *C.self_collection_verifiable_presentation
+
+	status := C.self_account_presentation_lookup_by_holder(
+		a.account,
+		signingPublicKeyPtr(holder),
+		&collection,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to lookup presentation")
+	}
+
+	presentations := fromVerifiablePresentationCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		collection,
+	)
+
+	return presentations, nil
+}
+
+// PresentationLookupByPresentationType looks up presentations matching a specific presentation type
+func (a *Account) PresentationLookupByPresentationType(presentationType []string) ([]*credential.VerifiablePresentation, error) {
+	var collection *C.self_collection_verifiable_presentation
+
+	presentationTypeCollection := toPresentationTypeCollection(presentationType)
+
+	status := C.self_account_presentation_lookup_by_presentation_type(
+		a.account,
+		presentationTypeCollection,
+		&collection,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to store presentation")
+	}
+
+	presentations := fromVerifiablePresentationCollection(
+		collection,
+	)
+
+	C.self_collection_presentation_type_destroy(
+		presentationTypeCollection,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		collection,
+	)
+
+	return presentations, nil
 }
 
 // VerifyChallenge requests a unique signed challenge over a given public key

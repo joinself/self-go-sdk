@@ -35,8 +35,13 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: account.TargetSandbox,
-		LogLevel:    account.LogWarn,
+		Environment: &account.Target{
+			"http://127.0.0.1:8080",
+			"http://127.0.0.1:8090",
+			"ws://127.0.0.1:9000",
+		}, //account.TargetSandbox,
+		// LogLevel: account.LogWarn,
+		LogLevel: account.LogDebug,
 		Callbacks: account.Callbacks{
 			OnConnect: func() {
 			},
@@ -384,7 +389,7 @@ func TestAccountCredentials(t *testing.T) {
 	require.Len(t, verifiableCredentials, 1)
 
 	passportPresentation, err := credential.NewPresentation().
-		Presentationtype(credential.PresentationTypePassport).
+		PresentationType(credential.PresentationTypePassport).
 		Holder(
 			credential.AddressAureWithKey(
 				bobbyIdentifiers[0],
@@ -523,5 +528,134 @@ func TestFinalizers(t *testing.T) {
 		time.Sleep(time.Millisecond)
 		runtime.GC()
 	}
+}
 
+func TestStoragePerformance(t *testing.T) {
+	alice, aliceInbox, aliceWel := testAccount(t)
+	bobby, bobbyInbox, _ := testAccount(t)
+
+	aliceAddress, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	bobbyAddress, err := bobby.InboxOpen()
+	require.Nil(t, err)
+
+	// fmt.Println("alice:", aliceAddress)
+	// fmt.Println("bobby:", bobbyAddress)
+
+	err = alice.ConnectionNegotiate(
+		aliceAddress,
+		bobbyAddress,
+		time.Now().Add(time.Hour),
+	)
+
+	require.Nil(t, err)
+
+	// wait for negotiation to finish
+	<-aliceWel
+
+	contentForBobby, err := message.NewChat().
+		Message("hello").
+		Finish()
+
+	require.Nil(t, err)
+
+	// send a message from alice
+	err = alice.MessageSend(
+		bobbyAddress,
+		contentForBobby,
+	)
+
+	require.Nil(t, err)
+
+	messageFromAlice := wait(t, bobbyInbox, time.Second)
+	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
+
+	chatMessage, err := message.DecodeChat(messageFromAlice)
+	require.Nil(t, err)
+	assert.Equal(t, "hello", chatMessage.Message())
+
+	contentForAlice, err := message.NewChat().
+		Message("hi!").
+		Finish()
+
+	require.Nil(t, err)
+
+	// send a response from bobby
+	err = bobby.MessageSend(
+		aliceAddress,
+		contentForAlice,
+	)
+
+	require.Nil(t, err)
+
+	messageFromBobby := wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	chatMessage, err = message.DecodeChat(messageFromBobby)
+	require.Nil(t, err)
+	assert.Equal(t, "hi!", chatMessage.Message())
+
+	identityKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+	invocationKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+	multiroleKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	document := identity.NewDocument()
+	operation := document.
+		Create().
+		Identifier(identityKey).
+		GrantEmbedded(invocationKey, identity.RoleInvocation).
+		GrantEmbedded(multiroleKey, identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging).
+		SignWith(identityKey).
+		SignWith(invocationKey).
+		SignWith(multiroleKey).
+		Finish()
+
+	err = alice.IdentityExecute(operation)
+	require.Nil(t, err)
+
+	contentForAlice, err = message.NewChat().
+		Message("hello again!").
+		Finish()
+
+	require.Nil(t, err)
+
+	start := time.Now()
+	var acknowledged int
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	for i := 0; i < 10000; i++ {
+		bobby.MessageSendAsync(
+			aliceAddress,
+			contentForAlice,
+			func(err error) {
+				if err != nil {
+					require.Nil(t, err)
+				}
+				acknowledged++
+				if acknowledged%100 == 0 {
+					fmt.Println("acknowledged", acknowledged)
+				}
+				if acknowledged == 10000 {
+					wg.Done()
+				}
+			},
+		)
+	}
+
+	wg.Wait()
+
+	messageFromBobby = wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	fmt.Println("sent and received in", time.Since(start))
+
+	chatMessage, err = message.DecodeChat(messageFromBobby)
+	require.Nil(t, err)
+	assert.Equal(t, "hello again!", chatMessage.Message())
 }

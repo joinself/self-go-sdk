@@ -7,7 +7,6 @@ require (
 	github.com/joinself/self-go-sdk-next v0.0.0-20240927162642-31e47ff7143e
 )
 
-
 replace github.com/joinself/self-go-sdk-next => ../../
 
 require (

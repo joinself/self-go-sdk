@@ -25,8 +25,11 @@ const (
 	TypeCustom                         Type           = C.CONTENT_CUSTOM
 	TypeChat                           Type           = C.CONTENT_CHAT
 	TypeReceipt                        Type           = C.CONTENT_RECEIPT
+	TypeIntroduction                   Type           = C.CONTENT_INTRODUCTION
 	TypeDiscoveryRequest               Type           = C.CONTENT_DISCOVERY_REQUEST
 	TypeDiscoveryResponse              Type           = C.CONTENT_DISCOVERY_RESPONSE
+	TypeAccountPairingRequest          Type           = C.CONTENT_ACCOUNT_PAIRING_REQUEST
+	TypeAccountPairingResponse         Type           = C.CONTENT_ACCOUNT_PAIRING_RESPONSE
 	TypeCredentialVerificationRequest  Type           = C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST
 	TypeCredentialVerificationResponse Type           = C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE
 	TypeCredentialPresentationRequest  Type           = C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST
@@ -97,10 +100,16 @@ func ContentType(message *Message) Type {
 		return TypeChat
 	case C.CONTENT_RECEIPT:
 		return TypeReceipt
+	case C.CONTENT_INTRODUCTION:
+		return TypeIntroduction
 	case C.CONTENT_DISCOVERY_REQUEST:
 		return TypeDiscoveryRequest
 	case C.CONTENT_DISCOVERY_RESPONSE:
 		return TypeDiscoveryResponse
+	case C.CONTENT_ACCOUNT_PAIRING_REQUEST:
+		return TypeAccountPairingRequest
+	case C.CONTENT_ACCOUNT_PAIRING_RESPONSE:
+		return TypeAccountPairingResponse
 	case C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST:
 		return TypeCredentialVerificationRequest
 	case C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE:

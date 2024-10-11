@@ -53,7 +53,7 @@ func main() {
 				// we have received a response to our discovery request that is from a new
 				// user/address that we do not have an  end to end encrypted session.
 				// accept the invite to join the encrypted group created by the user.
-				groupAddres, err := selfAccount.ConnectionAccept(
+				groupAddress, err := selfAccount.ConnectionAccept(
 					wlc.ToAddress(),
 					wlc,
 				)
@@ -66,7 +66,7 @@ func main() {
 				log.Info(
 					"accepted connection encrypted group",
 					"from", wlc.FromAddress().String(),
-					"group", groupAddres.String(),
+					"group", groupAddress.String(),
 				)
 			},
 			// invoked when there is a message sent to an encrypted group we are subscribed to
@@ -215,7 +215,7 @@ func main() {
 			log.Fatal("failed to build agreement pdf", "error", err.Error())
 		}
 
-		agreementTerms, err := object.Encrypted(
+		agreementTerms, err := object.New(
 			"application/pdf",
 			agreementBuf.Bytes(),
 		)
@@ -235,27 +235,22 @@ func main() {
 		}
 
 		// create the body of the credential agreement
-		claims := make(map[string]interface{})
-
-		// the id of our unencrypted object is the SHA3 hash of our terms
-		claims["termsHash"] = hex.EncodeToString(agreementTerms.Id())
-
-		// TODO we can support different signatory types [signatory, witness, promisee, promisor, etc]
-		// OR we leave that up to the content of the terms to define?
-		aliceParty := map[string]string{
-			"type": "signatory",
-			"id":   inboxAddress.String(),
-		}
-
-		bobbyParty := map[string]string{
-			"type": "signatory",
-			"id":   responderAddress.String(),
-		}
-
 		// when validating the agreement, any validator will be
 		// required to ensure they have been presented signed
 		// credentials for all parties
-		claims["parties"] = []map[string]string{aliceParty, bobbyParty}
+		claims := map[string]interface{}{
+			"termsHash": hex.EncodeToString(agreementTerms.Hash()),
+			"parties": []map[string]interface{}{
+				map[string]interface{}{
+					"type": "signatory",
+					"id":   inboxAddress.String(),
+				},
+				map[string]interface{}{
+					"type": "signatory",
+					"id":   responderAddress.String(),
+				},
+			},
+		}
 
 		// create a credential to serve as our agreement
 		// the subject of our credential will be ourselves,
@@ -266,26 +261,44 @@ func main() {
 			CredentialType([]string{"VerifiableCredential", "AgreementCredential"}).
 			CredentialSubject(credential.AddressKey(responderAddress)).
 			CredentialSubjectClaims(claims).
-			// CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
+			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
 			Issuer(credential.AddressKey(inboxAddress)).
 			ValidFrom(time.Now()).
 			SignWith(inboxAddress, time.Now()).
 			Finish()
 
 		if err != nil {
-			log.Error("failed to create credential", "error", err)
+			log.Fatal("failed to create credential", "error", err)
 		}
 
 		signedAgreementCredential, err := selfAccount.CredentialIssue(unsignedAgreementCredential)
 		if err != nil {
-			log.Error("failed to issue credential", "error", err)
+			log.Fatal("failed to issue credential", "error", err)
+		}
+
+		unsignedAgreementPresentation, err := credential.NewPresentation().
+			PresentationType([]string{"VerifiablePresentation", "AgreementPresentation"}).
+			Holder(credential.AddressKey(responderAddress)).
+			CredentialAdd(signedAgreementCredential).
+			Finish()
+
+		if err != nil {
+			log.Fatal("failed to create presentation", "error", err)
+		}
+
+		signedAgreementPresentation, err := selfAccount.PresentationIssue(
+			unsignedAgreementPresentation,
+		)
+
+		if err != nil {
+			log.Fatal("failed to issue presentation", "error", err)
 		}
 
 		// create a new request and store a reference to it
 		content, err = message.NewCredentialVerificationRequest().
 			Type([]string{"VerifiableCredential", "AgreementCredential"}).
 			Evidence("terms", agreementTerms).
-			Proof(signedAgreementCredential).
+			Proof(signedAgreementPresentation).
 			Expires(time.Now().Add(time.Hour * 24)).
 			Finish()
 
@@ -317,12 +330,10 @@ func main() {
 			}
 
 			// check that the credential is not yet valid for use
-			/*
-				if c.ValidFrom().After(time.Now()) {
-					log.Warn("credential is intended to be used in the future")
-					continue
-				}
-			*/
+			if c.ValidFrom().After(time.Now()) {
+				log.Warn("credential is intended to be used in the future")
+				continue
+			}
 
 			claims, err := c.CredentialSubjectClaims()
 			if err != nil {

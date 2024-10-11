@@ -117,3 +117,22 @@ func (o *Object) Data() []byte {
 		)),
 	)
 }
+
+func fromObjectCollection(collection *C.self_collection_object) []*Object {
+	collectionLen := int(C.self_collection_object_len(
+		collection,
+	))
+
+	objects := make([]*Object, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_object_at(
+			collection,
+			C.size_t(i),
+		)
+
+		objects[i] = newObject(ptr)
+	}
+
+	return objects
+}
