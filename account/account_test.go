@@ -35,13 +35,8 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: &account.Target{
-			"http://127.0.0.1:8080",
-			"http://127.0.0.1:8090",
-			"ws://127.0.0.1:9000",
-		}, //account.TargetSandbox,
-		// LogLevel: account.LogWarn,
-		LogLevel: account.LogDebug,
+		Environment: account.TargetSandbox,
+		LogLevel:    account.LogWarn,
 		Callbacks: account.Callbacks{
 			OnConnect: func() {
 			},
