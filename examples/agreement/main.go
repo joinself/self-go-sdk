@@ -259,7 +259,7 @@ func main() {
 		// same manner.
 		unsignedAgreementCredential, err := credential.NewCredential().
 			CredentialType([]string{"VerifiableCredential", "AgreementCredential"}).
-			CredentialSubject(credential.AddressKey(responderAddress)).
+			CredentialSubject(credential.AddressKey(inboxAddress)).
 			CredentialSubjectClaims(claims).
 			CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
 			Issuer(credential.AddressKey(inboxAddress)).
@@ -278,7 +278,7 @@ func main() {
 
 		unsignedAgreementPresentation, err := credential.NewPresentation().
 			PresentationType([]string{"VerifiablePresentation", "AgreementPresentation"}).
-			Holder(credential.AddressKey(responderAddress)).
+			Holder(credential.AddressKey(inboxAddress)).
 			CredentialAdd(signedAgreementCredential).
 			Finish()
 
