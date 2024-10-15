@@ -160,7 +160,7 @@ func (b *AccountPairingRequestBuilder) Address(address *signing.PublicKey) *Acco
 func (b *AccountPairingRequestBuilder) Roles(roles identity.Role) *AccountPairingRequestBuilder {
 	C.self_message_content_account_pairing_request_builder_roles(
 		b.ptr,
-		C.ulong(roles),
+		C.uint64_t(roles),
 	)
 	return b
 }
