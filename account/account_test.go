@@ -526,6 +526,7 @@ func TestFinalizers(t *testing.T) {
 }
 
 func TestStoragePerformance(t *testing.T) {
+	t.Skip("manual test")
 	alice, aliceInbox, aliceWel := testAccount(t)
 	bobby, bobbyInbox, _ := testAccount(t)
 
