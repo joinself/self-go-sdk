@@ -415,6 +415,30 @@ func (a *Account) CredentialStore(verifiedCredential *credential.VerifiableCrede
 	return nil
 }
 
+// CredentialLookup looks up all credentials stored to the account
+func (a *Account) CredentialLookup() ([]*credential.VerifiableCredential, error) {
+	var collection *C.self_collection_verifiable_credential
+
+	status := C.self_account_credential_lookup(
+		a.account,
+		&collection,
+	)
+
+	if status > 0 {
+		return nil, errors.New("failed to lookup credential")
+	}
+
+	credentials := fromVerifiableCredentialCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
 // CredentialLookupByIssuer looks up credentials issued by a specific issuer
 func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
