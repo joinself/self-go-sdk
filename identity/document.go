@@ -23,6 +23,9 @@ func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 //go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/exchange.exchangePublicKeyPtr
 func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
 
+//go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk-next/keypair/signing.fromSigningPublicKeyCollection
+func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
+
 // Document a collection of public keys tied to an identity
 type Document struct {
 	ptr *C.self_identity_document
@@ -91,6 +94,36 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 	default:
 		return false
 	}
+}
+
+// SigningKeys returns all signing keys that have been added to the document
+func (d *Document) SigningKeys() []*signing.PublicKey {
+	return fromSigningPublicKeyCollection(
+		C.self_identity_document_signing_keys(
+			d.ptr,
+		),
+	)
+}
+
+// SigningKeysWithRoles returns all signing keys that have been added to the document with a given set of roles
+func (d *Document) SigningKeysWithRoles(roles Role) []*signing.PublicKey {
+	return fromSigningPublicKeyCollection(
+		C.self_identity_document_signing_keys_with_roles(
+			d.ptr,
+			C.uint64_t(roles),
+		),
+	)
+}
+
+// SigningKeysWithRolesAt returns all signing keys that have been added to the document with a given set of roles at a given timeframe
+func (d *Document) SigningKeysWithRolesAt(roles Role, at time.Time) []*signing.PublicKey {
+	return fromSigningPublicKeyCollection(
+		C.self_identity_document_signing_keys_with_roles_at(
+			d.ptr,
+			C.uint64_t(roles),
+			C.int64_t(at.Unix()),
+		),
+	)
 }
 
 // Create creates a new operation to update the document
