@@ -329,11 +329,13 @@ func main() {
 				continue
 			}
 
-			// check that the credential is not yet valid for use
-			if c.ValidFrom().After(time.Now()) {
-				log.Warn("credential is intended to be used in the future")
-				continue
-			}
+			/*
+				// check that the credential is not yet valid for use
+				if c.ValidFrom().After(time.Now()) {
+					log.Warn("credential is intended to be used in the future")
+					continue
+				}
+			*/
 
 			claims, err := c.CredentialSubjectClaims()
 			if err != nil {
