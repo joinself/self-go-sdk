@@ -21,6 +21,7 @@ import (
 
 var (
 	CredentialTypeEmail                = []string{"VerifiableCredential", "EmailCredential"}
+	CredentialTypePhone                = []string{"VerifiableCredential", "PhoneCredential"}
 	CredentialTypePassport             = []string{"VerifiableCredential", "PassportCredential"}
 	CredentialTypeLiveness             = []string{"VerifiableCredential", "LivenessCredential"}
 	CredentialTypeProfileName          = []string{"VerifiableCredential", "ProfileNameCredential"}
