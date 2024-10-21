@@ -679,6 +679,144 @@ func (a *Account) InboxClose(address *signing.PublicKey) error {
 	return nil
 }
 
+// ValueKeys returns all keys for key value pairs stored on the account
+// an optional param can be passed to filter keys with a given prefix
+func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
+	var collection *C.self_collection_value_key
+
+	var pfx *C.char
+
+	if len(prefix) > 0 {
+		pfx = C.CString(prefix[0])
+	}
+
+	status := C.self_account_value_keys(
+		a.account,
+		pfx,
+		&collection,
+	)
+
+	if pfx != nil {
+		C.free(unsafe.Pointer(pfx))
+	}
+
+	if status > 0 {
+		return nil, fmt.Errorf("failed retreive value keys, code: %d", status)
+	}
+
+	collectionLen := int(C.self_collection_value_key_len(
+		collection,
+	))
+
+	keys := make([]string, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_value_key_at(
+			collection,
+			C.size_t(i),
+		)
+
+		keys[i] = C.GoString(ptr)
+	}
+
+	C.self_collection_value_key_destroy(collection)
+
+	return keys, nil
+}
+
+// ValueLookup looks up a value by it's key
+func (a *Account) ValueLookup(key string) ([]byte, error) {
+	var value *C.self_encoded_buffer
+
+	keyPtr := C.CString(key)
+
+	status := C.self_account_value_lookup(
+		a.account,
+		keyPtr,
+		&value,
+	)
+
+	C.free(unsafe.Pointer(keyPtr))
+
+	if status > 0 {
+		return nil, fmt.Errorf("failed lookup value, code: %d", status)
+	}
+
+	defer C.self_encoded_buffer_destroy(
+		value,
+	)
+
+	return C.GoBytes(
+		unsafe.Pointer(C.self_encoded_buffer_buf(value)),
+		C.int(C.self_encoded_buffer_len(value)),
+	), nil
+}
+
+// ValueStore stores a value to the accounts storage
+func (a *Account) ValueStore(key string, value []byte) error {
+	keyPtr := C.CString(key)
+	valueBuf := C.CBytes(value)
+	valueLen := len(value)
+
+	status := C.self_account_value_store(
+		a.account,
+		keyPtr,
+		(*C.uint8_t)(valueBuf),
+		C.size_t(valueLen),
+	)
+
+	C.free(unsafe.Pointer(keyPtr))
+	C.free(valueBuf)
+
+	if status > 0 {
+		return fmt.Errorf("failed store value, code: %d", status)
+	}
+
+	return nil
+}
+
+// ValueStore stores a value to the accounts storage with an expiry
+func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Time) error {
+	keyPtr := C.CString(key)
+	valueBuf := C.CBytes(value)
+	valueLen := len(value)
+
+	status := C.self_account_value_store_with_expiry(
+		a.account,
+		keyPtr,
+		(*C.uint8_t)(valueBuf),
+		C.size_t(valueLen),
+		C.int64_t(expires.Unix()),
+	)
+
+	C.free(unsafe.Pointer(keyPtr))
+	C.free(valueBuf)
+
+	if status > 0 {
+		return fmt.Errorf("failed store value, code: %d", status)
+	}
+
+	return nil
+}
+
+// ValueRemove removes a value by it's key
+func (a *Account) ValueRemove(key string) error {
+	keyPtr := C.CString(key)
+
+	status := C.self_account_value_remove(
+		a.account,
+		keyPtr,
+	)
+
+	C.free(unsafe.Pointer(keyPtr))
+
+	if status > 0 {
+		return fmt.Errorf("failed remove value, code: %d", status)
+	}
+
+	return nil
+}
+
 // ObjectUpload uploads an encrypted object, optionally storing it our to local storage
 func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object, persistLocally bool) error {
 	status := C.self_account_object_upload(
@@ -708,6 +846,41 @@ func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Objec
 	}
 
 	return nil
+}
+
+// ObjectStore stores an object to local storage
+func (a *Account) ObjectStore(obj *object.Object) error {
+	status := C.self_account_object_store(
+		a.account,
+		objectPtr(obj),
+	)
+
+	if status > 0 {
+		return fmt.Errorf("failed object upload, code: %d", status)
+	}
+
+	return nil
+}
+
+// ObjectRetrieve downloads and decrypts an object
+func (a *Account) ObjectRetrieve(hash []byte) (*object.Object, error) {
+	var objPtr *C.self_object
+
+	hashPtr := C.CBytes(hash)
+
+	status := C.self_account_object_retreive(
+		a.account,
+		(*C.uint8_t)(hashPtr),
+		&objPtr,
+	)
+
+	C.free(hashPtr)
+
+	if status > 0 {
+		return nil, fmt.Errorf("failed object download, code: %d", status)
+	}
+
+	return newObject(objPtr), nil
 }
 
 // ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
