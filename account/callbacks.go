@@ -137,11 +137,11 @@ func goOnConnect(user_data unsafe.Pointer) {
 
 //export goOnDisconnect
 func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
-	// TODO handle reason
+	var err error
 	if reason > 0 {
-		fmt.Println(reason)
+		err = fmt.Errorf("connection failed, status: %d", reason)
 	}
-	(*Account)(user_data).callbacks.OnDisconnect(nil)
+	(*Account)(user_data).callbacks.OnDisconnect(err)
 }
 
 //export goOnMessage

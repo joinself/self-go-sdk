@@ -701,7 +701,7 @@ func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
 	}
 
 	if status > 0 {
-		return nil, fmt.Errorf("failed retreive value keys, code: %d", status)
+		return nil, fmt.Errorf("failed retrieve value keys, code: %d", status)
 	}
 
 	collectionLen := int(C.self_collection_value_key_len(
@@ -868,7 +868,7 @@ func (a *Account) ObjectRetrieve(hash []byte) (*object.Object, error) {
 
 	hashPtr := C.CBytes(hash)
 
-	status := C.self_account_object_retreive(
+	status := C.self_account_object_retrieve(
 		a.account,
 		(*C.uint8_t)(hashPtr),
 		&objPtr,
