@@ -121,6 +121,24 @@ func newProposal(ptr *C.self_proposal) *Proposal {
 	return e
 }
 
+type Reference struct {
+	ptr *C.self_reference
+}
+
+func newReference(ptr *C.self_reference) *Reference {
+	e := &Reference{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(e, func(e *Reference) {
+		C.self_reference_destroy(
+			e.ptr,
+		)
+	})
+
+	return e
+}
+
 type Welcome struct {
 	ptr *C.self_welcome
 }
@@ -324,6 +342,14 @@ func (c *Proposal) Timestamp() time.Time {
 	return time.Unix(int64(C.self_proposal_timestamp(
 		c.ptr,
 	)), 0)
+}
+
+// ID returns the id of the messages content
+func (r *Reference) ID() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_reference_id(r.ptr)),
+		20,
+	)
 }
 
 // ToAddress returns the address the event was addressed to
