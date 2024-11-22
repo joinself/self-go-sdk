@@ -12,11 +12,14 @@ typedef const self_message cself_message_t;
 typedef const self_commit cself_commit_t;
 typedef const self_key_package cself_key_package_t;
 typedef const self_proposal cself_proposal_t;
+typedef const self_reference cself_reference_t;
 typedef const self_welcome cself_welcome_t;
 typedef const uint8_t cuint8_t;
 
 extern void goOnConnect(void*);
 extern void goOnDisconnect(void*, self_status);
+extern void goOnAcknowledgement(void*, cself_reference_t*);
+extern void goOnError(void*, cself_reference_t*, self_status);
 extern void goOnMessage(void*, cself_message_t*);
 extern void goOnCommit(void*, cself_commit_t*);
 extern void goOnKeyPackage(void*, cself_key_package_t*);
@@ -31,6 +34,14 @@ static void c_on_connect(void* user_data) {
 
 static void c_on_disconnect(void* user_data, self_status reason) {
   goOnDisconnect(user_data, reason);
+}
+
+static void c_on_acknowledgement(void* user_data, self_reference *reference) {
+  goOnAcknowledgement(user_data, reference);
+}
+
+static void c_on_error(void* user_data, self_reference *reference, self_status reason) {
+  goOnError(user_data, reference, reason);
 }
 
 static void c_on_message(void *user_data, self_message *message) {
@@ -62,6 +73,8 @@ static self_account_callbacks *account_callbacks() {
 
 	callbacks->on_connect = c_on_connect;
 	callbacks->on_disconnect = c_on_disconnect;
+	callbacks->on_acknowledgement = c_on_acknowledgement;
+	callbacks->on_error = c_on_error;
 	callbacks->on_message = c_on_message;
 	callbacks->on_commit = c_on_commit;
 	callbacks->on_key_package = c_on_key_package;
@@ -76,32 +89,31 @@ static void c_on_response(void *user_data, self_status response) {
 	goOnResponse(user_data, response);
 }
 
-static void c_self_account_message_send_async(
-	struct self_account *account,
-    const struct self_signing_public_key *to_address,
-    const struct self_message_content *content,
-    void *user_data
-) {
-	self_on_response_cb callback_fn = c_on_response;
 
-	self_account_message_send_async(
-		account,
-		to_address,
-		content,
-		&callback_fn,
-		user_data
-	);
-};
+//static void c_self_account_message_send_async(
+//	struct self_account *account,
+//    const struct self_signing_public_key *to_address,
+//    const struct self_message_content *content,
+//    void *user_data
+//) {
+//	self_on_response_cb callback_fn = c_on_response;
+
+//	self_account_message_send_async(
+//		account,
+//		to_address,
+//		content,
+//		&callback_fn,
+//		user_data
+//	);
+//};
 */
 import "C"
 import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/message"
 )
 
@@ -123,6 +135,9 @@ func newKeyPackage(e *C.self_key_package) *message.KeyPackage
 //go:linkname newProposal github.com/joinself/self-go-sdk-next/message.newProposal
 func newProposal(e *C.self_proposal) *message.Proposal
 
+//go:linkname newReference github.com/joinself/self-go-sdk-next/message.newReference
+func newReference(e *C.self_reference) *message.Reference
+
 //go:linkname newWelcome github.com/joinself/self-go-sdk-next/message.newWelcome
 func newWelcome(e *C.self_welcome) *message.Welcome
 
@@ -132,16 +147,43 @@ func accountCallbacks() *C.self_account_callbacks {
 
 //export goOnConnect
 func goOnConnect(user_data unsafe.Pointer) {
-	(*Account)(user_data).callbacks.OnConnect()
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnConnect != nil {
+		(*Account)(user_data).callbacks.OnConnect(account)
+	}
 }
 
 //export goOnDisconnect
 func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
+	account := (*Account)(user_data)
+
 	var err error
 	if reason > 0 {
 		err = fmt.Errorf("connection failed, status: %d", reason)
 	}
-	(*Account)(user_data).callbacks.OnDisconnect(err)
+
+	if account.callbacks.OnDisconnect != nil {
+		account.callbacks.OnDisconnect(account, err)
+	}
+}
+
+//export goOnAcknowledgement
+func goOnAcknowledgement(user_data unsafe.Pointer, reference *C.cself_reference_t) {
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnAcknowledgement != nil {
+		account.callbacks.OnAcknowledgement(account, newReference(reference))
+	}
+}
+
+//export goOnError
+func goOnError(user_data unsafe.Pointer, reference *C.cself_reference_t, reason C.self_status) {
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnAcknowledgement != nil {
+		account.callbacks.OnError(account, newReference(reference), fmt.Errorf("delivery failed, status: %d", reason))
+	}
 }
 
 //export goOnMessage
@@ -249,6 +291,7 @@ func goOnResponse(user_data unsafe.Pointer, response C.self_status) {
 	}
 }
 
+/*
 func accountMessageSendAsync(account *Account, toAddress *signing.PublicKey, content *message.Content, callback func(err error)) {
 	offset := atomic.AddInt64(&responseOffset, 1)
 	responseCallbacks.Store(offset, callback)
@@ -260,3 +303,4 @@ func accountMessageSendAsync(account *Account, toAddress *signing.PublicKey, con
 		unsafe.Pointer(&offset),
 	)
 }
+*/

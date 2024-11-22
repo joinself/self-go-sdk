@@ -59,13 +59,15 @@ type Config struct {
 
 // Callbacks defines callbacks invoked by the account
 type Callbacks struct {
-	OnConnect    func()
-	OnDisconnect func(err error)
-	OnMessage    func(account *Account, message *message.Message)
-	OnCommit     func(account *Account, commit *message.Commit)
-	OnKeyPackage func(account *Account, keyPackage *message.KeyPackage)
-	OnProposal   func(account *Account, proposal *message.Proposal)
-	OnWelcome    func(account *Account, welcome *message.Welcome)
+	OnConnect         func(account *Account)
+	OnDisconnect      func(account *Account, err error)
+	OnAcknowledgement func(account *Account, reference *message.Reference)
+	OnError           func(account *Account, reference *message.Reference, err error)
+	OnMessage         func(account *Account, message *message.Message)
+	OnCommit          func(account *Account, commit *message.Commit)
+	OnKeyPackage      func(account *Account, keyPackage *message.KeyPackage)
+	OnProposal        func(account *Account, proposal *message.Proposal)
+	OnWelcome         func(account *Account, welcome *message.Welcome)
 }
 
 func (c *Config) defaults() {

@@ -2,12 +2,12 @@ package account_test
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
 	"runtime"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,16 +32,25 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 		path = path + "/self.db"
 	}
 
+	signal := make(chan bool, 1)
+
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
 		Environment: account.TargetSandbox,
 		LogLevel:    account.LogError,
 		Callbacks: account.Callbacks{
-			OnConnect: func() {
+			OnConnect: func(account *account.Account) {
+				signal <- true
 			},
-			OnDisconnect: func(err error) {
+			OnDisconnect: func(account *account.Account, err error) {
 				// require.Nil(t, err)
+			},
+			OnAcknowledgement: func(account *account.Account, reference *message.Reference) {
+				fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
+			},
+			OnError: func(account *account.Account, reference *message.Reference, err error) {
+				fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
 			},
 			OnMessage: func(account *account.Account, msg *message.Message) {
 				switch message.ContentType(msg) {
@@ -74,6 +83,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 
 	acc, err := account.New(cfg)
 	require.Nil(t, err)
+	<-signal
 
 	return acc, incomingMsg, incomingWel
 }
@@ -443,28 +453,13 @@ func TestAccountPersistence(t *testing.T) {
 
 	require.Nil(t, err)
 
-	var received int64
-	var wg sync.WaitGroup
-	wg.Add(1)
-
 	for i := 0; i < 100; i++ {
-		bobby.MessageSendAsync(
+		err = bobby.MessageSend(
 			aliceAddress,
 			contentForAlice,
-			func(err error) {
-				response := atomic.AddInt64(&received, 1)
-				if err != nil {
-					panic(err)
-				}
-
-				if response == 100 {
-					wg.Done()
-				}
-			},
 		)
+		require.Nil(t, err)
 	}
-
-	wg.Wait()
 
 	// reopen alices account
 	_, aliceInbox, _ := testAccountWithPath(t, alicePath)
@@ -620,28 +615,19 @@ func TestStoragePerformance(t *testing.T) {
 	require.Nil(t, err)
 
 	start := time.Now()
-	var acknowledged int
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	for i := 0; i < 10000; i++ {
-		bobby.MessageSendAsync(
+		err := bobby.MessageSend(
 			aliceAddress,
 			contentForAlice,
-			func(err error) {
-				if err != nil {
-					require.Nil(t, err)
-				}
-				acknowledged++
-				if acknowledged%100 == 0 {
-					fmt.Println("acknowledged", acknowledged)
-				}
-				if acknowledged == 10000 {
-					wg.Done()
-				}
-			},
 		)
+
+		if err != nil {
+			require.Nil(t, err)
+		}
 	}
 
 	wg.Wait()

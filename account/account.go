@@ -927,8 +927,8 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 	status := C.self_account_connection_establish(
 		a.account,
 		signingPublicKeyPtr(asAddress),
-		&groupAddress,
 		keyPackagePtr(keyPackage),
+		&groupAddress,
 	)
 
 	if status > 0 {
@@ -945,8 +945,8 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 	status := C.self_account_connection_accept(
 		a.account,
 		signingPublicKeyPtr(asAddress),
-		&groupAddress,
 		welcomePtr(welcome),
+		&groupAddress,
 	)
 
 	if status > 0 {
@@ -957,6 +957,8 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 }
 
 // MessageSend sends a message to an address that we have established an encrypted group with
+// the OnAcknowledgement and OnError callback will be invoked upon receiving the servers response,
+// referencing the id of the messages content
 func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
 	status := C.self_account_message_send(
 		a.account,
@@ -969,16 +971,6 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Con
 	}
 
 	return nil
-}
-
-// MessageSend sends a message to an address that we have established an encrypted group with
-func (a *Account) MessageSendAsync(toAddress *signing.PublicKey, content *message.Content, callback func(err error)) {
-	accountMessageSendAsync(
-		a,
-		toAddress,
-		content,
-		callback,
-	)
 }
 
 // Close shuts down the account
