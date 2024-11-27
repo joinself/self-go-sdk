@@ -9,10 +9,11 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
+
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 type DiscoveryRequest struct {
@@ -93,13 +94,13 @@ func DecodeDiscoveryRequest(msg *Message) (*DiscoveryRequest, error) {
 
 	var discoveryRequestContent *C.self_message_content_discovery_request
 
-	status := C.self_message_content_as_discovery_request(
+	result := C.self_message_content_as_discovery_request(
 		content,
 		&discoveryRequestContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode discovery request message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newDiscoveryRequest(discoveryRequestContent), nil
@@ -148,13 +149,13 @@ func (b *DiscoveryRequestBuilder) Expires(expires time.Time) *DiscoveryRequestBu
 func (b *DiscoveryRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_discovery_request_builder_finish(
+	result := C.self_message_content_discovery_request_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build discovery request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
@@ -166,13 +167,13 @@ func DecodeDiscoveryResponse(msg *Message) (*DiscoveryResponse, error) {
 
 	var discoveryResponseContent *C.self_message_content_discovery_response
 
-	status := C.self_message_content_as_discovery_response(
+	result := C.self_message_content_as_discovery_response(
 		content,
 		&discoveryResponseContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode discovery response message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newDiscoveryResponse(discoveryResponseContent), nil
@@ -236,13 +237,13 @@ func (b *DiscoveryResponseBuilder) Status(status ResponseStatus) *DiscoveryRespo
 func (b *DiscoveryResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_discovery_response_builder_finish(
+	result := C.self_message_content_discovery_response_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build discovery response")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil

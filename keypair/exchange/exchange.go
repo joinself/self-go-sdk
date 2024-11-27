@@ -13,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 type PublicKey struct {
@@ -48,13 +49,13 @@ func FromAddress(hex string) *PublicKey {
 		C.free(unsafe.Pointer(hexBuf))
 	}()
 
-	status := C.self_exchange_public_key_decode(
+	result := C.self_exchange_public_key_decode(
 		&publicKey,
 		hexBuf,
 		hexLen,
 	)
 
-	if status != 0 {
+	if result != 0 {
 		return nil
 	}
 
@@ -71,14 +72,14 @@ func (p *PublicKey) String() string {
 	encodedPtr := C.CBytes(make([]byte, 66))
 	defer C.free(encodedPtr)
 
-	status := C.self_exchange_public_key_encode(
+	result := C.self_exchange_public_key_encode(
 		p.ptr,
 		(*C.uint8_t)(encodedPtr),
 		66,
 	)
 
-	if status > 0 {
-		panic("invalid key conversion!")
+	if result > 0 {
+		panic(status.New(result).Error())
 	}
 
 	encoded := C.GoBytes(
@@ -94,14 +95,14 @@ func (p *PublicKey) Bytes() []byte {
 	bytesPtr := C.CBytes(make([]byte, 33))
 	defer C.free(bytesPtr)
 
-	status := C.self_exchange_public_key_as_bytes(
+	result := C.self_exchange_public_key_as_bytes(
 		p.ptr,
 		(*C.uint8_t)(bytesPtr),
 		33,
 	)
 
-	if status > 0 {
-		panic("invalid key conversion!")
+	if result > 0 {
+		panic(status.New(result).Error())
 	}
 
 	bytes := C.GoBytes(

@@ -9,13 +9,13 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 //go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
@@ -102,13 +102,13 @@ func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationR
 
 	var credentialVerificationRequestContent *C.self_message_content_credential_verification_request
 
-	status := C.self_message_content_as_credential_verification_request(
+	result := C.self_message_content_as_credential_verification_request(
 		content,
 		&credentialVerificationRequestContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode credential verification request message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newCredentialVerificationRequest(credentialVerificationRequestContent), nil
@@ -268,13 +268,13 @@ func (b *CredentialVerificationRequestBuilder) Expires(expires time.Time) *Crede
 func (b *CredentialVerificationRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_credential_verification_request_builder_finish(
+	result := C.self_message_content_credential_verification_request_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build credential verificaiton request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
@@ -286,13 +286,13 @@ func DecodeCredentialVerificationResponse(msg *Message) (*CredentialVerification
 
 	var credentialVerificationResponseContent *C.self_message_content_credential_verification_response
 
-	status := C.self_message_content_as_credential_verification_response(
+	result := C.self_message_content_as_credential_verification_response(
 		content,
 		&credentialVerificationResponseContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode credential verification response message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newCredentialVerificationResponse(credentialVerificationResponseContent), nil
@@ -380,13 +380,13 @@ func (b *CredentialVerificationResponseBuilder) VerifiableCredential(proof *cred
 func (b *CredentialVerificationResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_credential_verification_response_builder_finish(
+	result := C.self_message_content_credential_verification_response_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build credential verificaiton response")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 	return newContent(finishedContent), nil
 }

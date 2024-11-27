@@ -96,9 +96,8 @@ func testRegisterIdentity(t testing.TB, account *account.Account) {
 	multiroleKey, err := account.KeychainSigningCreate()
 	require.Nil(t, err)
 
-	exchangeKey, err := account.KeychainExchangeCreate()
-	require.Nil(t, err)
-	fmt.Println(exchangeKey.String())
+	//exchangeKey, err := account.KeychainExchangeCreate()
+	//require.Nil(t, err)
 
 	operation := identity.NewOperation().
 		Identifier(identityKey).

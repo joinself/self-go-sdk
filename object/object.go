@@ -9,9 +9,10 @@ package object
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"unsafe"
+
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 type Object struct {
@@ -44,7 +45,7 @@ func New(mime string, data []byte) (*Object, error) {
 	dataBuf := C.CBytes(data)
 	dataLen := C.size_t(len(data))
 
-	status := C.self_object_create(
+	result := C.self_object_create(
 		&object,
 		mimeType,
 		(*C.uint8_t)(dataBuf),
@@ -54,8 +55,8 @@ func New(mime string, data []byte) (*Object, error) {
 	C.free(unsafe.Pointer(mimeType))
 	C.free(dataBuf)
 
-	if status > 0 {
-		return nil, errors.New("object creation failed")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newObject(object), nil

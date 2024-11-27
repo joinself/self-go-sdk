@@ -109,12 +109,12 @@ static void c_on_response(void *user_data, self_status response) {
 */
 import "C"
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/message"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 var responseOffset int64
@@ -160,7 +160,7 @@ func goOnDisconnect(user_data unsafe.Pointer, reason C.self_status) {
 
 	var err error
 	if reason > 0 {
-		err = fmt.Errorf("connection failed, status: %d", reason)
+		err = status.New(uint32(reason))
 	}
 
 	if account.callbacks.OnDisconnect != nil {
@@ -284,7 +284,7 @@ func goOnResponse(user_data unsafe.Pointer, response C.self_status) {
 
 	if callback != nil {
 		if int(response) > 0 {
-			(callback).(func(error))(errors.New("request failed"))
+			(callback).(func(error))(status.New(uint32(response)))
 		} else {
 			(callback).(func(error))(nil)
 		}

@@ -10,13 +10,13 @@ package credential
 import "C"
 import (
 	"encoding/json"
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 var (
@@ -253,13 +253,13 @@ func (b *CredentialBuilder) SignWith(signer *signing.PublicKey, issuedAt time.Ti
 func (b *CredentialBuilder) Finish() (*Credential, error) {
 	var credential *C.self_credential
 
-	status := C.self_credential_builder_finish(
+	result := C.self_credential_builder_finish(
 		b.ptr,
 		&credential,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to create credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newCredential(credential), nil
@@ -276,14 +276,14 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 		C.free(encodedBuf)
 	}()
 
-	status := C.self_verifiable_credential_decode(
+	result := C.self_verifiable_credential_decode(
 		&verifiableCredential,
 		(*C.uint8_t)(encodedBuf),
 		(C.size_t)(encodedLen),
 	)
 
-	if status > 0 {
-		return nil, errors.New("decode credential failed")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newVerifiableCredential(verifiableCredential), nil
@@ -365,13 +365,13 @@ func (c *VerifiableCredential) Issuer() *Address {
 func (c *VerifiableCredential) Signer() (*Address, error) {
 	var signerAddress *C.self_credential_address
 
-	status := C.self_verifiable_credential_signer(
+	result := C.self_verifiable_credential_signer(
 		c.ptr,
 		&signerAddress,
 	)
 
-	if status > 0 {
-		return nil, errors.New("invalid signer address")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newAddress(signerAddress), nil
@@ -400,13 +400,13 @@ func (c *VerifiableCredential) Encode() ([]byte, error) {
 	var encodedCredentialBuffer *C.self_encoded_buffer
 	encodedCredentialBufferPtr := &encodedCredentialBuffer
 
-	status := C.self_verifiable_credential_encode(
+	result := C.self_verifiable_credential_encode(
 		c.ptr,
 		encodedCredentialBufferPtr,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to encode credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	encodedCredential := C.GoBytes(
@@ -423,12 +423,12 @@ func (c *VerifiableCredential) Encode() ([]byte, error) {
 
 // Validate validates the contents of the credential and it's signatures
 func (c *VerifiableCredential) Validate() error {
-	status := C.self_verifiable_credential_validate(
+	result := C.self_verifiable_credential_validate(
 		c.ptr,
 	)
 
-	if status > 0 {
-		return errors.New("credential invalid")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil

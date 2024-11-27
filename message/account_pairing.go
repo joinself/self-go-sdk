@@ -9,7 +9,6 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
@@ -18,6 +17,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/identity"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 //go:linkname operationPtr github.com/joinself/self-go-sdk-next/identity.operationPtr
@@ -107,13 +107,13 @@ func DecodeAccountPairingRequest(msg *Message) (*AccountPairingRequest, error) {
 
 	var accountPairingRequestContent *C.self_message_content_account_pairing_request
 
-	status := C.self_message_content_as_account_pairing_request(
+	result := C.self_message_content_as_account_pairing_request(
 		content,
 		&accountPairingRequestContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode account pairing request message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newAccountPairingRequest(accountPairingRequestContent), nil
@@ -178,13 +178,13 @@ func (b *AccountPairingRequestBuilder) Expires(expires time.Time) *AccountPairin
 func (b *AccountPairingRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_account_pairing_request_builder_finish(
+	result := C.self_message_content_account_pairing_request_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build account pairing request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
@@ -196,13 +196,13 @@ func DecodeAccountPairingResponse(msg *Message) (*AccountPairingResponse, error)
 
 	var accountPairingResponseContent *C.self_message_content_account_pairing_response
 
-	status := C.self_message_content_as_account_pairing_response(
+	result := C.self_message_content_as_account_pairing_response(
 		content,
 		&accountPairingResponseContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode account pairing response message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newAccountPairingResponse(accountPairingResponseContent), nil
@@ -334,13 +334,13 @@ func (b *AccountPairingResponseBuilder) Asset(asset *object.Object) *AccountPair
 func (b *AccountPairingResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_account_pairing_response_builder_finish(
+	result := C.self_message_content_account_pairing_response_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build account pairing response")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
