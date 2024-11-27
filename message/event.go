@@ -9,12 +9,12 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 type QREncoding int
@@ -176,14 +176,14 @@ func DecodeAnonymousMessage(data []byte) (*AnonymousMessage, error) {
 	dataLen := len(data)
 	defer C.free(dataBuf)
 
-	status := C.self_anonymous_message_decode(
+	result := C.self_anonymous_message_decode(
 		&anonymousMessage,
 		(*C.uint8_t)(dataBuf),
 		C.size_t(dataLen),
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode anonymous message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newAnonymousMessage(anonymousMessage), nil
@@ -209,14 +209,14 @@ func (a *AnonymousMessage) EncodeToQR(encoding QREncoding) ([]byte, error) {
 	var qrCode *C.self_encoded_buffer
 	qrCodePtr := &qrCode
 
-	status := C.self_anonymous_message_encode_as_qr(
+	result := C.self_anonymous_message_encode_as_qr(
 		a.ptr,
 		qrCodePtr,
 		uint32(encoding),
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to encode QR code")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	encodedQR := C.GoBytes(

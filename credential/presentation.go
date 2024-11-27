@@ -9,9 +9,10 @@ package credential
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"unsafe"
+
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 var (
@@ -120,13 +121,13 @@ func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *P
 func (b *PresentationBuilder) Finish() (*Presentation, error) {
 	var presentation *C.self_presentation
 
-	status := C.self_presentation_builder_finish(
+	result := C.self_presentation_builder_finish(
 		b.ptr,
 		&presentation,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to create presentation")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newPresentation(presentation), nil
@@ -163,12 +164,12 @@ func (p *VerifiablePresentation) Credentials() []*VerifiableCredential {
 
 // Validate validates the contents of the presentation and it's signatures
 func (p *VerifiablePresentation) Validate() error {
-	status := C.self_verifiable_presentation_validate(
+	result := C.self_verifiable_presentation_validate(
 		p.ptr,
 	)
 
-	if status > 0 {
-		return errors.New("presentation invalid")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -179,13 +180,13 @@ func (p *VerifiablePresentation) Encode() ([]byte, error) {
 	var encodedPresentationBuffer *C.self_encoded_buffer
 	encodedPresentationBufferPtr := &encodedPresentationBuffer
 
-	status := C.self_verifiable_presentation_encode(
+	result := C.self_verifiable_presentation_encode(
 		p.ptr,
 		encodedPresentationBufferPtr,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to encode presentation")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	encodedPresentation := C.GoBytes(

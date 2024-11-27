@@ -9,11 +9,11 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 type Chat struct {
@@ -58,13 +58,13 @@ func DecodeChat(msg *Message) (*Chat, error) {
 
 	var chatContent *C.self_message_content_chat
 
-	status := C.self_message_content_as_chat(
+	result := C.self_message_content_as_chat(
 		content,
 		&chatContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode chat message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newChat(chatContent), nil
@@ -152,13 +152,13 @@ func (b *ChatBuilder) Attach(attachment *object.Object) *ChatBuilder {
 func (b *ChatBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_chat_builder_finish(
+	result := C.self_message_content_chat_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build chat request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil

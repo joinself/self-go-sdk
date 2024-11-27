@@ -9,12 +9,12 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 
 	"github.com/joinself/self-go-sdk-next/credential"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 //go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
@@ -62,13 +62,13 @@ func DecodeIntroduction(msg *Message) (*Introduction, error) {
 
 	var introductionContent *C.self_message_content_introduction
 
-	status := C.self_message_content_as_introduction(
+	result := C.self_message_content_as_introduction(
 		content,
 		&introductionContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode introduction message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newIntroduction(introductionContent), nil
@@ -144,13 +144,13 @@ func (b *IntroductionBuilder) Asset(attachment *object.Object) *IntroductionBuil
 func (b *IntroductionBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_introduction_builder_finish(
+	result := C.self_message_content_introduction_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build introduction request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil

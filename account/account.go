@@ -10,7 +10,6 @@ package account
 import "C"
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"sync"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 var pins = make(map[*Account]*runtime.Pinner)
@@ -151,7 +151,7 @@ func New(cfg *Config) (*Account, error) {
 		)
 	})
 
-	status := C.self_account_configure(
+	result := C.self_account_configure(
 		account.account,
 		rpcURLBuf,
 		objectURLBuf,
@@ -164,8 +164,8 @@ func New(cfg *Config) (*Account, error) {
 		unsafe.Pointer(account),
 	)
 
-	if status > 0 {
-		return nil, errors.New("configuring account failed")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return account, nil
@@ -217,7 +217,7 @@ func (a *Account) Configure(cfg *Config) error {
 	// so we can pass them as user-data to C
 	pin(a)
 
-	status := C.self_account_configure(
+	result := C.self_account_configure(
 		a.account,
 		rpcURLBuf,
 		objectURLBuf,
@@ -230,8 +230,8 @@ func (a *Account) Configure(cfg *Config) error {
 		unsafe.Pointer(a),
 	)
 
-	if status > 0 {
-		return errors.New("configuring account failed")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -241,13 +241,13 @@ func (a *Account) Configure(cfg *Config) error {
 func (a *Account) KeychainSigningCreate() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
 
-	status := C.self_account_keychain_signing_create(
+	result := C.self_account_keychain_signing_create(
 		a.account,
 		&address,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to create keypair")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(address), nil
@@ -259,7 +259,7 @@ func (a *Account) KeychainSigningImport(seed []byte) (*signing.PublicKey, error)
 
 	seedBuf := C.CBytes(seed)
 
-	status := C.self_account_keychain_signing_import(
+	result := C.self_account_keychain_signing_import(
 		a.account,
 		(*C.uint8_t)(seedBuf),
 		&address,
@@ -267,8 +267,8 @@ func (a *Account) KeychainSigningImport(seed []byte) (*signing.PublicKey, error)
 
 	C.free(seedBuf)
 
-	if status > 0 {
-		return nil, errors.New("failed to create keypair")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(address), nil
@@ -278,14 +278,15 @@ func (a *Account) KeychainSigningImport(seed []byte) (*signing.PublicKey, error)
 func (a *Account) KeychainExchangeCreate() (*exchange.PublicKey, error) {
 	var address *C.self_exchange_public_key
 
-	status := C.self_account_keychain_exchange_create(
+	result := C.self_account_keychain_exchange_create(
 		a.account,
 		&address,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to create keypair")
+	if result > 0 {
+		return nil, status.New(result)
 	}
+
 	return newExchangePublicKey(address), nil
 }
 
@@ -293,15 +294,15 @@ func (a *Account) KeychainExchangeCreate() (*exchange.PublicKey, error) {
 func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, roles identity.Role) ([]*signing.PublicKey, error) {
 	var collection *C.self_collection_signing_public_key
 
-	status := C.self_account_keychain_signing_associated_with(
+	result := C.self_account_keychain_signing_associated_with(
 		a.account,
 		signingPublicKeyPtr(address),
 		C.uint64_t(roles),
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to create keypair")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	keys := fromSigningPublicKeyCollection(
@@ -319,13 +320,13 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 func (a *Account) IdentityList() ([]*signing.PublicKey, error) {
 	var collection *C.self_collection_signing_public_key
 
-	status := C.self_account_identity_list(
+	result := C.self_account_identity_list(
 		a.account,
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to list identities")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	keys := fromSigningPublicKeyCollection(
@@ -343,14 +344,14 @@ func (a *Account) IdentityList() ([]*signing.PublicKey, error) {
 func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Document, error) {
 	var document *C.self_identity_document
 
-	status := C.self_account_identity_resolve(
+	result := C.self_account_identity_resolve(
 		a.account,
 		signingPublicKeyPtr(address),
 		&document,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to resolve identity")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newIdentityDocument(document), nil
@@ -358,13 +359,13 @@ func (a *Account) IdentityResolve(address *signing.PublicKey) (*identity.Documen
 
 // IdentityExecute executes an operation that creates or modifies a document
 func (a *Account) IdentityExecute(operation *identity.Operation) error {
-	status := C.self_account_identity_execute(
+	result := C.self_account_identity_execute(
 		a.account,
 		operationPtr(operation),
 	)
 
-	if status > 0 {
-		return errors.New("failed to execute operation")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -372,13 +373,13 @@ func (a *Account) IdentityExecute(operation *identity.Operation) error {
 
 // IdentitySign signs an operation that can later be executed
 func (a *Account) IdentitySign(operation *identity.Operation) error {
-	status := C.self_account_identity_sign(
+	result := C.self_account_identity_sign(
 		a.account,
 		operationPtr(operation),
 	)
 
-	if status > 0 {
-		return errors.New("failed to sign operation")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -388,14 +389,14 @@ func (a *Account) IdentitySign(operation *identity.Operation) error {
 func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (*credential.VerifiableCredential, error) {
 	var verifiableCredential *C.self_verifiable_credential
 
-	status := C.self_account_credential_issue(
+	result := C.self_account_credential_issue(
 		a.account,
 		credentialPtr(unverifiedCredential),
 		&verifiableCredential,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to issue credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newVerifiableCredential(verifiableCredential), nil
@@ -403,13 +404,13 @@ func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (
 
 // CredentialStore stores a verifiable credential
 func (a *Account) CredentialStore(verifiedCredential *credential.VerifiableCredential) error {
-	status := C.self_account_credential_store(
+	result := C.self_account_credential_store(
 		a.account,
 		verifiableCredentialPtr(verifiedCredential),
 	)
 
-	if status > 0 {
-		return errors.New("failed to store credential")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -419,13 +420,13 @@ func (a *Account) CredentialStore(verifiedCredential *credential.VerifiableCrede
 func (a *Account) CredentialLookup() ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
 
-	status := C.self_account_credential_lookup(
+	result := C.self_account_credential_lookup(
 		a.account,
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to lookup credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -443,14 +444,14 @@ func (a *Account) CredentialLookup() ([]*credential.VerifiableCredential, error)
 func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
 
-	status := C.self_account_credential_lookup_by_issuer(
+	result := C.self_account_credential_lookup_by_issuer(
 		a.account,
 		signingPublicKeyPtr(issuer),
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to lookup credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -468,14 +469,14 @@ func (a *Account) CredentialLookupByIssuer(issuer *signing.PublicKey) ([]*creden
 func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
 
-	status := C.self_account_credential_lookup_by_bearer(
+	result := C.self_account_credential_lookup_by_bearer(
 		a.account,
 		signingPublicKeyPtr(bearer),
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to lookup credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -495,14 +496,14 @@ func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*
 
 	credentialTypeCollection := toCredentialTypeCollection(credentialType)
 
-	status := C.self_account_credential_lookup_by_credential_type(
+	result := C.self_account_credential_lookup_by_credential_type(
 		a.account,
 		credentialTypeCollection,
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to lookup credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	credentials := fromVerifiableCredentialCollection(
@@ -524,14 +525,14 @@ func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*
 func (a *Account) PresentationIssue(presentation *credential.Presentation) (*credential.VerifiablePresentation, error) {
 	var verifiablePresentation *C.self_verifiable_presentation
 
-	status := C.self_account_presentation_issue(
+	result := C.self_account_presentation_issue(
 		a.account,
 		presentationPtr(presentation),
 		&verifiablePresentation,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to issue credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newVerfiablePresentation(verifiablePresentation), nil
@@ -539,13 +540,13 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 
 // PresentationStore stores a verifiable presentation
 func (a *Account) PresentationStore(verifiedPresentation *credential.VerifiablePresentation) error {
-	status := C.self_account_presentation_store(
+	result := C.self_account_presentation_store(
 		a.account,
 		verifiablePresentationPtr(verifiedPresentation),
 	)
 
-	if status > 0 {
-		return errors.New("failed to store presentation")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -555,14 +556,14 @@ func (a *Account) PresentationStore(verifiedPresentation *credential.VerifiableP
 func (a *Account) PresentationLookupByHolder(holder *signing.PublicKey) ([]*credential.VerifiablePresentation, error) {
 	var collection *C.self_collection_verifiable_presentation
 
-	status := C.self_account_presentation_lookup_by_holder(
+	result := C.self_account_presentation_lookup_by_holder(
 		a.account,
 		signingPublicKeyPtr(holder),
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to lookup presentation")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	presentations := fromVerifiablePresentationCollection(
@@ -582,14 +583,14 @@ func (a *Account) PresentationLookupByPresentationType(presentationType []string
 
 	presentationTypeCollection := toPresentationTypeCollection(presentationType)
 
-	status := C.self_account_presentation_lookup_by_presentation_type(
+	result := C.self_account_presentation_lookup_by_presentation_type(
 		a.account,
 		presentationTypeCollection,
 		&collection,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to store presentation")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	presentations := fromVerifiablePresentationCollection(
@@ -611,14 +612,14 @@ func (a *Account) PresentationLookupByPresentationType(presentationType []string
 func (a *Account) VerifyChallenge(asAddress *signing.PublicKey) ([]byte, error) {
 	var challengeBuf *C.self_encoded_buffer
 
-	status := C.self_account_verify_challenge(
+	result := C.self_account_verify_challenge(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		&challengeBuf,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to issue credential")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	challenge := C.GoBytes(
@@ -635,14 +636,14 @@ func (a *Account) VerifyChallenge(asAddress *signing.PublicKey) ([]byte, error) 
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
 
-	status := C.self_account_inbox_open(
+	result := C.self_account_inbox_open(
 		a.account,
 		0,
 		&address,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to open inbox")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(address), nil
@@ -652,14 +653,14 @@ func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 func (a *Account) InboxOpenWithExpiry(expires time.Time) (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
 
-	status := C.self_account_inbox_open(
+	result := C.self_account_inbox_open(
 		a.account,
 		C.int64_t(expires.Unix()),
 		&address,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to open inbox")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(address), nil
@@ -667,13 +668,13 @@ func (a *Account) InboxOpenWithExpiry(expires time.Time) (*signing.PublicKey, er
 
 // InboxClose closes an existing inbox permanently
 func (a *Account) InboxClose(address *signing.PublicKey) error {
-	status := C.self_account_inbox_close(
+	result := C.self_account_inbox_close(
 		a.account,
 		signingPublicKeyPtr(address),
 	)
 
-	if status > 0 {
-		return errors.New("failed to close inbox")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -690,7 +691,7 @@ func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
 		pfx = C.CString(prefix[0])
 	}
 
-	status := C.self_account_value_keys(
+	result := C.self_account_value_keys(
 		a.account,
 		pfx,
 		&collection,
@@ -700,8 +701,8 @@ func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
 		C.free(unsafe.Pointer(pfx))
 	}
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed retrieve value keys, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	collectionLen := int(C.self_collection_value_key_len(
@@ -730,7 +731,7 @@ func (a *Account) ValueLookup(key string) ([]byte, error) {
 
 	keyPtr := C.CString(key)
 
-	status := C.self_account_value_lookup(
+	result := C.self_account_value_lookup(
 		a.account,
 		keyPtr,
 		&value,
@@ -738,8 +739,8 @@ func (a *Account) ValueLookup(key string) ([]byte, error) {
 
 	C.free(unsafe.Pointer(keyPtr))
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed lookup value, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	defer C.self_encoded_buffer_destroy(
@@ -758,7 +759,7 @@ func (a *Account) ValueStore(key string, value []byte) error {
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
 
-	status := C.self_account_value_store(
+	result := C.self_account_value_store(
 		a.account,
 		keyPtr,
 		(*C.uint8_t)(valueBuf),
@@ -768,8 +769,8 @@ func (a *Account) ValueStore(key string, value []byte) error {
 	C.free(unsafe.Pointer(keyPtr))
 	C.free(valueBuf)
 
-	if status > 0 {
-		return fmt.Errorf("failed store value, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -781,7 +782,7 @@ func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Ti
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
 
-	status := C.self_account_value_store_with_expiry(
+	result := C.self_account_value_store_with_expiry(
 		a.account,
 		keyPtr,
 		(*C.uint8_t)(valueBuf),
@@ -792,8 +793,8 @@ func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Ti
 	C.free(unsafe.Pointer(keyPtr))
 	C.free(valueBuf)
 
-	if status > 0 {
-		return fmt.Errorf("failed store value, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -803,15 +804,15 @@ func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Ti
 func (a *Account) ValueRemove(key string) error {
 	keyPtr := C.CString(key)
 
-	status := C.self_account_value_remove(
+	result := C.self_account_value_remove(
 		a.account,
 		keyPtr,
 	)
 
 	C.free(unsafe.Pointer(keyPtr))
 
-	if status > 0 {
-		return fmt.Errorf("failed remove value, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -819,15 +820,15 @@ func (a *Account) ValueRemove(key string) error {
 
 // ObjectUpload uploads an encrypted object, optionally storing it our to local storage
 func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object, persistLocally bool) error {
-	status := C.self_account_object_upload(
+	result := C.self_account_object_upload(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		objectPtr(obj),
 		C.bool(persistLocally),
 	)
 
-	if status > 0 {
-		return fmt.Errorf("failed object upload, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -835,14 +836,14 @@ func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object,
 
 // ObjectDownload downloads and decrypts an object
 func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Object) error {
-	status := C.self_account_object_download(
+	result := C.self_account_object_download(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		objectPtr(obj),
 	)
 
-	if status > 0 {
-		return fmt.Errorf("failed object download, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -850,13 +851,13 @@ func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Objec
 
 // ObjectStore stores an object to local storage
 func (a *Account) ObjectStore(obj *object.Object) error {
-	status := C.self_account_object_store(
+	result := C.self_account_object_store(
 		a.account,
 		objectPtr(obj),
 	)
 
-	if status > 0 {
-		return fmt.Errorf("failed object upload, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -868,7 +869,7 @@ func (a *Account) ObjectRetrieve(hash []byte) (*object.Object, error) {
 
 	hashPtr := C.CBytes(hash)
 
-	status := C.self_account_object_retrieve(
+	result := C.self_account_object_retrieve(
 		a.account,
 		(*C.uint8_t)(hashPtr),
 		&objPtr,
@@ -876,8 +877,8 @@ func (a *Account) ObjectRetrieve(hash []byte) (*object.Object, error) {
 
 	C.free(hashPtr)
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed object download, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newObject(objPtr), nil
@@ -886,15 +887,15 @@ func (a *Account) ObjectRetrieve(hash []byte) (*object.Object, error) {
 // ConnectionNegotiate negotiates a new encrypted group connection with an address. sends a key
 // package to the recipient, which they will use to invite us to an encrypted group
 func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress *signing.PublicKey, expires time.Time) error {
-	status := C.self_account_connection_negotiate(
+	result := C.self_account_connection_negotiate(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		signingPublicKeyPtr(withAddress),
 		C.int64_t(expires.Unix()),
 	)
 
-	if status > 0 {
-		return fmt.Errorf("failed negotiate connection, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -905,15 +906,15 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*message.KeyPackage, error) {
 	var keyPackage *C.self_key_package
 
-	status := C.self_account_connection_negotiate_out_of_band(
+	result := C.self_account_connection_negotiate_out_of_band(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		C.int64_t(expires.Unix()),
 		&keyPackage,
 	)
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed negotiate connection, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newKeyPackage(keyPackage), nil
@@ -924,15 +925,15 @@ func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, exp
 func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
-	status := C.self_account_connection_establish(
+	result := C.self_account_connection_establish(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		keyPackagePtr(keyPackage),
 		&groupAddress,
 	)
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed establish connection, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(groupAddress), nil
@@ -942,15 +943,15 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
-	status := C.self_account_connection_accept(
+	result := C.self_account_connection_accept(
 		a.account,
 		signingPublicKeyPtr(asAddress),
 		welcomePtr(welcome),
 		&groupAddress,
 	)
 
-	if status > 0 {
-		return nil, fmt.Errorf("failed accept connection, code: %d", status)
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newSigningPublicKey(groupAddress), nil
@@ -960,14 +961,14 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 // the OnAcknowledgement and OnError callback will be invoked upon receiving the servers response,
 // referencing the id of the messages content
 func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
-	status := C.self_account_message_send(
+	result := C.self_account_message_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),
 		contentPtr(content),
 	)
 
-	if status > 0 {
-		return fmt.Errorf("failed message send, code: %d", status)
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil
@@ -975,12 +976,12 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Con
 
 // Close shuts down the account
 func (a *Account) Close() error {
-	status := C.self_account_destroy(
+	result := C.self_account_destroy(
 		a.account,
 	)
 
-	if status > 0 {
-		return errors.New("failed to close account")
+	if result > 0 {
+		return status.New(result)
 	}
 
 	return nil

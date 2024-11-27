@@ -9,12 +9,12 @@ package message
 */
 import "C"
 import (
-	"errors"
 	"runtime"
 	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/status"
 )
 
 //go:linkname fromCredentialTypeCollection github.com/joinself/self-go-sdk-next/credential.fromCredentialTypeCollection
@@ -128,13 +128,13 @@ func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationR
 
 	var credentialPresentationRequestContent *C.self_message_content_credential_presentation_request
 
-	status := C.self_message_content_as_credential_presentation_request(
+	result := C.self_message_content_as_credential_presentation_request(
 		content,
 		&credentialPresentationRequestContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode credential presentation request message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newCredentialPresentationRequest(credentialPresentationRequestContent), nil
@@ -233,13 +233,13 @@ func (b *CredentialPresentationRequestBuilder) Expires(expires time.Time) *Crede
 func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_credential_presentation_request_builder_finish(
+	result := C.self_message_content_credential_presentation_request_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build credential verificaiton request")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
@@ -251,13 +251,13 @@ func DecodeCredentialPresentationResponse(msg *Message) (*CredentialPresentation
 
 	var credentialPresentationResponseContent *C.self_message_content_credential_presentation_response
 
-	status := C.self_message_content_as_credential_presentation_response(
+	result := C.self_message_content_as_credential_presentation_response(
 		content,
 		&credentialPresentationResponseContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to decode credential presentation response message")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newCredentialPresentationResponse(credentialPresentationResponseContent), nil
@@ -347,13 +347,13 @@ func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentat
 func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
-	status := C.self_message_content_credential_presentation_response_builder_finish(
+	result := C.self_message_content_credential_presentation_response_builder_finish(
 		b.ptr,
 		&finishedContent,
 	)
 
-	if status > 0 {
-		return nil, errors.New("failed to build credential verificaiton response")
+	if result > 0 {
+		return nil, status.New(result)
 	}
 
 	return newContent(finishedContent), nil
