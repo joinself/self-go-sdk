@@ -111,6 +111,7 @@ import "C"
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/message"
@@ -148,6 +149,8 @@ func accountCallbacks() *C.self_account_callbacks {
 //export goOnConnect
 func goOnConnect(user_data unsafe.Pointer) {
 	account := (*Account)(user_data)
+
+	atomic.StoreInt32(&account.ready, 1)
 
 	if account.callbacks.OnConnect != nil {
 		(*Account)(user_data).callbacks.OnConnect(account)

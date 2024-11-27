@@ -12,6 +12,7 @@ import (
 	"errors"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -27,7 +28,7 @@ import (
 var pins = make(map[*Account]*runtime.Pinner)
 var mu sync.Mutex
 
-func pin(pointer *Account) {
+func pin(pointer *Account) unsafe.Pointer {
 	p := new(runtime.Pinner)
 	p.Pin(pointer)
 	p.Pin(pointer.callbacks)
@@ -35,6 +36,8 @@ func pin(pointer *Account) {
 	mu.Lock()
 	pins[pointer] = p
 	mu.Unlock()
+
+	return unsafe.Pointer(pointer)
 }
 
 func unpin(pointer *Account) {
@@ -113,6 +116,7 @@ func toPresentationTypeCollection(c []string) *C.self_collection_presentation_ty
 type Account struct {
 	account   *C.self_account
 	callbacks *Callbacks
+	ready     int32
 }
 
 // New creates a new self account
@@ -141,7 +145,7 @@ func New(cfg *Config) (*Account, error) {
 
 	// pin our account and callback pointers
 	// so we can pass them as user-data to C
-	pin(account)
+	pinnedAccount := pin(account)
 
 	runtime.SetFinalizer(account, func(account *Account) {
 		unpin(account)
@@ -161,11 +165,17 @@ func New(cfg *Config) (*Account, error) {
 		storageKeyLen,
 		uint32(cfg.LogLevel),
 		accountCallbacks(),
-		unsafe.Pointer(account),
+		pinnedAccount,
 	)
 
 	if result > 0 {
 		return nil, status.New(result)
+	}
+
+	if !cfg.SkipReady {
+		for atomic.LoadInt32(&account.ready) == 0 {
+			time.Sleep(time.Millisecond * 10)
+		}
 	}
 
 	return account, nil
@@ -215,7 +225,7 @@ func (a *Account) Configure(cfg *Config) error {
 
 	// pin our account and callback pointers
 	// so we can pass them as user-data to C
-	pin(a)
+	pinnedAccount := pin(a)
 
 	result := C.self_account_configure(
 		a.account,
@@ -227,11 +237,17 @@ func (a *Account) Configure(cfg *Config) error {
 		storageKeyLen,
 		uint32(cfg.LogLevel),
 		accountCallbacks(),
-		unsafe.Pointer(a),
+		pinnedAccount,
 	)
 
 	if result > 0 {
 		return status.New(result)
+	}
+
+	if !cfg.SkipReady {
+		for atomic.LoadInt32(&a.ready) == 0 {
+			time.Sleep(time.Millisecond * 10)
+		}
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package account_test
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -47,10 +46,10 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 				// require.Nil(t, err)
 			},
 			OnAcknowledgement: func(account *account.Account, reference *message.Reference) {
-				fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
+				// fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
 			},
 			OnError: func(account *account.Account, reference *message.Reference, err error) {
-				fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
+				// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
 			},
 			OnMessage: func(account *account.Account, msg *message.Message) {
 				switch message.ContentType(msg) {
