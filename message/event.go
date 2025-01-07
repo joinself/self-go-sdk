@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk-next/platform"
 	"github.com/joinself/self-go-sdk-next/status"
 )
 
@@ -26,6 +27,9 @@ const (
 
 //go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
 func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
+
+//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk-next/platform.newPlatformAttestation
+func newPlatformAttestation(*C.self_platform_attestation) *platform.Attestation
 
 type AnonymousMessage struct {
 	ptr *C.self_anonymous_message
@@ -314,6 +318,26 @@ func (m *Message) Content() *Content {
 	return newContent(
 		C.self_message_message_content(m.ptr),
 	)
+}
+
+// Content returns the sha3 hash of the encoded content
+func (m *Message) ContentHash() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_message_message_content_hash(m.ptr)),
+		32,
+	)
+}
+
+// Content returns the sha3 hash of the encoded content
+func (m *Message) Integrity() (*platform.Attestation, bool) {
+	integrity := C.self_message_message_integrity(m.ptr)
+	if integrity == nil {
+		return nil, false
+	}
+
+	return newPlatformAttestation(
+		integrity,
+	), true
 }
 
 // ToAddress returns the address the event was addressed to

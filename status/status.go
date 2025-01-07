@@ -15,7 +15,6 @@ type Error struct {
 }
 
 func New(status uint32) *Error {
-
 	return &Error{
 		status: status,
 		message: C.GoString(
