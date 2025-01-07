@@ -624,30 +624,6 @@ func (a *Account) PresentationLookupByPresentationType(presentationType []string
 	return presentations, nil
 }
 
-// VerifyChallenge requests a unique signed challenge over a given public key
-func (a *Account) VerifyChallenge(asAddress *signing.PublicKey) ([]byte, error) {
-	var challengeBuf *C.self_encoded_buffer
-
-	result := C.self_account_verify_challenge(
-		a.account,
-		signingPublicKeyPtr(asAddress),
-		&challengeBuf,
-	)
-
-	if result > 0 {
-		return nil, status.New(result)
-	}
-
-	challenge := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(challengeBuf)),
-		C.int(C.self_encoded_buffer_len(challengeBuf)),
-	)
-
-	C.self_encoded_buffer_destroy(challengeBuf)
-
-	return challenge, nil
-}
-
 // InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
