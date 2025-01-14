@@ -12,6 +12,7 @@ import (
 
 	"github.com/joinself/self-go-sdk-next/account"
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/identity"
 	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/joinself/self-go-sdk-next/object"
@@ -19,13 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testAccount(t testing.TB) (*account.Account, chan *message.Message, chan *message.Welcome) {
+func testAccount(t testing.TB) (*account.Account, chan *event.Message, chan *event.Welcome) {
 	return testAccountWithPath(t, ":memory:")
 }
 
-func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *message.Message, chan *message.Welcome) {
-	incomingMsg := make(chan *message.Message, 1024)
-	incomingWel := make(chan *message.Welcome, 1024)
+func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *event.Message, chan *event.Welcome) {
+	incomingMsg := make(chan *event.Message, 1024)
+	incomingWel := make(chan *event.Welcome, 1024)
 
 	if path != ":memory:" {
 		path = path + "/self.db"
@@ -45,19 +46,19 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 			OnDisconnect: func(account *account.Account, err error) {
 				// require.Nil(t, err)
 			},
-			OnAcknowledgement: func(account *account.Account, reference *message.Reference) {
+			OnAcknowledgement: func(account *account.Account, reference *event.Reference) {
 				// fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
 			},
-			OnError: func(account *account.Account, reference *message.Reference, err error) {
+			OnError: func(account *account.Account, reference *event.Reference, err error) {
 				// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
 			},
-			OnMessage: func(account *account.Account, msg *message.Message) {
-				switch message.ContentType(msg) {
-				case message.TypeChat:
+			OnMessage: func(account *account.Account, msg *event.Message) {
+				switch event.ContentType(msg) {
+				case event.TypeChat:
 					incomingMsg <- msg
 				}
 			},
-			OnKeyPackage: func(account *account.Account, keyPackage *message.KeyPackage) {
+			OnKeyPackage: func(account *account.Account, keyPackage *event.KeyPackage) {
 				_, err := account.ConnectionEstablish(
 					keyPackage.ToAddress(),
 					keyPackage,
@@ -66,7 +67,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *mes
 					panic(err)
 				}
 			},
-			OnWelcome: func(account *account.Account, welcome *message.Welcome) {
+			OnWelcome: func(account *account.Account, welcome *event.Welcome) {
 				_, err := account.ConnectionAccept(
 					welcome.ToAddress(),
 					welcome,
@@ -113,7 +114,7 @@ func testRegisterIdentity(t testing.TB, account *account.Account) {
 	require.Nil(t, err)
 }
 
-func wait(t testing.TB, ch chan *message.Message, timeout time.Duration) *message.Message {
+func wait(t testing.TB, ch chan *event.Message, timeout time.Duration) *event.Message {
 	select {
 	case <-time.After(timeout):
 		require.Nil(t, errors.New("timeout"))
@@ -460,12 +461,16 @@ func TestAccountPersistence(t *testing.T) {
 	}
 
 	// reopen alices account
-	_, aliceInbox, _ := testAccountWithPath(t, alicePath)
+	alice, aliceInbox, _ := testAccountWithPath(t, alicePath)
 
 	// receive the messages from bobby
 	for i := 0; i < 100; i++ {
 		<-aliceInbox
 	}
+
+	inboxes, err := alice.InboxList()
+	require.Nil(t, err)
+	assert.Len(t, inboxes, 1)
 }
 
 func TestAccountDiscovery(t *testing.T) {
@@ -490,9 +495,9 @@ func TestAccountDiscovery(t *testing.T) {
 
 	require.Nil(t, err)
 
-	anonymousMessage := message.NewAnonymousMessage(content)
+	anonymousMessage := event.NewAnonymousMessage(content)
 
-	qrCode, err := anonymousMessage.EncodeToQR(message.QREncodingSVG)
+	qrCode, err := anonymousMessage.EncodeToQR(event.QREncodingSVG)
 	require.Nil(t, err)
 
 	os.WriteFile("/tmp/qr.svg", qrCode, 0644)

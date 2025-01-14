@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/status"
 )
 
@@ -123,8 +124,8 @@ func newCredentialPresentationResponseBuilder(ptr *C.self_message_content_creden
 }
 
 // DecodeCredentialPresentationRequest decodes a message to a credential presentation request
-func DecodeCredentialPresentationRequest(msg *Message) (*CredentialPresentationRequest, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeCredentialPresentationRequest(msg *event.Message) (*CredentialPresentationRequest, error) {
+	content := contentPtr(msg.Content())
 
 	var credentialPresentationRequestContent *C.self_message_content_credential_presentation_request
 
@@ -230,7 +231,7 @@ func (b *CredentialPresentationRequestBuilder) Expires(expires time.Time) *Crede
 }
 
 // Finish finalises the request and builds the content
-func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
+func (b *CredentialPresentationRequestBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_presentation_request_builder_finish(
@@ -246,8 +247,8 @@ func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
 }
 
 // DecodeCredentialPresentationResponse decodes a message to a credential presentation response
-func DecodeCredentialPresentationResponse(msg *Message) (*CredentialPresentationResponse, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeCredentialPresentationResponse(msg *event.Message) (*CredentialPresentationResponse, error) {
+	content := contentPtr(msg.Content())
 
 	var credentialPresentationResponseContent *C.self_message_content_credential_presentation_response
 
@@ -344,7 +345,7 @@ func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentat
 }
 
 // Finish finalises the response and builds the content
-func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
+func (b *CredentialPresentationResponseBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_presentation_response_builder_finish(

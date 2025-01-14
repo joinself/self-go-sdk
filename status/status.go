@@ -26,3 +26,7 @@ func New(status uint32) *Error {
 func (e Error) Error() string {
 	return e.message
 }
+
+func (e Error) Status() uint32 {
+	return e.status
+}

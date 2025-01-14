@@ -8,7 +8,7 @@ package account
 #include <stdlib.h>
 */
 import "C"
-import "github.com/joinself/self-go-sdk-next/message"
+import "github.com/joinself/self-go-sdk-next/event"
 
 type LogLevel uint32
 
@@ -62,13 +62,13 @@ type Config struct {
 type Callbacks struct {
 	OnConnect         func(account *Account)
 	OnDisconnect      func(account *Account, err error)
-	OnAcknowledgement func(account *Account, reference *message.Reference)
-	OnError           func(account *Account, reference *message.Reference, err error)
-	OnMessage         func(account *Account, message *message.Message)
-	OnCommit          func(account *Account, commit *message.Commit)
-	OnKeyPackage      func(account *Account, keyPackage *message.KeyPackage)
-	OnProposal        func(account *Account, proposal *message.Proposal)
-	OnWelcome         func(account *Account, welcome *message.Welcome)
+	OnAcknowledgement func(account *Account, reference *event.Reference)
+	OnError           func(account *Account, reference *event.Reference, err error)
+	OnMessage         func(account *Account, message *event.Message)
+	OnCommit          func(account *Account, commit *event.Commit)
+	OnKeyPackage      func(account *Account, keyPackage *event.KeyPackage)
+	OnProposal        func(account *Account, proposal *event.Proposal)
+	OnWelcome         func(account *Account, welcome *event.Welcome)
 }
 
 func (c *Config) defaults() {

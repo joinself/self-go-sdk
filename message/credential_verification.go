@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/object"
 	"github.com/joinself/self-go-sdk-next/status"
 )
@@ -97,8 +98,8 @@ func newCredentialVerificationResponseBuilder(ptr *C.self_message_content_creden
 }
 
 // DecodeCredentialVerificationRequest decodes a message to a credential verification request
-func DecodeCredentialVerificationRequest(msg *Message) (*CredentialVerificationRequest, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeCredentialVerificationRequest(msg *event.Message) (*CredentialVerificationRequest, error) {
+	content := contentPtr(msg.Content())
 
 	var credentialVerificationRequestContent *C.self_message_content_credential_verification_request
 
@@ -265,7 +266,7 @@ func (b *CredentialVerificationRequestBuilder) Expires(expires time.Time) *Crede
 }
 
 // Finish finalises the request and builds the content
-func (b *CredentialVerificationRequestBuilder) Finish() (*Content, error) {
+func (b *CredentialVerificationRequestBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_verification_request_builder_finish(
@@ -281,8 +282,8 @@ func (b *CredentialVerificationRequestBuilder) Finish() (*Content, error) {
 }
 
 // DecodeCredentialVerificationResponse decodes a message to a credential verification response
-func DecodeCredentialVerificationResponse(msg *Message) (*CredentialVerificationResponse, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeCredentialVerificationResponse(msg *event.Message) (*CredentialVerificationResponse, error) {
+	content := contentPtr(msg.Content())
 
 	var credentialVerificationResponseContent *C.self_message_content_credential_verification_response
 
@@ -377,7 +378,7 @@ func (b *CredentialVerificationResponseBuilder) VerifiableCredential(proof *cred
 }
 
 // Finish finalises the response and builds the content
-func (b *CredentialVerificationResponseBuilder) Finish() (*Content, error) {
+func (b *CredentialVerificationResponseBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_verification_response_builder_finish(
