@@ -117,7 +117,7 @@ func toPresentationTypeCollection(c []string) *C.self_collection_presentation_ty
 type Account struct {
 	account   *C.self_account
 	callbacks *Callbacks
-	pairing   *string
+	pairing   *pairing
 	status    int32
 }
 
@@ -267,7 +267,7 @@ func (a *Account) PairingCode() (string, bool) {
 		return "", false
 	}
 
-	return *a.pairing, true
+	return *&a.pairing.PairingCode, true
 }
 
 // KeychainSigningCreate creates a new signing keypair

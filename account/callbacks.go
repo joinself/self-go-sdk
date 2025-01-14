@@ -110,6 +110,7 @@ static void c_on_response(void *user_data, self_status response) {
 */
 import "C"
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -123,6 +124,11 @@ import (
 
 var responseOffset int64
 var responseCallbacks sync.Map
+
+type pairing struct {
+	RequestID   []byte `json:"requestId"`
+	PairingCode string `json:"pairingCode"`
+}
 
 //go:linkname newContent github.com/joinself/self-go-sdk-next/event.newContent
 func newContent(m *C.self_message_content) *event.Content
@@ -156,6 +162,14 @@ func goOnConnect(user_data unsafe.Pointer) {
 	if atomic.LoadInt32(&account.status) == 0 {
 		go func() {
 			for {
+				existing, err := account.valueLookup("s:pairing")
+				if err == nil && existing != nil {
+					if json.Unmarshal(existing, &account.pairing) == nil {
+						logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
+						atomic.StoreInt32(&account.status, 1)
+					}
+				}
+
 				inboxes, err := account.InboxList()
 				if err != nil {
 					fmt.Printf("[WARN] failed to list inboxes: %s\n", err.Error())
@@ -193,18 +207,33 @@ func goOnConnect(user_data unsafe.Pointer) {
 					continue
 				}
 
-				content.ID()
-
 				pairingCode, err := event.NewAnonymousMessage(content).EncodeToString()
 				if err != nil {
-					fmt.Printf("[WARN] failed to enncode pairing discovery request: %s\n", err.Error())
+					fmt.Printf("[WARN] failed to encode pairing discovery request: %s\n", err.Error())
 					time.Sleep(time.Second * 10)
 					continue
 				}
 
-				account.pairing = &pairingCode
+				account.pairing = &pairing{
+					RequestID:   content.ID(),
+					PairingCode: pairingCode,
+				}
 
-				logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", pairingCode))
+				existing, err = json.Marshal(account.pairing)
+				if err != nil {
+					fmt.Printf("[WARN] failed to serialize pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				err = account.valueStore("s:pairing", existing)
+				if err != nil {
+					fmt.Printf("[WARN] failed to store pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
 
 				atomic.StoreInt32(&account.status, 1)
 
