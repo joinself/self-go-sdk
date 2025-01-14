@@ -10,6 +10,7 @@ package account
 import "C"
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -707,6 +708,19 @@ func (a *Account) InboxList() ([]*signing.PublicKey, error) {
 // ValueKeys returns all keys for key value pairs stored on the account
 // an optional param can be passed to filter keys with a given prefix
 func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
+	// prefix user keys to avoid conflicts or accidental access
+	if len(prefix) > 0 {
+		return a.valueKeys(
+			fmt.Sprintf("u:%s", prefix[0]),
+		)
+	}
+
+	return a.valueKeys("u:")
+}
+
+// ValueKeys returns all keys for key value pairs stored on the account
+// an optional param can be passed to filter keys with a given prefix
+func (a *Account) valueKeys(prefix ...string) ([]string, error) {
 	var collection *C.self_collection_value_key
 
 	var pfx *C.char
@@ -751,6 +765,13 @@ func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
 
 // ValueLookup looks up a value by it's key
 func (a *Account) ValueLookup(key string) ([]byte, error) {
+	return a.valueLookup(
+		fmt.Sprintf("u:%s", key),
+	)
+}
+
+// ValueLookup looks up a value by it's key
+func (a *Account) valueLookup(key string) ([]byte, error) {
 	var value *C.self_encoded_buffer
 
 	keyPtr := C.CString(key)
@@ -779,6 +800,14 @@ func (a *Account) ValueLookup(key string) ([]byte, error) {
 
 // ValueStore stores a value to the accounts storage
 func (a *Account) ValueStore(key string, value []byte) error {
+	return a.valueStore(
+		fmt.Sprintf("u:%s", key),
+		value,
+	)
+}
+
+// ValueStore stores a value to the accounts storage
+func (a *Account) valueStore(key string, value []byte) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -800,8 +829,17 @@ func (a *Account) ValueStore(key string, value []byte) error {
 	return nil
 }
 
-// ValueStore stores a value to the accounts storage with an expiry
+// ValueStoreWithExpiry stores a value to the accounts storage with an expiry
 func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Time) error {
+	return a.valueStoreWithExpiry(
+		fmt.Sprintf("u:%s", key),
+		value,
+		expires,
+	)
+}
+
+// ValueStoreWithExpiry stores a value to the accounts storage with an expiry
+func (a *Account) valueStoreWithExpiry(key string, value []byte, expires time.Time) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -826,6 +864,13 @@ func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Ti
 
 // ValueRemove removes a value by it's key
 func (a *Account) ValueRemove(key string) error {
+	return a.valueRemove(
+		fmt.Sprintf("u:%s", key),
+	)
+}
+
+// ValueRemove removes a value by it's key
+func (a *Account) valueRemove(key string) error {
 	keyPtr := C.CString(key)
 
 	result := C.self_account_value_remove(
