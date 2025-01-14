@@ -10,16 +10,6 @@ package account
 import "C"
 import "github.com/joinself/self-go-sdk-next/event"
 
-type LogLevel uint32
-
-const (
-	LogError LogLevel = C.LOG_ERROR
-	LogWarn  LogLevel = C.LOG_WARN
-	LogInfo  LogLevel = C.LOG_INFO
-	LogDebug LogLevel = C.LOG_DEBUG
-	LogTrace LogLevel = C.LOG_TRACE
-)
-
 var (
 	TargetProduction = &Target{
 		Rpc:     defaultRpcProduction,

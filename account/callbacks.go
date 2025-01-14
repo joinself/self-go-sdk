@@ -164,15 +164,14 @@ func goOnConnect(user_data unsafe.Pointer) {
 				}
 
 				if len(inboxes) > 0 {
-					fmt.Println("EXIT ALREADY INBOXES")
+					atomic.StoreInt32(&account.status, 1)
 					break
 				}
 
 				inbox, err := account.InboxOpen()
 				if err != nil {
 					fmt.Printf("[WARN] failed to create inbox: %s\n", err.Error())
-
-					time.Sleep(time.Millisecond * 100)
+					time.Sleep(time.Second)
 					continue
 				}
 
@@ -205,7 +204,9 @@ func goOnConnect(user_data unsafe.Pointer) {
 
 				account.pairing = &pairingCode
 
-				fmt.Printf("[INFO] SDK Pairing Code: %s\n", pairingCode)
+				logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", pairingCode))
+
+				atomic.StoreInt32(&account.status, 1)
 
 				break
 			}
@@ -320,18 +321,10 @@ func goOnLog(entry *C.self_log_entry) {
 	level := C.self_log_entry_level(entry)
 	message := C.GoString(C.self_log_entry_args(entry))
 
-	switch level {
-	case C.LOG_ERROR:
-		fmt.Printf("[ERROR] %s\n", message)
-	case C.LOG_WARN:
-		fmt.Printf("[WARN] %s\n", message)
-	case C.LOG_INFO:
-		fmt.Printf("[INFO] %s\n", message)
-	case C.LOG_DEBUG:
-		fmt.Printf("[DEBUG] %s\n", message)
-	case C.LOG_TRACE:
-		fmt.Printf("[TRACE] %s\n", message)
-	}
+	logger()(
+		LogLevel(level),
+		message,
+	)
 
 	C.self_log_entry_destroy(entry)
 }

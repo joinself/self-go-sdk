@@ -20,6 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	account.SetLogFunc(func(level account.LogLevel, message string) {
+		// disable logging
+	})
+}
+
 func testAccount(t testing.TB) (*account.Account, chan *event.Message, chan *event.Welcome) {
 	return testAccountWithPath(t, ":memory:")
 }
@@ -470,7 +476,7 @@ func TestAccountPersistence(t *testing.T) {
 
 	inboxes, err := alice.InboxList()
 	require.Nil(t, err)
-	assert.Len(t, inboxes, 1)
+	assert.Len(t, inboxes, 2)
 }
 
 func TestAccountDiscovery(t *testing.T) {
