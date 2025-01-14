@@ -267,7 +267,7 @@ func (a *Account) PairingCode() (string, bool) {
 		return "", false
 	}
 
-	return *&a.pairing.PairingCode, true
+	return a.pairing.PairingCode, true
 }
 
 // KeychainSigningCreate creates a new signing keypair
