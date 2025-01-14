@@ -13,8 +13,15 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/status"
 )
+
+//go:linkname keyPackagePtr github.com/joinself/self-go-sdk-next/event.keyPackagePtr
+func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
+
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/event.newKeyPackage
+func newKeyPackage(ptr *C.self_key_package) *event.KeyPackage
 
 type DiscoveryRequest struct {
 	ptr *C.self_message_content_discovery_request
@@ -89,8 +96,8 @@ func newDiscoveryResponseBuilder(ptr *C.self_message_content_discovery_response_
 }
 
 // DecodeDiscoveryRequest decodes a message to a discovery request
-func DecodeDiscoveryRequest(msg *Message) (*DiscoveryRequest, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeDiscoveryRequest(msg *event.Message) (*DiscoveryRequest, error) {
+	content := contentPtr(msg.Content())
 
 	var discoveryRequestContent *C.self_message_content_discovery_request
 
@@ -107,7 +114,7 @@ func DecodeDiscoveryRequest(msg *Message) (*DiscoveryRequest, error) {
 }
 
 // KeyPackage returns the embedded key package conntained in the discovery request
-func (c *DiscoveryRequest) KeyPackage() *KeyPackage {
+func (c *DiscoveryRequest) KeyPackage() *event.KeyPackage {
 	return newKeyPackage(C.self_message_content_discovery_request_key_package(
 		c.ptr,
 	))
@@ -128,10 +135,10 @@ func NewDiscoveryRequest() *DiscoveryRequestBuilder {
 }
 
 // KeyPackage sets the key package that will be embedded in the request
-func (b *DiscoveryRequestBuilder) KeyPackage(keyPackage *KeyPackage) *DiscoveryRequestBuilder {
+func (b *DiscoveryRequestBuilder) KeyPackage(keyPackage *event.KeyPackage) *DiscoveryRequestBuilder {
 	C.self_message_content_discovery_request_builder_key_package(
 		b.ptr,
-		keyPackage.ptr,
+		keyPackagePtr(keyPackage),
 	)
 	return b
 }
@@ -146,7 +153,7 @@ func (b *DiscoveryRequestBuilder) Expires(expires time.Time) *DiscoveryRequestBu
 }
 
 // Finish finalises the request and builds the content
-func (b *DiscoveryRequestBuilder) Finish() (*Content, error) {
+func (b *DiscoveryRequestBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_discovery_request_builder_finish(
@@ -162,8 +169,8 @@ func (b *DiscoveryRequestBuilder) Finish() (*Content, error) {
 }
 
 // DecodeDiscoveryResponse decodes a message to a discovery response
-func DecodeDiscoveryResponse(msg *Message) (*DiscoveryResponse, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeDiscoveryResponse(msg *event.Message) (*DiscoveryResponse, error) {
+	content := contentPtr(msg.Content())
 
 	var discoveryResponseContent *C.self_message_content_discovery_response
 
@@ -234,7 +241,7 @@ func (b *DiscoveryResponseBuilder) Status(status ResponseStatus) *DiscoveryRespo
 }
 
 // Finish finalises the response and builds the content
-func (b *DiscoveryResponseBuilder) Finish() (*Content, error) {
+func (b *DiscoveryResponseBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_discovery_response_builder_finish(

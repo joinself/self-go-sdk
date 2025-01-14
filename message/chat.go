@@ -12,9 +12,18 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk-next/event"
+	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk-next/platform"
 	"github.com/joinself/self-go-sdk-next/status"
 )
+
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
+func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
+
+//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk-next/platform.newPlatformAttestation
+func newPlatformAttestation(*C.self_platform_attestation) *platform.Attestation
 
 type Chat struct {
 	ptr *C.self_message_content_chat
@@ -53,8 +62,8 @@ func newChatBuilder(ptr *C.self_message_content_chat_builder) *ChatBuilder {
 }
 
 // DeocodeChat decodes a chat message
-func DecodeChat(msg *Message) (*Chat, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeChat(msg *event.Message) (*Chat, error) {
+	content := contentPtr(msg.Content())
 
 	var chatContent *C.self_message_content_chat
 
@@ -149,7 +158,7 @@ func (b *ChatBuilder) Attach(attachment *object.Object) *ChatBuilder {
 }
 
 // Finish finalizes the chat message and prepares it for sending
-func (b *ChatBuilder) Finish() (*Content, error) {
+func (b *ChatBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_chat_builder_finish(

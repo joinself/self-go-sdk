@@ -10,6 +10,7 @@ package account
 import "C"
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -17,10 +18,10 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/identity"
 	"github.com/joinself/self-go-sdk-next/keypair/exchange"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/joinself/self-go-sdk-next/object"
 	"github.com/joinself/self-go-sdk-next/status"
 )
@@ -88,14 +89,14 @@ func newObject(ptr *C.self_object) *object.Object
 //go:linkname objectPtr github.com/joinself/self-go-sdk-next/object.objectPtr
 func objectPtr(o *object.Object) *C.self_object
 
-//go:linkname keyPackagePtr github.com/joinself/self-go-sdk-next/message.keyPackagePtr
-func keyPackagePtr(k *message.KeyPackage) *C.self_key_package
+//go:linkname keyPackagePtr github.com/joinself/self-go-sdk-next/event.keyPackagePtr
+func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 
-//go:linkname welcomePtr github.com/joinself/self-go-sdk-next/message.welcomePtr
-func welcomePtr(w *message.Welcome) *C.self_welcome
+//go:linkname welcomePtr github.com/joinself/self-go-sdk-next/event.welcomePtr
+func welcomePtr(w *event.Welcome) *C.self_welcome
 
-//go:linkname contentPtr github.com/joinself/self-go-sdk-next/message.contentPtr
-func contentPtr(c *message.Content) *C.self_message_content
+//go:linkname contentPtr github.com/joinself/self-go-sdk-next/event.contentPtr
+func contentPtr(c *event.Content) *C.self_message_content
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk-next/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -116,7 +117,8 @@ func toPresentationTypeCollection(c []string) *C.self_collection_presentation_ty
 type Account struct {
 	account   *C.self_account
 	callbacks *Callbacks
-	ready     int32
+	pairing   *pairing
+	status    int32
 }
 
 // New creates a new self account
@@ -173,7 +175,7 @@ func New(cfg *Config) (*Account, error) {
 	}
 
 	if !cfg.SkipReady {
-		for atomic.LoadInt32(&account.ready) == 0 {
+		for atomic.LoadInt32(&account.status) == 0 {
 			time.Sleep(time.Millisecond * 10)
 		}
 	}
@@ -245,12 +247,27 @@ func (a *Account) Configure(cfg *Config) error {
 	}
 
 	if !cfg.SkipReady {
-		for atomic.LoadInt32(&a.ready) == 0 {
+		for atomic.LoadInt32(&a.status) == 0 {
 			time.Sleep(time.Millisecond * 10)
 		}
 	}
 
 	return nil
+}
+
+// PairingCode returns the sdk pairing code used in linking an sdk instance to
+// an organisation identity. If the sdk has already been linked, or the pairing
+// code is not yet available, this will return false
+func (a *Account) PairingCode() (string, bool) {
+	if atomic.LoadInt32(&a.status) == 0 {
+		return "", false
+	}
+
+	if a.pairing == nil {
+		return "", false
+	}
+
+	return a.pairing.PairingCode, true
 }
 
 // KeychainSigningCreate creates a new signing keypair
@@ -641,7 +658,7 @@ func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	return newSigningPublicKey(address), nil
 }
 
-// InboxOpen opens a new inbox that can be used to send and receive messages
+// InboxOpenWithExpiry opens a new inbox that can be used to send and receive messages that expires after a given time period
 func (a *Account) InboxOpenWithExpiry(expires time.Time) (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
 
@@ -672,9 +689,38 @@ func (a *Account) InboxClose(address *signing.PublicKey) error {
 	return nil
 }
 
+// InboxList lists all inboxes
+func (a *Account) InboxList() ([]*signing.PublicKey, error) {
+	var collection *C.self_collection_signing_public_key
+
+	result := C.self_account_inbox_list(
+		a.account,
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return fromSigningPublicKeyCollection(collection), nil
+}
+
 // ValueKeys returns all keys for key value pairs stored on the account
 // an optional param can be passed to filter keys with a given prefix
 func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
+	// prefix user keys to avoid conflicts or accidental access
+	if len(prefix) > 0 {
+		return a.valueKeys(
+			fmt.Sprintf("u:%s", prefix[0]),
+		)
+	}
+
+	return a.valueKeys("u:")
+}
+
+// ValueKeys returns all keys for key value pairs stored on the account
+// an optional param can be passed to filter keys with a given prefix
+func (a *Account) valueKeys(prefix ...string) ([]string, error) {
 	var collection *C.self_collection_value_key
 
 	var pfx *C.char
@@ -719,6 +765,13 @@ func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
 
 // ValueLookup looks up a value by it's key
 func (a *Account) ValueLookup(key string) ([]byte, error) {
+	return a.valueLookup(
+		fmt.Sprintf("u:%s", key),
+	)
+}
+
+// ValueLookup looks up a value by it's key
+func (a *Account) valueLookup(key string) ([]byte, error) {
 	var value *C.self_encoded_buffer
 
 	keyPtr := C.CString(key)
@@ -747,6 +800,14 @@ func (a *Account) ValueLookup(key string) ([]byte, error) {
 
 // ValueStore stores a value to the accounts storage
 func (a *Account) ValueStore(key string, value []byte) error {
+	return a.valueStore(
+		fmt.Sprintf("u:%s", key),
+		value,
+	)
+}
+
+// ValueStore stores a value to the accounts storage
+func (a *Account) valueStore(key string, value []byte) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -768,8 +829,17 @@ func (a *Account) ValueStore(key string, value []byte) error {
 	return nil
 }
 
-// ValueStore stores a value to the accounts storage with an expiry
+// ValueStoreWithExpiry stores a value to the accounts storage with an expiry
 func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Time) error {
+	return a.valueStoreWithExpiry(
+		fmt.Sprintf("u:%s", key),
+		value,
+		expires,
+	)
+}
+
+// ValueStoreWithExpiry stores a value to the accounts storage with an expiry
+func (a *Account) valueStoreWithExpiry(key string, value []byte, expires time.Time) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -794,6 +864,13 @@ func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Ti
 
 // ValueRemove removes a value by it's key
 func (a *Account) ValueRemove(key string) error {
+	return a.valueRemove(
+		fmt.Sprintf("u:%s", key),
+	)
+}
+
+// ValueRemove removes a value by it's key
+func (a *Account) valueRemove(key string) error {
 	keyPtr := C.CString(key)
 
 	result := C.self_account_value_remove(
@@ -895,7 +972,7 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 
 // ConnectionNegotiateOutOfBand negotiates a new encrypted group connection with an address. returns a
 // key pacakge for use in an out of band message, like an anonymous message encoded to a QR code
-func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*message.KeyPackage, error) {
+func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*event.KeyPackage, error) {
 	var keyPackage *C.self_key_package
 
 	result := C.self_account_connection_negotiate_out_of_band(
@@ -914,7 +991,7 @@ func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, exp
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
 // using the key package the initiator sent to us, returns the address of the group
-func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *message.KeyPackage) (*signing.PublicKey, error) {
+func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *event.KeyPackage) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
 	result := C.self_account_connection_establish(
@@ -932,7 +1009,7 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 }
 
 // ConnectionAccept accepts a welcome to a encrypted group, returns the address of the group
-func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *message.Welcome) (*signing.PublicKey, error) {
+func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *event.Welcome) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
 	result := C.self_account_connection_accept(
@@ -952,7 +1029,7 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *messag
 // MessageSend sends a message to an address that we have established an encrypted group with
 // the OnAcknowledgement and OnError callback will be invoked upon receiving the servers response,
 // referencing the id of the messages content
-func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
+func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Content) error {
 	result := C.self_account_message_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),

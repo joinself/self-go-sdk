@@ -12,6 +12,7 @@ import (
 	"runtime"
 
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/object"
 	"github.com/joinself/self-go-sdk-next/status"
@@ -57,8 +58,8 @@ func newIntroductionBuilder(ptr *C.self_message_content_introduction_builder) *I
 }
 
 // DeocodeIntroduction decodes an introduction message
-func DecodeIntroduction(msg *Message) (*Introduction, error) {
-	content := C.self_message_message_content(msg.ptr)
+func DecodeIntroduction(msg *event.Message) (*Introduction, error) {
+	content := contentPtr(msg.Content())
 
 	var introductionContent *C.self_message_content_introduction
 
@@ -141,7 +142,7 @@ func (b *IntroductionBuilder) Asset(attachment *object.Object) *IntroductionBuil
 }
 
 // Finish finalizes the introduction message and prepares it for sending
-func (b *IntroductionBuilder) Finish() (*Content, error) {
+func (b *IntroductionBuilder) Finish() (*event.Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_introduction_builder_finish(

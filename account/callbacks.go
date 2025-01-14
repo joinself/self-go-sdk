@@ -81,6 +81,7 @@ static self_account_callbacks *account_callbacks() {
 	callbacks->on_proposal = c_on_proposal;
 	callbacks->on_welcome = c_on_welcome;
 	callbacks->on_log = c_on_log;
+	callbacks->on_integrity = NULL;
 
 	return callbacks;
 }
@@ -109,11 +110,14 @@ static void c_on_response(void *user_data, self_status response) {
 */
 import "C"
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/joinself/self-go-sdk-next/status"
 )
@@ -121,26 +125,31 @@ import (
 var responseOffset int64
 var responseCallbacks sync.Map
 
-//go:linkname newContent github.com/joinself/self-go-sdk-next/message.newContent
-func newContent(m *C.self_message_content) *message.Content
+type pairing struct {
+	RequestID   []byte `json:"requestId"`
+	PairingCode string `json:"pairingCode"`
+}
 
-//go:linkname newMessage github.com/joinself/self-go-sdk-next/message.newMessage
-func newMessage(e *C.self_message) *message.Message
+//go:linkname newContent github.com/joinself/self-go-sdk-next/event.newContent
+func newContent(m *C.self_message_content) *event.Content
 
-//go:linkname newCommit github.com/joinself/self-go-sdk-next/message.newCommit
-func newCommit(e *C.self_commit) *message.Commit
+//go:linkname newMessage github.com/joinself/self-go-sdk-next/event.newMessage
+func newMessage(e *C.self_message) *event.Message
 
-//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/message.newKeyPackage
-func newKeyPackage(e *C.self_key_package) *message.KeyPackage
+//go:linkname newCommit github.com/joinself/self-go-sdk-next/event.newCommit
+func newCommit(e *C.self_commit) *event.Commit
 
-//go:linkname newProposal github.com/joinself/self-go-sdk-next/message.newProposal
-func newProposal(e *C.self_proposal) *message.Proposal
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/event.newKeyPackage
+func newKeyPackage(e *C.self_key_package) *event.KeyPackage
 
-//go:linkname newReference github.com/joinself/self-go-sdk-next/message.newReference
-func newReference(e *C.self_reference) *message.Reference
+//go:linkname newProposal github.com/joinself/self-go-sdk-next/event.newProposal
+func newProposal(e *C.self_proposal) *event.Proposal
 
-//go:linkname newWelcome github.com/joinself/self-go-sdk-next/message.newWelcome
-func newWelcome(e *C.self_welcome) *message.Welcome
+//go:linkname newReference github.com/joinself/self-go-sdk-next/event.newReference
+func newReference(e *C.self_reference) *event.Reference
+
+//go:linkname newWelcome github.com/joinself/self-go-sdk-next/event.newWelcome
+func newWelcome(e *C.self_welcome) *event.Welcome
 
 func accountCallbacks() *C.self_account_callbacks {
 	return C.account_callbacks()
@@ -150,7 +159,88 @@ func accountCallbacks() *C.self_account_callbacks {
 func goOnConnect(user_data unsafe.Pointer) {
 	account := (*Account)(user_data)
 
-	atomic.StoreInt32(&account.ready, 1)
+	if atomic.LoadInt32(&account.status) == 0 {
+		go func() {
+			for {
+				existing, err := account.valueLookup("s:pairing")
+				if err == nil && existing != nil {
+					if json.Unmarshal(existing, &account.pairing) == nil {
+						logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
+						atomic.StoreInt32(&account.status, 1)
+					}
+				}
+
+				inboxes, err := account.InboxList()
+				if err != nil {
+					fmt.Printf("[WARN] failed to list inboxes: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				if len(inboxes) > 0 {
+					atomic.StoreInt32(&account.status, 1)
+					break
+				}
+
+				inbox, err := account.InboxOpen()
+				if err != nil {
+					fmt.Printf("[WARN] failed to create inbox: %s\n", err.Error())
+					time.Sleep(time.Second)
+					continue
+				}
+
+				keyPackage, err := account.ConnectionNegotiateOutOfBand(inbox, time.Now().Add(time.Hour*8760))
+				if err != nil {
+					fmt.Printf("[WARN] failed to generate pairing key package: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				content, err := message.NewDiscoveryRequest().
+					KeyPackage(keyPackage).
+					Expires(time.Now().Add(time.Hour * 8760)).
+					Finish()
+
+				if err != nil {
+					fmt.Printf("[WARN] failed to generate pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				pairingCode, err := event.NewAnonymousMessage(content).EncodeToString()
+				if err != nil {
+					fmt.Printf("[WARN] failed to encode pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				account.pairing = &pairing{
+					RequestID:   content.ID(),
+					PairingCode: pairingCode,
+				}
+
+				existing, err = json.Marshal(account.pairing)
+				if err != nil {
+					fmt.Printf("[WARN] failed to serialize pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				err = account.valueStore("s:pairing", existing)
+				if err != nil {
+					fmt.Printf("[WARN] failed to store pairing discovery request: %s\n", err.Error())
+					time.Sleep(time.Second * 10)
+					continue
+				}
+
+				logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
+
+				atomic.StoreInt32(&account.status, 1)
+
+				break
+			}
+		}()
+	}
 
 	if account.callbacks.OnConnect != nil {
 		(*Account)(user_data).callbacks.OnConnect(account)
@@ -260,18 +350,10 @@ func goOnLog(entry *C.self_log_entry) {
 	level := C.self_log_entry_level(entry)
 	message := C.GoString(C.self_log_entry_args(entry))
 
-	switch level {
-	case C.LOG_ERROR:
-		fmt.Printf("[ERROR] %s\n", message)
-	case C.LOG_WARN:
-		fmt.Printf("[WARN] %s\n", message)
-	case C.LOG_INFO:
-		fmt.Printf("[INFO] %s\n", message)
-	case C.LOG_DEBUG:
-		fmt.Printf("[DEBUG] %s\n", message)
-	case C.LOG_TRACE:
-		fmt.Printf("[TRACE] %s\n", message)
-	}
+	logger()(
+		LogLevel(level),
+		message,
+	)
 
 	C.self_log_entry_destroy(entry)
 }
