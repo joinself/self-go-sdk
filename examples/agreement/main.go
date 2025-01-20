@@ -12,6 +12,7 @@ import (
 	"github.com/go-pdf/fpdf"
 	"github.com/joinself/self-go-sdk-next/account"
 	"github.com/joinself/self-go-sdk-next/credential"
+	"github.com/joinself/self-go-sdk-next/event"
 	"github.com/joinself/self-go-sdk-next/keypair/signing"
 	"github.com/joinself/self-go-sdk-next/message"
 	"github.com/joinself/self-go-sdk-next/object"
@@ -37,11 +38,11 @@ func main() {
 		// specify callbacks to handle events
 		Callbacks: account.Callbacks{
 			// invoked when the messaging socket connects
-			OnConnect: func() {
+			OnConnect: func(selfAccount *account.Account) {
 				log.Info("messaging socket connected")
 			},
 			// invoked when the messaging socket disconnects. if there is no error
-			OnDisconnect: func(err error) {
+			OnDisconnect: func(selfAccount *account.Account, err error) {
 				if err != nil {
 					log.Warn("messaging socket disconnected", "error", err)
 				} else {
@@ -49,7 +50,7 @@ func main() {
 				}
 			},
 			// invoked when there is a response to a discovery request from a new address.
-			OnWelcome: func(selfAccount *account.Account, wlc *message.Welcome) {
+			OnWelcome: func(selfAccount *account.Account, wlc *event.Welcome) {
 				// we have received a response to our discovery request that is from a new
 				// user/address that we do not have an  end to end encrypted session.
 				// accept the invite to join the encrypted group created by the user.
@@ -70,9 +71,9 @@ func main() {
 				)
 			},
 			// invoked when there is a message sent to an encrypted group we are subscribed to
-			OnMessage: func(selfAccount *account.Account, msg *message.Message) {
-				switch message.ContentType(msg) {
-				case message.TypeDiscoveryResponse:
+			OnMessage: func(selfAccount *account.Account, msg *event.Message) {
+				switch event.ContentType(msg) {
+				case event.TypeDiscoveryResponse:
 					log.Info(
 						"received response to discovery request",
 						"from", msg.FromAddress().String(),
@@ -96,7 +97,7 @@ func main() {
 					}
 
 					completer.(chan *signing.PublicKey) <- msg.FromAddress()
-				case message.TypeCredentialVerificationResponse:
+				case event.TypeCredentialVerificationResponse:
 					log.Info(
 						"received response to credential verification request",
 						"from", msg.FromAddress().String(),
@@ -184,8 +185,8 @@ func main() {
 		// encode it as a QR code. This can be encoded as either an SVG
 		// for use in rendering on a web page, or Unicode, for encoding
 		// in text based environments like a terminal
-		qrCode, err := message.NewAnonymousMessage(content).
-			EncodeToQR(message.QREncodingUnicode)
+		qrCode, err := event.NewAnonymousMessage(content).
+			EncodeToQR(event.QREncodingUnicode)
 
 		if err != nil {
 			log.Fatal("failed to encode anonymous message", "error", err)
@@ -241,11 +242,11 @@ func main() {
 		claims := map[string]interface{}{
 			"termsHash": hex.EncodeToString(agreementTerms.Hash()),
 			"parties": []map[string]interface{}{
-				map[string]interface{}{
+				{
 					"type": "signatory",
 					"id":   inboxAddress.String(),
 				},
-				map[string]interface{}{
+				{
 					"type": "signatory",
 					"id":   responderAddress.String(),
 				},
