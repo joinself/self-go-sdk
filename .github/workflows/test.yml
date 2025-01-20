@@ -5,24 +5,25 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted, linux-docker]
+    runs-on: ubuntu-latest
     container:
       image: golang:1.22.1-bookworm
     steps:
       - name: Setup job
-        uses: joinself/github-actions/setup-job@main
-        with:
-          gh-token: ${{ secrets.GH_TOKEN }}
+        uses: joinself/github-actions-public/setup-job@main
       - name: Test
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
 
-          curl -L -H "Authorization: token ${GH_TOKEN}" -H 'Accept: application/octet-stream' --output self-sdk_0.53.0_amd64.deb https://api.github.com/repos/joinself/self-c-sdk/releases/assets/219366252
-          apt install -y ./self-sdk_0.53.0_amd64.deb
+          mkdir -m 0755 -p /etc/apt/keyrings
+          curl -fsSL https://europe-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor -o /etc/apt/keyrings/self.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/self.gpg] https://europe-apt.pkg.dev/projects/principal-oxide-204416 apt main" > /etc/apt/sources.list.d/self.list
+          apt-get update && apt-get install -y self-sdk=0.53.0
 
+          # curl -L -H "Authorization: token ${GH_TOKEN}" -H 'Accept: application/octet-stream' --output self-sdk_0.53.0_amd64.deb https://api.github.com/repos/joinself/self-c-sdk/releases/assets/219366252
+          # apt install -y ./self-sdk_0.53.0_amd64.deb
+          
           curl https://gotest-release.s3.amazonaws.com/gotest_linux > /usr/local/bin/gotest
           chmod +x /usr/local/bin/gotest
 
