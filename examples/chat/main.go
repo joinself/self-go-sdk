@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/joinself/self-go-sdk-next/account"
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/message"
+	"github.com/joinself/self-go-sdk/account"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/message"
 )
 
 var requests sync.Map

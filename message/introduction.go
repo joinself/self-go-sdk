@@ -11,14 +11,14 @@ import "C"
 import (
 	"runtime"
 
-	"github.com/joinself/self-go-sdk-next/credential"
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/object"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
 type Introduction struct {

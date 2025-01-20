@@ -1,13 +1,13 @@
-module github.com/joinself/self-go-sdk-next/examples/discovery
+module github.com/joinself/self-go-sdk/examples/discovery
 
 go 1.22.1
 
 require (
 	github.com/charmbracelet/log v0.4.0
-	github.com/joinself/self-go-sdk-next v0.0.0-20240927162642-31e47ff7143e
+	github.com/joinself/self-go-sdk v0.0.0-20240927162642-31e47ff7143e
 )
 
-replace github.com/joinself/self-go-sdk-next => ../../
+replace github.com/joinself/self-go-sdk => ../../
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

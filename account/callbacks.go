@@ -117,9 +117,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/message"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 var responseOffset int64
@@ -130,25 +130,25 @@ type pairing struct {
 	PairingCode string `json:"pairingCode"`
 }
 
-//go:linkname newContent github.com/joinself/self-go-sdk-next/event.newContent
+//go:linkname newContent github.com/joinself/self-go-sdk/event.newContent
 func newContent(m *C.self_message_content) *event.Content
 
-//go:linkname newMessage github.com/joinself/self-go-sdk-next/event.newMessage
+//go:linkname newMessage github.com/joinself/self-go-sdk/event.newMessage
 func newMessage(e *C.self_message) *event.Message
 
-//go:linkname newCommit github.com/joinself/self-go-sdk-next/event.newCommit
+//go:linkname newCommit github.com/joinself/self-go-sdk/event.newCommit
 func newCommit(e *C.self_commit) *event.Commit
 
-//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/event.newKeyPackage
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk/event.newKeyPackage
 func newKeyPackage(e *C.self_key_package) *event.KeyPackage
 
-//go:linkname newProposal github.com/joinself/self-go-sdk-next/event.newProposal
+//go:linkname newProposal github.com/joinself/self-go-sdk/event.newProposal
 func newProposal(e *C.self_proposal) *event.Proposal
 
-//go:linkname newReference github.com/joinself/self-go-sdk-next/event.newReference
+//go:linkname newReference github.com/joinself/self-go-sdk/event.newReference
 func newReference(e *C.self_reference) *event.Reference
 
-//go:linkname newWelcome github.com/joinself/self-go-sdk-next/event.newWelcome
+//go:linkname newWelcome github.com/joinself/self-go-sdk/event.newWelcome
 func newWelcome(e *C.self_welcome) *event.Welcome
 
 func accountCallbacks() *C.self_account_callbacks {

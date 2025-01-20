@@ -12,13 +12,13 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
 func newSigningPublicKey(ptr *C.self_signing_public_key) *signing.PublicKey
 
-//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
 type Method int

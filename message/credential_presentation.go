@@ -13,42 +13,42 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/credential"
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname fromCredentialTypeCollection github.com/joinself/self-go-sdk-next/credential.fromCredentialTypeCollection
+//go:linkname fromCredentialTypeCollection github.com/joinself/self-go-sdk/credential.fromCredentialTypeCollection
 func fromCredentialTypeCollection(c *C.self_collection_credential_type) []string
 
-//go:linkname fromPresentationTypeCollection github.com/joinself/self-go-sdk-next/credential.fromPresentationTypeCollection
+//go:linkname fromPresentationTypeCollection github.com/joinself/self-go-sdk/credential.fromPresentationTypeCollection
 func fromPresentationTypeCollection(c *C.self_collection_presentation_type) []string
 
-//go:linkname fromPresentationDetailCollection github.com/joinself/self-go-sdk-next/credential.fromPresentationDetailCollection
+//go:linkname fromPresentationDetailCollection github.com/joinself/self-go-sdk/credential.fromPresentationDetailCollection
 func fromPresentationDetailCollection(c *C.self_collection_credential_presentation_detail) []*credential.CredentialPresentationDetail
 
-//go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk-next/credential.toCredentialTypeCollection
+//go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk/credential.toCredentialTypeCollection
 func toCredentialTypeCollection(credentialType []string) *C.self_collection_credential_type
 
-//go:linkname toPresentationTypeCollection github.com/joinself/self-go-sdk-next/credential.toPresentationTypeCollection
+//go:linkname toPresentationTypeCollection github.com/joinself/self-go-sdk/credential.toPresentationTypeCollection
 func toPresentationTypeCollection(presentationType []string) *C.self_collection_presentation_type
 
-//go:linkname fromVerifiableCredentialCollection github.com/joinself/self-go-sdk-next/credential.fromVerifiableCredentialCollection
+//go:linkname fromVerifiableCredentialCollection github.com/joinself/self-go-sdk/credential.fromVerifiableCredentialCollection
 func fromVerifiableCredentialCollection(c *C.self_collection_verifiable_credential) []*credential.VerifiableCredential
 
-//go:linkname fromVerifiablePresentationCollection github.com/joinself/self-go-sdk-next/credential.fromVerifiablePresentationCollection
+//go:linkname fromVerifiablePresentationCollection github.com/joinself/self-go-sdk/credential.fromVerifiablePresentationCollection
 func fromVerifiablePresentationCollection(c *C.self_collection_verifiable_presentation) []*credential.VerifiablePresentation
 
-//go:linkname fromCredentialVerificationEvidenceCollection github.com/joinself/self-go-sdk-next/credential.fromCredentialVerificationEvidenceCollection
+//go:linkname fromCredentialVerificationEvidenceCollection github.com/joinself/self-go-sdk/credential.fromCredentialVerificationEvidenceCollection
 func fromCredentialVerificationEvidenceCollection(c *C.self_collection_credential_verification_evidence) []*credential.CredentialVerificationEvidence
 
-//go:linkname fromCredentialVerificationParameterCollection github.com/joinself/self-go-sdk-next/credential.fromCredentialVerificationParameterCollection
+//go:linkname fromCredentialVerificationParameterCollection github.com/joinself/self-go-sdk/credential.fromCredentialVerificationParameterCollection
 func fromCredentialVerificationParameterCollection(c *C.self_collection_credential_verification_parameter) []*credential.CredentialVerificationParameter
 
-//go:linkname verifiableCredentialPtr github.com/joinself/self-go-sdk-next/credential.verifiableCredentialPtr
+//go:linkname verifiableCredentialPtr github.com/joinself/self-go-sdk/credential.verifiableCredentialPtr
 func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verifiable_credential
 
-//go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk-next/credential.verifiablePresentationPtr
+//go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
 
 type CredentialPresentationRequest struct {

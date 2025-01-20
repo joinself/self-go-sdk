@@ -13,14 +13,14 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname keyPackagePtr github.com/joinself/self-go-sdk-next/event.keyPackagePtr
+//go:linkname keyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
 func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 
-//go:linkname newKeyPackage github.com/joinself/self-go-sdk-next/event.newKeyPackage
+//go:linkname newKeyPackage github.com/joinself/self-go-sdk/event.newKeyPackage
 func newKeyPackage(ptr *C.self_key_package) *event.KeyPackage
 
 type DiscoveryRequest struct {

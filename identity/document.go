@@ -12,18 +12,18 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/joinself/self-go-sdk-next/keypair"
-	"github.com/joinself/self-go-sdk-next/keypair/exchange"
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
+	"github.com/joinself/self-go-sdk/keypair"
+	"github.com/joinself/self-go-sdk/keypair/exchange"
+	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/signing.signingPublicKeyPtr
+//go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
-//go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk-next/keypair/exchange.exchangePublicKeyPtr
+//go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk/keypair/exchange.exchangePublicKeyPtr
 func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
 
-//go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk-next/keypair/signing.fromSigningPublicKeyCollection
+//go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
 // Document a collection of public keys tied to an identity

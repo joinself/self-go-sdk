@@ -8,7 +8,7 @@ package account
 #include <stdlib.h>
 */
 import "C"
-import "github.com/joinself/self-go-sdk-next/event"
+import "github.com/joinself/self-go-sdk/event"
 
 var (
 	TargetProduction = &Target{

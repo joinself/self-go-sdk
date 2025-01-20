@@ -14,9 +14,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/object"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 	CredentialTypeApplicationPublisher = []string{"VerifiableCredential", "ApplicationPublisherCredential"}
 )
 
-//go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
+//go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
 // Credential an unsigned credential

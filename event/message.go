@@ -12,8 +12,8 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/platform"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/platform"
 )
 
 type Message struct {

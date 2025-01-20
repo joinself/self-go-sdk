@@ -10,12 +10,12 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/go-pdf/fpdf"
-	"github.com/joinself/self-go-sdk-next/account"
-	"github.com/joinself/self-go-sdk-next/credential"
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/message"
-	"github.com/joinself/self-go-sdk-next/object"
+	"github.com/joinself/self-go-sdk/account"
+	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk/object"
 )
 
 var requests sync.Map

@@ -13,16 +13,16 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/credential"
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/object"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname newObject github.com/joinself/self-go-sdk-next/object.newObject
+//go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
-//go:linkname objectPtr github.com/joinself/self-go-sdk-next/object.objectPtr
+//go:linkname objectPtr github.com/joinself/self-go-sdk/object.objectPtr
 func objectPtr(ptr *object.Object) *C.self_object
 
 type CredentialVerificationRequest struct {

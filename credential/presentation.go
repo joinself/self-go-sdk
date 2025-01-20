@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 var (

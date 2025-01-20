@@ -12,17 +12,17 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk-next/event"
-	"github.com/joinself/self-go-sdk-next/keypair/signing"
-	"github.com/joinself/self-go-sdk-next/object"
-	"github.com/joinself/self-go-sdk-next/platform"
-	"github.com/joinself/self-go-sdk-next/status"
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/platform"
+	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk-next/keypair/signing.newSigningPublicKey
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
 func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
 
-//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk-next/platform.newPlatformAttestation
+//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk/platform.newPlatformAttestation
 func newPlatformAttestation(*C.self_platform_attestation) *platform.Attestation
 
 type Chat struct {
