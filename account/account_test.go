@@ -239,6 +239,19 @@ func TestAccountMessaging(t *testing.T) {
 	chatMessage, err = message.DecodeChat(messageFromBobby)
 	require.Nil(t, err)
 	assert.Equal(t, "hello again!", chatMessage.Message())
+
+	aliceGroupWith, err := alice.GroupWith(bobbyAddress)
+	require.Nil(t, err)
+
+	bobbyGroupWith, err := bobby.GroupWith(aliceAddress)
+	require.Nil(t, err)
+
+	assert.True(t, aliceGroupWith.Matches(bobbyGroupWith))
+
+	aliceMemberAs, err := alice.GroupMemberAs(aliceGroupWith)
+	require.Nil(t, err)
+	assert.True(t, aliceAddress.Matches(aliceMemberAs))
+
 }
 
 func TestAccountIdentity(t *testing.T) {

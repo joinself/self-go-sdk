@@ -705,6 +705,43 @@ func (a *Account) InboxList() ([]*signing.PublicKey, error) {
 	return fromSigningPublicKeyCollection(collection), nil
 }
 
+// GroupWith returns the address of the encrypted group that has been
+// negotiated with another address.
+// If there is no existing group, this will returnn nil
+func (a *Account) GroupWith(withAddress *signing.PublicKey) (*signing.PublicKey, error) {
+	var address *C.self_signing_public_key
+
+	result := C.self_account_group_with(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		&address,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newSigningPublicKey(address), nil
+}
+
+// GroupMemberAs returns the address used to interact with a given group
+// If there is no existing group, this will returnn nil
+func (a *Account) GroupMemberAs(groupAddress *signing.PublicKey) (*signing.PublicKey, error) {
+	var address *C.self_signing_public_key
+
+	result := C.self_account_group_member_as(
+		a.account,
+		signingPublicKeyPtr(groupAddress),
+		&address,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newSigningPublicKey(address), nil
+}
+
 // ValueKeys returns all keys for key value pairs stored on the account
 // an optional param can be passed to filter keys with a given prefix
 func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
