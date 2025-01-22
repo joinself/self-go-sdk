@@ -252,6 +252,9 @@ func TestAccountMessaging(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, aliceAddress.Matches(aliceMemberAs))
 
+	bobbyMemberAs, err := alice.GroupMemberAs(bobbyGroupWith)
+	require.Nil(t, err)
+	assert.True(t, aliceAddress.Matches(bobbyMemberAs))
 }
 
 func TestAccountIdentity(t *testing.T) {
@@ -432,6 +435,260 @@ func TestAccountCredentials(t *testing.T) {
 
 	credentials := passportVerifiablePresentation.Credentials()
 	assert.Len(t, credentials, 1)
+}
+
+func TestAccountMessageSigning(t *testing.T) {
+	alice, aliceInbox, aliceWel := testAccount(t)
+	bobby, bobbyInbox, _ := testAccount(t)
+
+	aliceAddress, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	bobbyAddress, err := bobby.InboxOpen()
+	require.Nil(t, err)
+
+	// fmt.Println("alice:", aliceAddress)
+	// fmt.Println("bobby:", bobbyAddress)
+
+	err = alice.ConnectionNegotiate(
+		aliceAddress,
+		bobbyAddress,
+		time.Now().Add(time.Hour),
+	)
+
+	require.Nil(t, err)
+
+	// wait for negotiation to finish
+	<-aliceWel
+
+	// create an identity document for alice
+	aliceIdentifier, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	aliceInvocation, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	aliceIdentityOperation := identity.NewOperation().
+		Identifier(aliceIdentifier).
+		GrantEmbedded(aliceInvocation, identity.RoleInvocation).
+		GrantEmbedded(aliceAddress, identity.RoleMessaging|identity.RoleAuthentication).
+		SignWith(aliceIdentifier).
+		SignWith(aliceInvocation).
+		Sequence(0).
+		Finish()
+
+	err = alice.IdentityExecute(aliceIdentityOperation)
+	require.Nil(t, err)
+
+	// create an identity document for bobby
+	bobbyIdentifier, err := bobby.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	bobbyInvocation, err := bobby.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	bobbyIdentityOperation := identity.NewOperation().
+		Identifier(bobbyIdentifier).
+		GrantEmbedded(bobbyInvocation, identity.RoleInvocation).
+		GrantEmbedded(bobbyAddress, identity.RoleMessaging|identity.RoleAuthentication).
+		SignWith(bobbyIdentifier).
+		SignWith(bobbyInvocation).
+		Sequence(0).
+		Finish()
+
+	err = bobby.IdentityExecute(bobbyIdentityOperation)
+	require.Nil(t, err)
+
+	// exchange introductions
+	contentForBobby, err := message.NewIntroduction().
+		DocumentAddress(aliceIdentifier).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = alice.MessageSend(
+		bobbyAddress,
+		contentForBobby,
+	)
+
+	require.Nil(t, err)
+
+	messageFromAlice := wait(t, bobbyInbox, time.Second)
+	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
+
+	aliceIntroduction, err := message.DecodeIntroduction(messageFromAlice)
+	require.Nil(t, err)
+	assert.True(t, aliceIntroduction.DocumentAddress().Matches(aliceIdentifier))
+
+	contentForAlice, err := message.NewIntroduction().
+		DocumentAddress(bobbyIdentifier).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = bobby.MessageSend(
+		aliceAddress,
+		contentForAlice,
+	)
+
+	require.Nil(t, err)
+
+	messageFromBobby := wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	bobbyIntroduction, err := message.DecodeIntroduction(messageFromBobby)
+	require.Nil(t, err)
+	assert.True(t, bobbyIntroduction.DocumentAddress().Matches(bobbyIdentifier))
+
+	// select which of bobbys keys we want to use
+	bobbyIdentityDocument, err := alice.IdentityResolve(bobbyIntroduction.DocumentAddress())
+	require.Nil(t, err)
+
+	bobbyInvocationKeys := bobbyIdentityDocument.SigningKeysWithRoles(identity.RoleInvocation)
+	require.Len(t, bobbyInvocationKeys, 1)
+	assert.True(t, bobbyInvocation.Matches(bobbyInvocationKeys[0]))
+
+	// create an identity document and keys that management can be shared
+	sharedIdentifier, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	sharedIdentityOperation := identity.NewOperation().
+		Identifier(sharedIdentifier).
+		GrantReferenced(
+			identity.MethodAure,
+			aliceIdentifier,
+			aliceInvocation,
+			identity.RoleInvocation,
+		).
+		GrantReferenced(
+			identity.MethodAure,
+			bobbyIdentifier,
+			bobbyInvocation,
+			identity.RoleInvocation,
+		).
+		SignWith(sharedIdentifier).
+		SignWith(aliceInvocation).
+		Sequence(0).
+		Finish()
+
+	err = alice.IdentitySign(sharedIdentityOperation)
+	require.Nil(t, err)
+
+	contentForBobby, err = message.NewSigningRequest().
+		UnsignedPayload(message.NewUnsignedIdentityDocumentOperation(
+			sharedIdentifier,
+			sharedIdentityOperation,
+		)).
+		RequireLiveness().
+		Finish()
+
+	require.Nil(t, err)
+
+	// send siging request to bobby
+	err = alice.MessageSend(
+		bobbyAddress,
+		contentForBobby,
+	)
+
+	require.Nil(t, err)
+
+	messageFromAlice = wait(t, bobbyInbox, time.Second)
+	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
+
+	signingRequest, err := message.DecodeSigningRequest(messageFromAlice)
+	require.Nil(t, err)
+	assert.True(t, signingRequest.RequiresLiveness())
+
+	unsignedPayload := signingRequest.UnsignedPayload()
+	unsignedIdentityDocumentOperation, err := unsignedPayload.AsIdentityDocumentOperation()
+	require.Nil(t, err)
+
+	contentForAlice, err = message.NewSigningResponse().
+		SignedPayload(
+			bobbyInvocation,
+			message.NewSignedIdentityDocumentOperation(
+				unsignedIdentityDocumentOperation.DocumentAddress(),
+				unsignedIdentityDocumentOperation.Operation(),
+			),
+		).
+		Finish()
+
+	require.Nil(t, err)
+
+	// send a response from bobby
+	err = bobby.MessageSend(
+		aliceAddress,
+		contentForAlice,
+	)
+
+	require.Nil(t, err)
+
+	messageFromBobby = wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	chatMessage, err = message.DecodeChat(messageFromBobby)
+	require.Nil(t, err)
+	assert.Equal(t, "hi!", chatMessage.Message())
+
+	identityKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+	invocationKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+	multiroleKey, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	document := identity.NewDocument()
+	operation := document.
+		Create().
+		Identifier(identityKey).
+		GrantEmbedded(invocationKey, identity.RoleInvocation).
+		GrantEmbedded(multiroleKey, identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging).
+		SignWith(identityKey).
+		SignWith(invocationKey).
+		SignWith(multiroleKey).
+		Finish()
+
+	err = alice.IdentityExecute(operation)
+	require.Nil(t, err)
+
+	contentForAlice, err = message.NewChat().
+		Message("hello again!").
+		Finish()
+
+	require.Nil(t, err)
+
+	start := time.Now()
+	err = bobby.MessageSend(
+		aliceAddress,
+		contentForAlice,
+	)
+
+	require.Nil(t, err)
+
+	messageFromBobby = wait(t, aliceInbox, time.Second)
+	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+
+	fmt.Println("sent and received in", time.Since(start))
+
+	chatMessage, err = message.DecodeChat(messageFromBobby)
+	require.Nil(t, err)
+	assert.Equal(t, "hello again!", chatMessage.Message())
+
+	aliceGroupWith, err := alice.GroupWith(bobbyAddress)
+	require.Nil(t, err)
+
+	bobbyGroupWith, err := bobby.GroupWith(aliceAddress)
+	require.Nil(t, err)
+
+	assert.True(t, aliceGroupWith.Matches(bobbyGroupWith))
+
+	aliceMemberAs, err := alice.GroupMemberAs(aliceGroupWith)
+	require.Nil(t, err)
+	assert.True(t, aliceAddress.Matches(aliceMemberAs))
+
+	bobbyMemberAs, err := alice.GroupMemberAs(bobbyGroupWith)
+	require.Nil(t, err)
+	assert.True(t, aliceAddress.Matches(bobbyMemberAs))
 }
 
 func TestAccountPersistence(t *testing.T) {

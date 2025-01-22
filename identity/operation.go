@@ -19,14 +19,17 @@ import (
 
 // TODO define directly from C types...
 type Role uint64
+type Method uint16
 
 const (
-	RoleAssertion      Role = C.KEY_ROLE_ASSERTION
-	RoleAuthentication Role = C.KEY_ROLE_AUTHENTICATION
-	RoleVerification   Role = C.KEY_ROLE_VERIFICATION
-	RoleInvocation     Role = C.KEY_ROLE_INVOCATION
-	RoleDelegation     Role = C.KEY_ROLE_DELEGATION
-	RoleMessaging      Role = C.KEY_ROLE_MESSAGING
+	RoleAssertion      Role   = C.KEY_ROLE_ASSERTION
+	RoleAuthentication Role   = C.KEY_ROLE_AUTHENTICATION
+	RoleVerification   Role   = C.KEY_ROLE_VERIFICATION
+	RoleInvocation     Role   = C.KEY_ROLE_INVOCATION
+	RoleDelegation     Role   = C.KEY_ROLE_DELEGATION
+	RoleMessaging      Role   = C.KEY_ROLE_MESSAGING
+	MethodAure         Method = C.METHOD_AURE
+	MethodKey          Method = C.METHOD_KEY
 )
 
 type Operation struct {
@@ -141,7 +144,7 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 }
 
 // GrantReferenced grants roles to a key controlled by another identity
-func (b *OperationBuilder) GrantReferenced(method uint16, controller *signing.PublicKey, key *signing.PublicKey, roles Role) *OperationBuilder {
+func (b *OperationBuilder) GrantReferenced(method Method, controller *signing.PublicKey, key *signing.PublicKey, roles Role) *OperationBuilder {
 	C.self_identity_operation_builder_signing_grant_referenced(
 		b.ptr,
 		C.uint16_t(method),
