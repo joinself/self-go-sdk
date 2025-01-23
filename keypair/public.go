@@ -9,4 +9,6 @@ const (
 
 type PublicKey interface {
 	Type() KeyType
+	Bytes() []byte
+	String() string
 }

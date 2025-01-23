@@ -10,7 +10,7 @@ The official Self SDK for Go.
 
 ### Dependencies
 
-- [Go](https://go.dev) 1.13 or later
+- [Go](https://go.dev) 1.22 or later
 - [Self SDK](https://github.com/joinself/self-c-sdk)
 
 ### Install
