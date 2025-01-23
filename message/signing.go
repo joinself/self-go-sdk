@@ -309,9 +309,9 @@ func (c *SigningRequest) UnsignedPayload() *UnsignedPayload {
 
 // RequiresLiveness returns true if the request requires an accompanying liveness check
 func (c *SigningRequest) RequiresLiveness() bool {
-	return C.self_message_content_signing_request_requires_liveness(
+	return bool(C.self_message_content_signing_request_requires_liveness(
 		c.ptr,
-	) == true
+	))
 }
 
 // Expires returns the time the request expires at
@@ -414,16 +414,36 @@ func (c *SigningResponse) SignedPayload() *SignedPayload {
 
 // Presentations returns any presentations that can be used by the linked by
 func (c *SigningResponse) Presentations() []*credential.VerifiablePresentation {
-	return fromVerifiablePresentationCollection(C.self_message_content_signing_response_presentations(
+	collection := C.self_message_content_signing_response_presentations(
 		c.ptr,
-	))
+	)
+
+	presentations := fromVerifiablePresentationCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		collection,
+	)
+
+	return presentations
 }
 
 // Assets returns any supporting objects needed to support claims in the provided presentations
 func (c *SigningResponse) Assets() []*object.Object {
-	return fromObjectCollection(C.self_message_content_signing_response_assets(
+	collection := C.self_message_content_signing_response_assets(
 		c.ptr,
-	))
+	)
+
+	objects := fromObjectCollection(
+		collection,
+	)
+
+	C.self_collection_object_destroy(
+		collection,
+	)
+
+	return objects
 }
 
 // NewSigningResponse creates a new account pairing response

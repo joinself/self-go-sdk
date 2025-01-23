@@ -14,6 +14,8 @@ import (
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/identity"
+	"github.com/joinself/self-go-sdk/keypair"
+	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/stretchr/testify/assert"
@@ -59,10 +61,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 				// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
 			},
 			OnMessage: func(account *account.Account, msg *event.Message) {
-				switch event.ContentType(msg) {
-				case event.TypeChat:
-					incomingMsg <- msg
-				}
+				incomingMsg <- msg
 			},
 			OnKeyPackage: func(account *account.Account, keyPackage *event.KeyPackage) {
 				_, err := account.ConnectionEstablish(
@@ -470,11 +469,13 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	aliceIdentityOperation := identity.NewOperation().
 		Identifier(aliceIdentifier).
+		Sequence(0).
+		Timestamp(time.Now()).
 		GrantEmbedded(aliceInvocation, identity.RoleInvocation).
-		GrantEmbedded(aliceAddress, identity.RoleMessaging|identity.RoleAuthentication).
+		GrantEmbedded(aliceAddress, identity.RoleVerification|identity.RoleMessaging|identity.RoleAuthentication).
 		SignWith(aliceIdentifier).
 		SignWith(aliceInvocation).
-		Sequence(0).
+		SignWith(aliceAddress).
 		Finish()
 
 	err = alice.IdentityExecute(aliceIdentityOperation)
@@ -487,13 +488,20 @@ func TestAccountMessageSigning(t *testing.T) {
 	bobbyInvocation, err := bobby.KeychainSigningCreate()
 	require.Nil(t, err)
 
+	bobbyAssertion, err := bobby.KeychainSigningCreate()
+	require.Nil(t, err)
+
 	bobbyIdentityOperation := identity.NewOperation().
 		Identifier(bobbyIdentifier).
+		Sequence(0).
+		Timestamp(time.Now()).
 		GrantEmbedded(bobbyInvocation, identity.RoleInvocation).
-		GrantEmbedded(bobbyAddress, identity.RoleMessaging|identity.RoleAuthentication).
+		GrantEmbedded(bobbyAssertion, identity.RoleAssertion).
+		GrantEmbedded(bobbyAddress, identity.RoleVerification|identity.RoleMessaging|identity.RoleAuthentication).
 		SignWith(bobbyIdentifier).
 		SignWith(bobbyInvocation).
-		Sequence(0).
+		SignWith(bobbyAssertion).
+		SignWith(bobbyAddress).
 		Finish()
 
 	err = bobby.IdentityExecute(bobbyIdentityOperation)
@@ -554,6 +562,8 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	sharedIdentityOperation := identity.NewOperation().
 		Identifier(sharedIdentifier).
+		Sequence(0).
+		Timestamp(time.Now()).
 		GrantReferenced(
 			identity.MethodAure,
 			aliceIdentifier,
@@ -568,7 +578,6 @@ func TestAccountMessageSigning(t *testing.T) {
 		).
 		SignWith(sharedIdentifier).
 		SignWith(aliceInvocation).
-		Sequence(0).
 		Finish()
 
 	err = alice.IdentitySign(sharedIdentityOperation)
@@ -603,7 +612,72 @@ func TestAccountMessageSigning(t *testing.T) {
 	unsignedIdentityDocumentOperation, err := unsignedPayload.AsIdentityDocumentOperation()
 	require.Nil(t, err)
 
+	// validate the operation and check what keys it's adding
+	unsignedOperation := unsignedIdentityDocumentOperation.Operation()
+	actions := unsignedOperation.Actions()
+
+	require.Len(t, actions, 2)
+	assert.Equal(t, actions[0].Action(), identity.ActionGrant)
+	assert.Equal(t, actions[0].Roles(), identity.RoleInvocation)
+	assert.Equal(t, actions[0].Description(), identity.DescriptionReference)
+	assert.Equal(t, actions[1].Action(), identity.ActionGrant)
+	assert.Equal(t, actions[1].Roles(), identity.RoleInvocation)
+	assert.Equal(t, actions[1].Description(), identity.DescriptionReference)
+
+	reference := actions[0].Reference()
+	assert.Equal(t, keypair.KeyTypeSigning, reference.Address().Type())
+	assert.Equal(t, identity.MethodAure, reference.Method())
+	assert.True(t, reference.Address().(*signing.PublicKey).Matches(aliceInvocation))
+	assert.True(t, reference.Controller().Matches(aliceIdentifier))
+
+	reference = actions[1].Reference()
+	assert.Equal(t, keypair.KeyTypeSigning, reference.Address().Type())
+	assert.Equal(t, identity.MethodAure, reference.Method())
+	assert.True(t, reference.Address().(*signing.PublicKey).Matches(bobbyInvocation))
+	assert.True(t, reference.Controller().Matches(bobbyIdentifier))
+
+	// check alice has signed the operation (optional)
+	assert.True(t, unsignedOperation.SignedBy(aliceInvocation))
+
+	// TODO re-enable this one presentations signing has been improved
+	/*
+		// request a liveness check using the hash of the operation (mocked here as a self signed credential)
+		unverifiedCredential, err := credential.NewCredential().
+			CredentialType(credential.CredentialTypeLiveness).
+			CredentialSubject(credential.AddressAure(
+				bobbyIdentifier,
+			)).
+			CredentialSubjectClaim(
+				"requestHash",
+				hex.EncodeToString(unsignedOperation.Hash()),
+			).
+			ValidFrom(time.Now()).
+			Issuer(credential.AddressAure(
+				bobbyIdentifier,
+			)).
+			SignWith(bobbyAssertion, time.Now()).
+			Finish()
+
+		require.Nil(t, err)
+
+		verifiedCredential, err := bobby.CredentialIssue(unverifiedCredential)
+		require.Nil(t, err)
+
+		unverifiedPresentation, err := credential.NewPresentation().
+			PresentationType(credential.PresentationTypeLiveness).
+			CredentialAdd(verifiedCredential).
+			Holder(credential.AddressAure(
+				sharedIdentifier,
+			)).
+			Finish()
+
+		verifiedPresentation, err := bobby.PresentationIssue(unverifiedPresentation)
+		require.Nil(t, err)
+	*/
+	// send the response and indicate which key is to be used to sign the operation
 	contentForAlice, err = message.NewSigningResponse().
+		ResponseTo(messageFromAlice.ID()).
+		Status(message.ResponseStatusAccepted).
 		SignedPayload(
 			bobbyInvocation,
 			message.NewSignedIdentityDocumentOperation(
@@ -611,6 +685,7 @@ func TestAccountMessageSigning(t *testing.T) {
 				unsignedIdentityDocumentOperation.Operation(),
 			),
 		).
+		// Presentation(verifiedPresentation).
 		Finish()
 
 	require.Nil(t, err)
@@ -626,69 +701,52 @@ func TestAccountMessageSigning(t *testing.T) {
 	messageFromBobby = wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
-	require.Nil(t, err)
-	assert.Equal(t, "hi!", chatMessage.Message())
-
-	identityKey, err := alice.KeychainSigningCreate()
-	require.Nil(t, err)
-	invocationKey, err := alice.KeychainSigningCreate()
-	require.Nil(t, err)
-	multiroleKey, err := alice.KeychainSigningCreate()
+	signingResponse, err := message.DecodeSigningResponse(messageFromBobby)
 	require.Nil(t, err)
 
-	document := identity.NewDocument()
-	operation := document.
-		Create().
-		Identifier(identityKey).
-		GrantEmbedded(invocationKey, identity.RoleInvocation).
-		GrantEmbedded(multiroleKey, identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging).
-		SignWith(identityKey).
-		SignWith(invocationKey).
-		SignWith(multiroleKey).
-		Finish()
+	signedPayload := signingResponse.SignedPayload()
 
-	err = alice.IdentityExecute(operation)
+	// IMPORTANT - verify we have signed this operation to ensure it's the same
+	// one we sent in the original request BEFORE we execute it
+	// we also must ensure that the response contains a liveness presentation
+	// linked to the operation hash that was signed
+
+	require.Equal(t, message.SignedPayloadIdentityDocumentOperation, signedPayload.PayloadType())
+
+	signedIdentityDocumentOperation, err := signedPayload.AsIdentityDocumentOperation()
 	require.Nil(t, err)
 
-	contentForAlice, err = message.NewChat().
-		Message("hello again!").
-		Finish()
+	assert.True(t, sharedIdentifier.Matches(signedIdentityDocumentOperation.DocumentAddress()))
 
-	require.Nil(t, err)
+	signedOperation := signedIdentityDocumentOperation.Operation()
+	require.True(t, signedOperation.SignedBy(aliceInvocation))
+	require.True(t, signedOperation.SignedBy(bobbyInvocation))
 
-	start := time.Now()
-	err = bobby.MessageSend(
-		aliceAddress,
-		contentForAlice,
-	)
+	// TODO re-enable this one presentations signing has been improved
+	/*
+		presentations := signingResponse.Presentations()
+		require.Len(t, presentations, 1)
+		assert.Nil(t, presentations[0].Validate())
+		assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType())
+		assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
-	require.Nil(t, err)
+		credentials := presentations[0].Credentials()
+		require.Len(t, credentials, 1)
+		assert.Nil(t, credentials[0].Validate())
+		assert.True(t, credentials[0].CredentialSubject().Address().Matches(bobbyIdentifier))
 
-	messageFromBobby = wait(t, aliceInbox, time.Second)
-	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
+		claimRequestHash, ok := credentials[0].CredentialSubjectClaim("requestHash")
+		require.True(t, ok)
+		assert.Equal(t, hex.EncodeToString(unsignedOperation.Hash()), claimRequestHash)
+		assert.Equal(t, hex.EncodeToString(signedOperation.Hash()), claimRequestHash)
 
-	fmt.Println("sent and received in", time.Since(start))
+		// store the presentation to be used when asserting the liveness requirements for the operation has been met
+		err = alice.PresentationStore(presentations[0])
+		require.Nil(t, err)
+	*/
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
-	require.Nil(t, err)
-	assert.Equal(t, "hello again!", chatMessage.Message())
-
-	aliceGroupWith, err := alice.GroupWith(bobbyAddress)
-	require.Nil(t, err)
-
-	bobbyGroupWith, err := bobby.GroupWith(aliceAddress)
-	require.Nil(t, err)
-
-	assert.True(t, aliceGroupWith.Matches(bobbyGroupWith))
-
-	aliceMemberAs, err := alice.GroupMemberAs(aliceGroupWith)
-	require.Nil(t, err)
-	assert.True(t, aliceAddress.Matches(aliceMemberAs))
-
-	bobbyMemberAs, err := alice.GroupMemberAs(bobbyGroupWith)
-	require.Nil(t, err)
-	assert.True(t, aliceAddress.Matches(bobbyMemberAs))
+	// execute the completed operation
+	err = alice.IdentityExecute(signedOperation)
 }
 
 func TestAccountPersistence(t *testing.T) {

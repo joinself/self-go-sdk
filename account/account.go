@@ -702,7 +702,15 @@ func (a *Account) InboxList() ([]*signing.PublicKey, error) {
 		return nil, status.New(result)
 	}
 
-	return fromSigningPublicKeyCollection(collection), nil
+	inboxes := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return inboxes, nil
 }
 
 // GroupWith returns the address of the encrypted group that has been

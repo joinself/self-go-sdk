@@ -23,6 +23,12 @@ func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 //go:linkname exchangePublicKeyPtr github.com/joinself/self-go-sdk/keypair/exchange.exchangePublicKeyPtr
 func exchangePublicKeyPtr(p *exchange.PublicKey) *C.self_exchange_public_key
 
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
+func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
+
+//go:linkname newExchangePublicKey github.com/joinself/self-go-sdk/keypair/exchange.newExchangePublicKey
+func newExchangePublicKey(*C.self_exchange_public_key) *exchange.PublicKey
+
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
@@ -98,32 +104,56 @@ func (d *Document) ValidAt(key keypair.PublicKey, at time.Time) bool {
 
 // SigningKeys returns all signing keys that have been added to the document
 func (d *Document) SigningKeys() []*signing.PublicKey {
-	return fromSigningPublicKeyCollection(
-		C.self_identity_document_signing_keys(
-			d.ptr,
-		),
+	collection := C.self_identity_document_signing_keys(
+		d.ptr,
 	)
+
+	keys := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return keys
 }
 
 // SigningKeysWithRoles returns all signing keys that have been added to the document with a given set of roles
 func (d *Document) SigningKeysWithRoles(roles Role) []*signing.PublicKey {
-	return fromSigningPublicKeyCollection(
-		C.self_identity_document_signing_keys_with_roles(
-			d.ptr,
-			C.uint64_t(roles),
-		),
+	collection := C.self_identity_document_signing_keys_with_roles(
+		d.ptr,
+		C.uint64_t(roles),
 	)
+
+	keys := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return keys
 }
 
 // SigningKeysWithRolesAt returns all signing keys that have been added to the document with a given set of roles at a given timeframe
 func (d *Document) SigningKeysWithRolesAt(roles Role, at time.Time) []*signing.PublicKey {
-	return fromSigningPublicKeyCollection(
-		C.self_identity_document_signing_keys_with_roles_at(
-			d.ptr,
-			C.uint64_t(roles),
-			C.int64_t(at.Unix()),
-		),
+	collection := C.self_identity_document_signing_keys_with_roles_at(
+		d.ptr,
+		C.uint64_t(roles),
+		C.int64_t(at.Unix()),
 	)
+
+	keys := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return keys
 }
 
 // Create creates a new operation to update the document

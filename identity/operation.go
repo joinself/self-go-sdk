@@ -11,25 +11,35 @@ import "C"
 import (
 	"runtime"
 	"time"
+	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-// TODO define directly from C types...
 type Role uint64
 type Method uint16
+type Action int
+type Description int
 
 const (
-	RoleAssertion      Role   = C.KEY_ROLE_ASSERTION
-	RoleAuthentication Role   = C.KEY_ROLE_AUTHENTICATION
-	RoleVerification   Role   = C.KEY_ROLE_VERIFICATION
-	RoleInvocation     Role   = C.KEY_ROLE_INVOCATION
-	RoleDelegation     Role   = C.KEY_ROLE_DELEGATION
-	RoleMessaging      Role   = C.KEY_ROLE_MESSAGING
-	MethodAure         Method = C.METHOD_AURE
-	MethodKey          Method = C.METHOD_KEY
+	RoleAssertion        Role        = C.KEY_ROLE_ASSERTION
+	RoleAuthentication   Role        = C.KEY_ROLE_AUTHENTICATION
+	RoleVerification     Role        = C.KEY_ROLE_VERIFICATION
+	RoleInvocation       Role        = C.KEY_ROLE_INVOCATION
+	RoleDelegation       Role        = C.KEY_ROLE_DELEGATION
+	RoleMessaging        Role        = C.KEY_ROLE_MESSAGING
+	MethodAure           Method      = C.METHOD_AURE
+	MethodKey            Method      = C.METHOD_KEY
+	ActionGrant          Action      = C.OPERATION_ACTION_GRANT
+	ActionRevoke         Action      = C.OPERATION_ACTION_REVOKE
+	ActionModify         Action      = C.OPERATION_ACTION_MODIFY
+	ActionRecover        Action      = C.OPERATION_ACTION_RECOVER
+	ActionDeactivate     Action      = C.OPERATION_ACTION_DEACTIVATE
+	DescriptionNone      Description = C.OPERATION_DESCRIPTION_NONE
+	DescriptionEmbedded  Description = C.OPERATION_DESCRIPTION_EMBEDDED
+	DescriptionReference Description = C.OPERATION_DESCRIPTION_REFERENCE
 )
 
 type Operation struct {
@@ -52,6 +62,59 @@ func newOperation(ptr *C.self_identity_operation) *Operation {
 
 func operationPtr(o *Operation) *C.self_identity_operation {
 	return o.ptr
+}
+
+// Sequence the sequence number of the operation
+func (o *Operation) Sequence(address *signing.PublicKey) uint32 {
+	return uint32(C.self_identity_operation_sequence(
+		operationPtr(o),
+	))
+}
+
+// Hash returns the 32 byte hash of the operations content
+func (o *Operation) Hash() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_identity_operation_hash(
+			operationPtr(o),
+		)),
+		32,
+	)
+}
+
+// SignedBy checks if the operation has been signed with a given key
+func (o *Operation) SignedBy(address *signing.PublicKey) bool {
+	return bool(C.self_identity_operation_signed_by(
+		operationPtr(o),
+		signingPublicKeyPtr(address),
+	))
+}
+
+// Actions returns a summary of the operations actions
+func (o *Operation) Actions() []*ActionSummary {
+	collection := C.self_identity_operation_actions(
+		operationPtr(o),
+	)
+
+	collectionLen := int(C.self_collection_identity_operation_action_len(
+		collection,
+	))
+
+	actions := make([]*ActionSummary, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_identity_operation_action_at(
+			collection,
+			C.size_t(i),
+		)
+
+		actions[i] = newOperationAction(ptr)
+	}
+
+	C.self_collection_identity_operation_action_destroy(
+		collection,
+	)
+
+	return actions
 }
 
 type OperationBuilder struct {

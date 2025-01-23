@@ -157,9 +157,19 @@ func (p *VerifiablePresentation) Holder() *Address {
 
 // Credential returns the verifiable credentials contained in the presentation
 func (p *VerifiablePresentation) Credentials() []*VerifiableCredential {
-	return fromVerifiableCredentialCollection(C.self_verifiable_presentation_credentials(
+	collection := C.self_verifiable_presentation_credentials(
 		p.ptr,
-	))
+	)
+
+	credentials := fromVerifiableCredentialCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials
 }
 
 // Validate validates the contents of the presentation and it's signatures
