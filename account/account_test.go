@@ -2,6 +2,7 @@ package account_test
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -584,7 +585,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.Nil(t, err)
 
 	contentForBobby, err = message.NewSigningRequest().
-		UnsignedPayload(message.NewUnsignedIdentityDocumentOperation(
+		Payload(message.NewSigningIdentityDocumentOperation(
 			sharedIdentifier,
 			sharedIdentityOperation,
 		)).
@@ -608,7 +609,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, signingRequest.RequiresLiveness())
 
-	unsignedPayload := signingRequest.UnsignedPayload()
+	unsignedPayload := signingRequest.Payload()
 	unsignedIdentityDocumentOperation, err := unsignedPayload.AsIdentityDocumentOperation()
 	require.Nil(t, err)
 
@@ -639,53 +640,49 @@ func TestAccountMessageSigning(t *testing.T) {
 	// check alice has signed the operation (optional)
 	assert.True(t, unsignedOperation.SignedBy(aliceInvocation))
 
-	// TODO re-enable this one presentations signing has been improved
-	/*
-		// request a liveness check using the hash of the operation (mocked here as a self signed credential)
-		unverifiedCredential, err := credential.NewCredential().
-			CredentialType(credential.CredentialTypeLiveness).
-			CredentialSubject(credential.AddressAure(
-				bobbyIdentifier,
-			)).
-			CredentialSubjectClaim(
-				"requestHash",
-				hex.EncodeToString(unsignedOperation.Hash()),
-			).
-			ValidFrom(time.Now()).
-			Issuer(credential.AddressAure(
-				bobbyIdentifier,
-			)).
-			SignWith(bobbyAssertion, time.Now()).
-			Finish()
+	// request a liveness check using the hash of the operation (mocked here as a self signed credential)
+	unverifiedCredential, err := credential.NewCredential().
+		CredentialType(credential.CredentialTypeLiveness).
+		CredentialSubject(credential.AddressAure(
+			bobbyIdentifier,
+		)).
+		CredentialSubjectClaim(
+			"requestHash",
+			hex.EncodeToString(unsignedOperation.Hash()),
+		).
+		ValidFrom(time.Now()).
+		Issuer(credential.AddressAure(
+			bobbyIdentifier,
+		)).
+		SignWith(bobbyAssertion, time.Now()).
+		Finish()
 
-		require.Nil(t, err)
+	require.Nil(t, err)
 
-		verifiedCredential, err := bobby.CredentialIssue(unverifiedCredential)
-		require.Nil(t, err)
+	verifiedCredential, err := bobby.CredentialIssue(unverifiedCredential)
+	require.Nil(t, err)
 
-		unverifiedPresentation, err := credential.NewPresentation().
-			PresentationType(credential.PresentationTypeLiveness).
-			CredentialAdd(verifiedCredential).
-			Holder(credential.AddressAure(
-				sharedIdentifier,
-			)).
-			Finish()
+	unverifiedPresentation, err := credential.NewPresentation().
+		PresentationType(credential.PresentationTypeLiveness).
+		CredentialAdd(verifiedCredential).
+		Holder(credential.AddressAureWithKey(
+			sharedIdentifier,
+			bobbyInvocation,
+		)).
+		Finish()
 
-		verifiedPresentation, err := bobby.PresentationIssue(unverifiedPresentation)
-		require.Nil(t, err)
-	*/
+	require.Nil(t, err)
+
+	verifiedPresentation, err := bobby.PresentationIssue(unverifiedPresentation)
+	require.Nil(t, err)
+
 	// send the response and indicate which key is to be used to sign the operation
 	contentForAlice, err = message.NewSigningResponse().
 		ResponseTo(messageFromAlice.ID()).
 		Status(message.ResponseStatusAccepted).
-		SignedPayload(
-			bobbyInvocation,
-			message.NewSignedIdentityDocumentOperation(
-				unsignedIdentityDocumentOperation.DocumentAddress(),
-				unsignedIdentityDocumentOperation.Operation(),
-			),
-		).
-		// Presentation(verifiedPresentation).
+		Payload(unsignedPayload).
+		SignWith(bobbyInvocation).
+		Presentation(verifiedPresentation).
 		Finish()
 
 	require.Nil(t, err)
@@ -704,14 +701,14 @@ func TestAccountMessageSigning(t *testing.T) {
 	signingResponse, err := message.DecodeSigningResponse(messageFromBobby)
 	require.Nil(t, err)
 
-	signedPayload := signingResponse.SignedPayload()
+	signedPayload := signingResponse.Payload()
 
 	// IMPORTANT - verify we have signed this operation to ensure it's the same
 	// one we sent in the original request BEFORE we execute it
 	// we also must ensure that the response contains a liveness presentation
 	// linked to the operation hash that was signed
 
-	require.Equal(t, message.SignedPayloadIdentityDocumentOperation, signedPayload.PayloadType())
+	require.Equal(t, message.SigningPayloadIdentityDocumentOperation, signedPayload.PayloadType())
 
 	signedIdentityDocumentOperation, err := signedPayload.AsIdentityDocumentOperation()
 	require.Nil(t, err)
@@ -722,31 +719,29 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.True(t, signedOperation.SignedBy(aliceInvocation))
 	require.True(t, signedOperation.SignedBy(bobbyInvocation))
 
-	// TODO re-enable this one presentations signing has been improved
-	/*
-		presentations := signingResponse.Presentations()
-		require.Len(t, presentations, 1)
-		assert.Nil(t, presentations[0].Validate())
-		assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType())
-		assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
+	presentations := signingResponse.Presentations()
+	require.Len(t, presentations, 1)
+	assert.Nil(t, presentations[0].Validate())
+	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType())
+	assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
-		credentials := presentations[0].Credentials()
-		require.Len(t, credentials, 1)
-		assert.Nil(t, credentials[0].Validate())
-		assert.True(t, credentials[0].CredentialSubject().Address().Matches(bobbyIdentifier))
+	credentials := presentations[0].Credentials()
+	require.Len(t, credentials, 1)
+	assert.Nil(t, credentials[0].Validate())
+	assert.True(t, credentials[0].CredentialSubject().Address().Matches(bobbyIdentifier))
 
-		claimRequestHash, ok := credentials[0].CredentialSubjectClaim("requestHash")
-		require.True(t, ok)
-		assert.Equal(t, hex.EncodeToString(unsignedOperation.Hash()), claimRequestHash)
-		assert.Equal(t, hex.EncodeToString(signedOperation.Hash()), claimRequestHash)
+	claimRequestHash, ok := credentials[0].CredentialSubjectClaim("requestHash")
+	require.True(t, ok)
+	assert.Equal(t, hex.EncodeToString(unsignedOperation.Hash()), claimRequestHash)
+	assert.Equal(t, hex.EncodeToString(signedOperation.Hash()), claimRequestHash)
 
-		// store the presentation to be used when asserting the liveness requirements for the operation has been met
-		err = alice.PresentationStore(presentations[0])
-		require.Nil(t, err)
-	*/
+	// store the presentation to be used when asserting the liveness requirements for the operation has been met
+	err = alice.PresentationStore(presentations[0])
+	require.Nil(t, err)
 
 	// execute the completed operation
 	err = alice.IdentityExecute(signedOperation)
+	require.Nil(t, err)
 }
 
 func TestAccountPersistence(t *testing.T) {

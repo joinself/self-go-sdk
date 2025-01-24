@@ -21,27 +21,24 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-type SignedPayloadType int
-type UnsignedPayloadType int
+type SigningPayloadType int
 
 const (
-	SignedPayloadUnknown                     SignedPayloadType   = 1<<63 - 1
-	SignedPayloadIdentityDocumentOperation   SignedPayloadType   = C.SIGNED_PAYLOAD_IDENTITY_DOCUMENT_OPERATION
-	UnsignedPayloadUnknown                   UnsignedPayloadType = 1<<63 - 1
-	UnsignedPayloadIdentityDocumentOperation UnsignedPayloadType = C.UNSIGNED_PAYLOAD_IDENTITY_DOCUMENT_OPERATION
+	SigningPayloadUnknown                   SigningPayloadType = 1<<63 - 1
+	SigningPayloadIdentityDocumentOperation SigningPayloadType = C.SIGNING_PAYLOAD_IDENTITY_DOCUMENT_OPERATION
 )
 
-type UnsignedPayload struct {
-	ptr *C.self_message_content_unsigned_payload
+type SigningPayload struct {
+	ptr *C.self_message_content_signing_payload
 }
 
-func newUnsignedPayload(ptr *C.self_message_content_unsigned_payload) *UnsignedPayload {
-	c := &UnsignedPayload{
+func newSigningPayload(ptr *C.self_message_content_signing_payload) *SigningPayload {
+	c := &SigningPayload{
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *UnsignedPayload) {
-		C.self_message_content_unsigned_payload_destroy(
+	runtime.SetFinalizer(c, func(c *SigningPayload) {
+		C.self_message_content_signing_payload_destroy(
 			c.ptr,
 		)
 	})
@@ -49,26 +46,26 @@ func newUnsignedPayload(ptr *C.self_message_content_unsigned_payload) *UnsignedP
 	return c
 }
 
-func unsignedPayloadPtr(p *UnsignedPayload) *C.self_message_content_unsigned_payload {
+func signingPayloadPtr(p *SigningPayload) *C.self_message_content_signing_payload {
 	return p.ptr
 }
 
-// PayloadType returns the type of unsigned payload
-func (p *UnsignedPayload) PayloadType() UnsignedPayloadType {
-	switch C.self_message_content_unsigned_payload_payload_type(unsignedPayloadPtr(p)) {
-	case C.UNSIGNED_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
-		return UnsignedPayloadIdentityDocumentOperation
+// PayloadType returns the type of signing payload
+func (p *SigningPayload) PayloadType() SigningPayloadType {
+	switch C.self_message_content_signing_payload_payload_type(signingPayloadPtr(p)) {
+	case C.SIGNING_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
+		return SigningPayloadIdentityDocumentOperation
 	default:
-		return UnsignedPayloadUnknown
+		return SigningPayloadUnknown
 	}
 }
 
-// AsIdentityDocumentOperation extracts the unsigned payload as an identity document operation
-func (p *UnsignedPayload) AsIdentityDocumentOperation() (*UnsignedIdentityDocumentOperation, error) {
-	var identityDocumentOperation *C.self_message_content_unsigned_payload_identity_document_operation
+// AsIdentityDocumentOperation extracts the signing payload as an identity document operation
+func (p *SigningPayload) AsIdentityDocumentOperation() (*SigningIdentityDocumentOperation, error) {
+	var identityDocumentOperation *C.self_message_content_signing_payload_identity_document_operation
 
-	result := C.self_message_content_unsigned_payload_as_identity_document_operation(
-		unsignedPayloadPtr(p),
+	result := C.self_message_content_signing_payload_as_identity_document_operation(
+		signingPayloadPtr(p),
 		&identityDocumentOperation,
 	)
 
@@ -76,78 +73,30 @@ func (p *UnsignedPayload) AsIdentityDocumentOperation() (*UnsignedIdentityDocume
 		return nil, status.New(result)
 	}
 
-	return newUnsignedIdentityDocumentOperation(identityDocumentOperation), nil
+	return newSigningIdentityDocumentOperation(identityDocumentOperation), nil
 }
 
-type SignedPayload struct {
-	ptr *C.self_message_content_signed_payload
-}
-
-func newSignedPayload(ptr *C.self_message_content_signed_payload) *SignedPayload {
-	c := &SignedPayload{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *SignedPayload) {
-		C.self_message_content_signed_payload_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
-
-func signedPayloadPtr(p *SignedPayload) *C.self_message_content_signed_payload {
-	return p.ptr
-}
-
-// PayloadType returns the type of signed payload
-func (p *SignedPayload) PayloadType() SignedPayloadType {
-	switch C.self_message_content_signed_payload_payload_type(signedPayloadPtr(p)) {
-	case C.SIGNED_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
-		return SignedPayloadIdentityDocumentOperation
-	default:
-		return SignedPayloadUnknown
-	}
-}
-
-// AsIdentityDocumentOperation extracts the signed payload as an identity document operation
-func (p *SignedPayload) AsIdentityDocumentOperation() (*SignedIdentityDocumentOperation, error) {
-	var identityDocumentOperation *C.self_message_content_signed_payload_identity_document_operation
-
-	result := C.self_message_content_signed_payload_as_identity_document_operation(
-		signedPayloadPtr(p),
-		&identityDocumentOperation,
-	)
-
-	if result > 0 {
-		return nil, status.New(result)
-	}
-
-	return newSignedIdentityDocumentOperation(identityDocumentOperation), nil
-}
-
-// NewUnsignedIdentityDocumentOperation creates a new unsigned payload identity document operation
-func NewUnsignedIdentityDocumentOperation(documentAddress *signing.PublicKey, operation *identity.Operation) *UnsignedPayload {
-	return newUnsignedPayload(
-		C.self_message_content_unsigned_payload_identity_document_operation_init(
+// NewSigningIdentityDocumentOperation creates a new Signing payload identity document operation
+func NewSigningIdentityDocumentOperation(documentAddress *signing.PublicKey, operation *identity.Operation) *SigningPayload {
+	return newSigningPayload(
+		C.self_message_content_signing_payload_identity_document_operation_init(
 			signingPublicKeyPtr(documentAddress),
 			operationPtr(operation),
 		),
 	)
 }
 
-type UnsignedIdentityDocumentOperation struct {
-	ptr *C.self_message_content_unsigned_payload_identity_document_operation
+type SigningIdentityDocumentOperation struct {
+	ptr *C.self_message_content_signing_payload_identity_document_operation
 }
 
-func newUnsignedIdentityDocumentOperation(ptr *C.self_message_content_unsigned_payload_identity_document_operation) *UnsignedIdentityDocumentOperation {
-	c := &UnsignedIdentityDocumentOperation{
+func newSigningIdentityDocumentOperation(ptr *C.self_message_content_signing_payload_identity_document_operation) *SigningIdentityDocumentOperation {
+	c := &SigningIdentityDocumentOperation{
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *UnsignedIdentityDocumentOperation) {
-		C.self_message_content_unsigned_payload_identity_document_operation_destroy(
+	runtime.SetFinalizer(c, func(c *SigningIdentityDocumentOperation) {
+		C.self_message_content_signing_payload_identity_document_operation_destroy(
 			c.ptr,
 		)
 	})
@@ -156,56 +105,15 @@ func newUnsignedIdentityDocumentOperation(ptr *C.self_message_content_unsigned_p
 }
 
 // DocumentAddress returns the address of the document the operation relates to
-func (c *UnsignedIdentityDocumentOperation) DocumentAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_message_content_unsigned_payload_identity_document_operation_document_address(
+func (c *SigningIdentityDocumentOperation) DocumentAddress() *signing.PublicKey {
+	return newSigningPublicKey(C.self_message_content_signing_payload_identity_document_operation_document_address(
 		c.ptr,
 	))
 }
 
 // Operation returns the operation that the signature is being requested for
-func (c *UnsignedIdentityDocumentOperation) Operation() *identity.Operation {
-	return newOperation(C.self_message_content_unsigned_payload_identity_document_operation_operation(
-		c.ptr,
-	))
-}
-
-func NewSignedIdentityDocumentOperation(documentAddress *signing.PublicKey, operation *identity.Operation) *SignedPayload {
-	return newSignedPayload(
-		C.self_message_content_signed_payload_identity_document_operation_init(
-			signingPublicKeyPtr(documentAddress),
-			operationPtr(operation),
-		),
-	)
-}
-
-type SignedIdentityDocumentOperation struct {
-	ptr *C.self_message_content_signed_payload_identity_document_operation
-}
-
-func newSignedIdentityDocumentOperation(ptr *C.self_message_content_signed_payload_identity_document_operation) *SignedIdentityDocumentOperation {
-	c := &SignedIdentityDocumentOperation{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *SignedIdentityDocumentOperation) {
-		C.self_message_content_signed_payload_identity_document_operation_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
-
-// DocumentAddress returns the address of the document the operation relates to
-func (c *SignedIdentityDocumentOperation) DocumentAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_message_content_signed_payload_identity_document_operation_document_address(
-		c.ptr,
-	))
-}
-
-// Operation returns the operation that the signature is being requested for
-func (c *SignedIdentityDocumentOperation) Operation() *identity.Operation {
-	return newOperation(C.self_message_content_signed_payload_identity_document_operation_operation(
+func (c *SigningIdentityDocumentOperation) Operation() *identity.Operation {
+	return newOperation(C.self_message_content_signing_payload_identity_document_operation_operation(
 		c.ptr,
 	))
 }
@@ -300,9 +208,9 @@ func DecodeSigningRequest(msg *event.Message) (*SigningRequest, error) {
 	return newSigningRequest(accountPairingRequestContent), nil
 }
 
-// UnsignedPayload returns the unsigned payload of the
-func (c *SigningRequest) UnsignedPayload() *UnsignedPayload {
-	return newUnsignedPayload(C.self_message_content_signing_request_unsigned_payload(
+// Payload returns the Signing payload of the
+func (c *SigningRequest) Payload() *SigningPayload {
+	return newSigningPayload(C.self_message_content_signing_request_payload(
 		c.ptr,
 	))
 }
@@ -337,9 +245,9 @@ func (b *SigningRequestBuilder) Expires(expires time.Time) *SigningRequestBuilde
 	return b
 }
 
-// UnsignedPayload sets the unsigned payload of the request
-func (b *SigningRequestBuilder) UnsignedPayload(payload *UnsignedPayload) *SigningRequestBuilder {
-	C.self_message_content_signing_request_builder_unsigned_payload(
+// Payload sets the Signing payload of the request
+func (b *SigningRequestBuilder) Payload(payload *SigningPayload) *SigningRequestBuilder {
+	C.self_message_content_signing_request_builder_payload(
 		b.ptr,
 		payload.ptr,
 	)
@@ -405,9 +313,9 @@ func (c *SigningResponse) Status() ResponseStatus {
 	))
 }
 
-// SignedPayload returns the signed payload of the
-func (c *SigningResponse) SignedPayload() *SignedPayload {
-	return newSignedPayload(C.self_message_content_signing_response_signed_payload(
+// Payload returns the signing payload of the
+func (c *SigningResponse) Payload() *SigningPayload {
+	return newSigningPayload(C.self_message_content_signing_response_payload(
 		c.ptr,
 	))
 }
@@ -483,12 +391,20 @@ func (b *SigningResponseBuilder) Status(status ResponseStatus) *SigningResponseB
 	return b
 }
 
-// SignedPayload sets the signed payload of the response
-func (b *SigningResponseBuilder) SignedPayload(signer *signing.PublicKey, payload *SignedPayload) *SigningResponseBuilder {
-	C.self_message_content_signing_response_builder_signed_payload(
+// Payload sets the signing payload of the response
+func (b *SigningResponseBuilder) Payload(payload *SigningPayload) *SigningResponseBuilder {
+	C.self_message_content_signing_response_builder_payload(
+		b.ptr,
+		payload.ptr,
+	)
+	return b
+}
+
+// SignWith specifies a key the presentation should be signed with
+func (b *SigningResponseBuilder) SignWith(signer *signing.PublicKey) *SigningResponseBuilder {
+	C.self_message_content_signing_response_builder_sign_with(
 		b.ptr,
 		signingPublicKeyPtr(signer),
-		payload.ptr,
 	)
 	return b
 }

@@ -571,6 +571,20 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 	return newVerfiablePresentation(verifiablePresentation), nil
 }
 
+// PresentationSign signs a verifiable presentation
+func (a *Account) PresentationSign(verifiedPresentation *credential.VerifiablePresentation) error {
+	result := C.self_account_presentation_sign(
+		a.account,
+		verifiablePresentationPtr(verifiedPresentation),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
 // PresentationStore stores a verifiable presentation
 func (a *Account) PresentationStore(verifiedPresentation *credential.VerifiablePresentation) error {
 	result := C.self_account_presentation_store(
