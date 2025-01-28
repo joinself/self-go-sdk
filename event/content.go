@@ -83,7 +83,7 @@ func ContentType(message *Message) Type {
 		return TypeDiscoveryResponse
 	case C.CONTENT_SIGNING_REQUEST:
 		return TypeSigningRequest
-	case C.CONTENT_SigningESPONSE:
+	case C.CONTENT_SIGNING_RESPONSE:
 		return TypeSigningResponse
 	case C.CONTENT_ACCOUNT_PAIRING_REQUEST:
 		return TypeAccountPairingRequest
