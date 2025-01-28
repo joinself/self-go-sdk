@@ -36,6 +36,8 @@ const (
 	TypeIntroduction                   Type = C.CONTENT_INTRODUCTION
 	TypeDiscoveryRequest               Type = C.CONTENT_DISCOVERY_REQUEST
 	TypeDiscoveryResponse              Type = C.CONTENT_DISCOVERY_RESPONSE
+	TypeSigningRequest                 Type = C.CONTENT_SIGNING_REQUEST
+	TypeSigningResponse                Type = C.CONTENT_SIGNING_RESPONSE
 	TypeAccountPairingRequest          Type = C.CONTENT_ACCOUNT_PAIRING_REQUEST
 	TypeAccountPairingResponse         Type = C.CONTENT_ACCOUNT_PAIRING_RESPONSE
 	TypeCredentialVerificationRequest  Type = C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST
@@ -79,6 +81,10 @@ func ContentType(message *Message) Type {
 		return TypeDiscoveryRequest
 	case C.CONTENT_DISCOVERY_RESPONSE:
 		return TypeDiscoveryResponse
+	case C.CONTENT_SIGNING_REQUEST:
+		return TypeSigningRequest
+	case C.CONTENT_SigningESPONSE:
+		return TypeSigningResponse
 	case C.CONTENT_ACCOUNT_PAIRING_REQUEST:
 		return TypeAccountPairingRequest
 	case C.CONTENT_ACCOUNT_PAIRING_RESPONSE:
