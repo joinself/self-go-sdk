@@ -831,7 +831,7 @@ func (a *Account) ValueLookup(key string) ([]byte, error) {
 
 // ValueLookup looks up a value by it's key
 func (a *Account) valueLookup(key string) ([]byte, error) {
-	var value *C.self_encoded_buffer
+	var value *C.self_bytes_buffer
 
 	keyPtr := C.CString(key)
 
@@ -847,13 +847,13 @@ func (a *Account) valueLookup(key string) ([]byte, error) {
 		return nil, status.New(result)
 	}
 
-	defer C.self_encoded_buffer_destroy(
+	defer C.self_bytes_buffer_destroy(
 		value,
 	)
 
 	return C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(value)),
-		C.int(C.self_encoded_buffer_len(value)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(value)),
+		C.int(C.self_bytes_buffer_len(value)),
 	), nil
 }
 

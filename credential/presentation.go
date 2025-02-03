@@ -187,7 +187,7 @@ func (p *VerifiablePresentation) Validate() error {
 
 // Encode returns a json encoded verifiable presentation
 func (p *VerifiablePresentation) Encode() ([]byte, error) {
-	var encodedPresentationBuffer *C.self_encoded_buffer
+	var encodedPresentationBuffer *C.self_bytes_buffer
 	encodedPresentationBufferPtr := &encodedPresentationBuffer
 
 	result := C.self_verifiable_presentation_encode(
@@ -200,11 +200,11 @@ func (p *VerifiablePresentation) Encode() ([]byte, error) {
 	}
 
 	encodedPresentation := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(*encodedPresentationBufferPtr)),
-		C.int(C.self_encoded_buffer_len(*encodedPresentationBufferPtr)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(*encodedPresentationBufferPtr)),
+		C.int(C.self_bytes_buffer_len(*encodedPresentationBufferPtr)),
 	)
 
-	C.self_encoded_buffer_destroy(
+	C.self_bytes_buffer_destroy(
 		*encodedPresentationBufferPtr,
 	)
 
