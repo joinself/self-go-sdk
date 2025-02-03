@@ -86,7 +86,7 @@ func (a *AnonymousMessage) Content() *Content {
 
 // Content returns the messages content
 func (a *AnonymousMessage) EncodeToQR(encoding QREncoding) ([]byte, error) {
-	var qrCode *C.self_encoded_buffer
+	var qrCode *C.self_bytes_buffer
 
 	result := C.self_anonymous_message_encode_as_qr(
 		a.ptr,
@@ -99,11 +99,11 @@ func (a *AnonymousMessage) EncodeToQR(encoding QREncoding) ([]byte, error) {
 	}
 
 	encodedQR := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(qrCode)),
-		C.int(C.self_encoded_buffer_len(qrCode)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(qrCode)),
+		C.int(C.self_bytes_buffer_len(qrCode)),
 	)
 
-	C.self_encoded_buffer_destroy(
+	C.self_bytes_buffer_destroy(
 		qrCode,
 	)
 
@@ -112,7 +112,7 @@ func (a *AnonymousMessage) EncodeToQR(encoding QREncoding) ([]byte, error) {
 
 // EncodeToString encodes a message to an encoded string
 func (a *AnonymousMessage) EncodeToString() (string, error) {
-	var encodeBuffer *C.self_encoded_buffer
+	var encodeBuffer *C.self_bytes_buffer
 
 	result := C.self_anonymous_message_encode(
 		a.ptr,
@@ -124,11 +124,11 @@ func (a *AnonymousMessage) EncodeToString() (string, error) {
 	}
 
 	encodedMessage := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(encodeBuffer)),
-		C.int(C.self_encoded_buffer_len(encodeBuffer)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(encodeBuffer)),
+		C.int(C.self_bytes_buffer_len(encodeBuffer)),
 	)
 
-	C.self_encoded_buffer_destroy(
+	C.self_bytes_buffer_destroy(
 		encodeBuffer,
 	)
 

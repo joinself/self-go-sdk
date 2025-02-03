@@ -103,11 +103,11 @@ func (a *Address) String() string {
 	)
 
 	encodedAddress := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(encodedAddressBuffer)),
-		C.int(C.self_encoded_buffer_len(encodedAddressBuffer)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(encodedAddressBuffer)),
+		C.int(C.self_bytes_buffer_len(encodedAddressBuffer)),
 	)
 
-	C.self_encoded_buffer_destroy(
+	C.self_bytes_buffer_destroy(
 		encodedAddressBuffer,
 	)
 

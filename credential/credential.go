@@ -397,7 +397,7 @@ func (c *VerifiableCredential) Created() time.Time {
 
 // Encode returns a json encoded verifiable credential
 func (c *VerifiableCredential) Encode() ([]byte, error) {
-	var encodedCredentialBuffer *C.self_encoded_buffer
+	var encodedCredentialBuffer *C.self_bytes_buffer
 	encodedCredentialBufferPtr := &encodedCredentialBuffer
 
 	result := C.self_verifiable_credential_encode(
@@ -410,11 +410,11 @@ func (c *VerifiableCredential) Encode() ([]byte, error) {
 	}
 
 	encodedCredential := C.GoBytes(
-		unsafe.Pointer(C.self_encoded_buffer_buf(*encodedCredentialBufferPtr)),
-		C.int(C.self_encoded_buffer_len(*encodedCredentialBufferPtr)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(*encodedCredentialBufferPtr)),
+		C.int(C.self_bytes_buffer_len(*encodedCredentialBufferPtr)),
 	)
 
-	C.self_encoded_buffer_destroy(
+	C.self_bytes_buffer_destroy(
 		*encodedCredentialBufferPtr,
 	)
 
@@ -450,25 +450,163 @@ func (c *CredentialVerificationEvidence) Object() *object.Object {
 	))
 }
 
-// ParameterType returns the parameter type
-func (c *CredentialVerificationParameter) ParameterType() string {
+// Key returns the parameters key
+func (c *CredentialVerificationParameter) Key() string {
 	return C.GoString(
-		C.self_credential_verification_parameter_parameter_type(
+		C.self_credential_verification_parameter_parameter_key(
 			c.ptr,
 		),
 	)
 }
 
 // Value returns the value of the parameter
-func (c *CredentialVerificationParameter) Value() []byte {
-	return C.GoBytes(
-		unsafe.Pointer(C.self_credential_verification_parameter_value_buf(
-			c.ptr,
-		)),
-		(C.int)(C.self_credential_verification_parameter_value_len(
-			c.ptr,
-		)),
+func (c *CredentialVerificationParameter) Value() any {
+	ptr := C.self_credential_verification_parameter_value(
+		c.ptr,
 	)
+
+	defer func() {
+		C.self_message_content_parameter_value_destroy(ptr)
+	}()
+
+	switch C.self_message_content_parameter_value_value_type(
+		ptr,
+	) {
+	case C.PARAMETER_VALUE_BYTES:
+		buf := C.self_message_content_parameter_value_as_bytes(
+			ptr,
+		)
+
+		bytes := C.GoBytes(
+			unsafe.Pointer(C.self_bytes_buffer_buf(
+				buf,
+			)),
+			C.int(C.self_bytes_buffer_len(
+				buf,
+			)),
+		)
+
+		C.self_bytes_buffer_destroy(
+			buf,
+		)
+
+		return bytes
+	case C.PARAMETER_VALUE_STRING:
+		buf := C.self_message_content_parameter_value_as_string(
+			ptr,
+		)
+
+		str := C.GoString(
+			C.self_string_buffer_ptr(
+				buf,
+			),
+		)
+
+		C.self_string_buffer_destroy(
+			buf,
+		)
+
+		return str
+	case C.PARAMETER_VALUE_INT8:
+		return C.self_message_content_parameter_value_as_int8(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT16:
+		return C.self_message_content_parameter_value_as_int16(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT32:
+		return C.self_message_content_parameter_value_as_int32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT64:
+		return C.self_message_content_parameter_value_as_int64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT8:
+		return C.self_message_content_parameter_value_as_uint8(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT16:
+		return C.self_message_content_parameter_value_as_uint16(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT32:
+		return C.self_message_content_parameter_value_as_uint32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT64:
+		return C.self_message_content_parameter_value_as_uint64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_FLOAT32:
+		return C.self_message_content_parameter_value_as_float32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_FLOAT64:
+		return C.self_message_content_parameter_value_as_float64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_ARRAY_BYTES:
+		collection := C.self_message_content_parameter_value_as_array_bytes(
+			ptr,
+		)
+
+		collectionLen := int(C.self_collection_bytes_buffer_len(collection))
+
+		values := make([][]byte, collectionLen)
+
+		for i := 0; i < collectionLen; i++ {
+			buf := C.self_collection_bytes_buffer_at(collection, C.ulong(i))
+
+			values[i] = C.GoBytes(
+				unsafe.Pointer(C.self_bytes_buffer_buf(
+					buf,
+				)),
+				C.int(C.self_bytes_buffer_len(
+					buf,
+				)),
+			)
+
+			C.self_bytes_buffer_destroy(
+				buf,
+			)
+		}
+
+		C.self_collection_bytes_buffer_destroy(
+			collection,
+		)
+
+		return values
+	case C.PARAMETER_VALUE_ARRAY_STRING:
+		collection := C.self_message_content_parameter_value_as_array_string(
+			ptr,
+		)
+
+		collectionLen := int(C.self_collection_string_buffer_len(collection))
+
+		values := make([]string, collectionLen)
+
+		for i := 0; i < collectionLen; i++ {
+			buf := C.self_collection_string_buffer_at(collection, C.ulong(i))
+
+			values[i] = C.GoString(C.self_string_buffer_ptr(
+				buf,
+			))
+
+			C.self_string_buffer_destroy(
+				buf,
+			)
+		}
+
+		C.self_collection_string_buffer_destroy(
+			collection,
+		)
+
+		return values
+	default:
+		return nil
+	}
 }
 
 func toCredentialTypeCollection(credentialType []string) *C.self_collection_credential_type {

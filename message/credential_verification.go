@@ -238,20 +238,129 @@ func (b *CredentialVerificationRequestBuilder) Evidence(evidenceType string, evi
 }
 
 // Evidence attaches evidence to the credential verification request
-func (b *CredentialVerificationRequestBuilder) Parameter(parameterType string, value []byte) *CredentialVerificationRequestBuilder {
-	parameterTypeC := C.CString(parameterType)
-	valueBuf := C.CBytes(value)
-	valueLen := len(value)
+func (b *CredentialVerificationRequestBuilder) Parameter(key string, value any) *CredentialVerificationRequestBuilder {
+	var paramValuePtr *C.self_message_content_parameter_value
+
+	switch v := value.(type) {
+	case []byte:
+		valueBuf := C.CBytes(v)
+		valueLen := len(v)
+
+		paramValuePtr = C.self_message_content_parameter_value_bytes_create(
+			(*C.uint8_t)(valueBuf),
+			(C.size_t)(valueLen),
+		)
+
+		C.free(valueBuf)
+	case string:
+		valuePtr := C.CString(v)
+
+		paramValuePtr = C.self_message_content_parameter_value_string_create(
+			valuePtr,
+		)
+
+		C.free(unsafe.Pointer(valuePtr))
+	case bool:
+		paramValuePtr = C.self_message_content_parameter_value_bool_create(
+			C.bool(v),
+		)
+	case int8:
+		paramValuePtr = C.self_message_content_parameter_value_int8_create(
+			C.int8_t(v),
+		)
+	case int16:
+		paramValuePtr = C.self_message_content_parameter_value_int16_create(
+			C.int16_t(v),
+		)
+	case int32:
+		paramValuePtr = C.self_message_content_parameter_value_int32_create(
+			C.int32_t(v),
+		)
+	case int64:
+		paramValuePtr = C.self_message_content_parameter_value_int64_create(
+			C.int64_t(v),
+		)
+	case uint8:
+		paramValuePtr = C.self_message_content_parameter_value_uint8_create(
+			C.uint8_t(v),
+		)
+	case uint16:
+		paramValuePtr = C.self_message_content_parameter_value_uint16_create(
+			C.uint16_t(v),
+		)
+	case uint32:
+		paramValuePtr = C.self_message_content_parameter_value_uint32_create(
+			C.uint32_t(v),
+		)
+	case uint64:
+		paramValuePtr = C.self_message_content_parameter_value_uint64_create(
+			C.uint64_t(v),
+		)
+	case float32:
+		paramValuePtr = C.self_message_content_parameter_value_float32_create(
+			C.float(v),
+		)
+	case float64:
+		paramValuePtr = C.self_message_content_parameter_value_float64_create(
+			C.double(v),
+		)
+	case [][]byte:
+		collection := C.self_collection_bytes_buffer_init()
+
+		for i := 0; i < len(v); i++ {
+			valueBuf := C.CBytes(v[i])
+			valueLen := len(v)
+
+			C.self_collection_bytes_buffer_append(
+				collection,
+				(*C.uint8_t)(valueBuf),
+				(C.size_t)(valueLen),
+			)
+
+			C.free(valueBuf)
+		}
+
+		paramValuePtr = C.self_message_content_parameter_value_array_bytes_create(
+			collection,
+		)
+
+		C.self_collection_bytes_buffer_destroy(collection)
+	case []string:
+		collection := C.self_collection_string_buffer_init()
+
+		for i := 0; i < len(v); i++ {
+			valuePtr := C.CString(v[i])
+
+			paramValuePtr = C.self_message_content_parameter_value_string_create(
+				valuePtr,
+			)
+
+			C.self_collection_string_buffer_append(
+				collection,
+				valuePtr,
+			)
+
+			C.free(unsafe.Pointer(valuePtr))
+		}
+
+		paramValuePtr = C.self_message_content_parameter_value_array_string_create(
+			collection,
+		)
+
+		C.self_collection_string_buffer_destroy(collection)
+	default:
+		return b
+	}
+
+	keyC := C.CString(key)
 
 	C.self_message_content_credential_verification_request_builder_parameter(
 		b.ptr,
-		parameterTypeC,
-		(*C.uint8_t)(valueBuf),
-		(C.size_t)(valueLen),
+		keyC,
+		paramValuePtr,
 	)
 
-	C.free(unsafe.Pointer(parameterTypeC))
-	C.free(valueBuf)
+	C.free(unsafe.Pointer(keyC))
 
 	return b
 }
