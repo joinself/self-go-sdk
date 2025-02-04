@@ -309,7 +309,7 @@ func (b *CredentialVerificationRequestBuilder) Parameter(key string, value any) 
 
 		for i := 0; i < len(v); i++ {
 			valueBuf := C.CBytes(v[i])
-			valueLen := len(v)
+			valueLen := len(v[i])
 
 			C.self_collection_bytes_buffer_append(
 				collection,
