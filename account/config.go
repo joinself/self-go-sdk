@@ -30,9 +30,9 @@ type Target struct {
 }
 
 var (
-	defaultRpcSandbox        = "https://rpc.sandbox.joinself.com/"
-	defaultObjectSandbox     = "https://object.sandbox.joinself.com/"
-	defaultMessageSandbox    = "wss://message.sandbox.joinself.com/"
+	defaultRpcSandbox        = "https://rpc-sandbox.joinself.com/"
+	defaultObjectSandbox     = "https://object-sandbox.joinself.com/"
+	defaultMessageSandbox    = "wss://message-sandbox.joinself.com/"
 	defaultRpcProduction     = "https://rpc.joinself.com/"
 	defaultObjectProduction  = "https://object.joinself.com/"
 	defaultMessageProduction = "wss://message.joinself.com/"
