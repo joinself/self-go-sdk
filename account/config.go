@@ -16,10 +16,30 @@ var (
 		Object:  defaultObjectProduction,
 		Message: defaultMessageProduction,
 	}
-	TargetSandbox = &Target{
-		Rpc:     defaultRpcSandbox,
-		Object:  defaultObjectSandbox,
-		Message: defaultMessageSandbox,
+	TargetProductionSandbox = &Target{
+		Rpc:     defaultRpcProductionSandbox,
+		Object:  defaultObjectProductionSandbox,
+		Message: defaultMessageProductionSandbox,
+	}
+	TargetStaging = &Target{
+		Rpc:     defaultRpcStaging,
+		Object:  defaultObjectStaging,
+		Message: defaultMessageStaging,
+	}
+	TargetStagingSandbox = &Target{
+		Rpc:     defaultRpcStagingSandbox,
+		Object:  defaultObjectStagingSandbox,
+		Message: defaultMessageStagingSandbox,
+	}
+	TargetPreview = &Target{
+		Rpc:     defaultRpcPreview,
+		Object:  defaultObjectPreview,
+		Message: defaultMessagePreview,
+	}
+	TargetPreviewSandbox = &Target{
+		Rpc:     defaultRpcPreviewSandbox,
+		Object:  defaultObjectPreviewSandbox,
+		Message: defaultMessagePreviewSandbox,
 	}
 )
 
@@ -30,12 +50,24 @@ type Target struct {
 }
 
 var (
-	defaultRpcSandbox        = "https://rpc-sandbox.joinself.com/"
-	defaultObjectSandbox     = "https://object-sandbox.joinself.com/"
-	defaultMessageSandbox    = "wss://message-sandbox.joinself.com/"
-	defaultRpcProduction     = "https://rpc.joinself.com/"
-	defaultObjectProduction  = "https://object.joinself.com/"
-	defaultMessageProduction = "wss://message.joinself.com/"
+	defaultRpcProduction            = "https://rpc.joinself.com/"
+	defaultObjectProduction         = "https://object.joinself.com/"
+	defaultMessageProduction        = "wss://message.joinself.com/"
+	defaultRpcProductionSandbox     = "https://rpc-sandbox.joinself.com/"
+	defaultObjectProductionSandbox  = "https://object-sandbox.joinself.com/"
+	defaultMessageProductionSandbox = "wss://message-sandbox.joinself.com/"
+	defaultRpcStaging               = "https://rpc.staging.joinself.com/"
+	defaultObjectStaging            = "https://object.staging.joinself.com/"
+	defaultMessageStaging           = "wss://message.staging.joinself.com/"
+	defaultRpcStagingSandbox        = "https://rpc-sandbox.staging.joinself.com/"
+	defaultObjectStagingSandbox     = "https://object-sandbox.staging.joinself.com/"
+	defaultMessageStagingSandbox    = "wss://message-sandbox.staging.joinself.com/"
+	defaultRpcPreview               = "https://rpc.preview.joinself.com/"
+	defaultObjectPreview            = "https://object.preview.joinself.com/"
+	defaultMessagePreview           = "wss://message.preview.joinself.com/"
+	defaultRpcPreviewSandbox        = "https://rpc-sandbox.preview.joinself.com/"
+	defaultObjectPreviewSandbox     = "https://object-sandbox.preview.joinself.com/"
+	defaultMessagePreviewSandbox    = "wss://message-sandbox.preview.joinself.com/"
 )
 
 // Config stores config for an account
@@ -67,6 +99,6 @@ func (c *Config) defaults() {
 	}
 
 	if c.Environment == nil {
-		c.Environment = TargetSandbox
+		c.Environment = TargetProductionSandbox
 	}
 }

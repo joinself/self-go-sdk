@@ -32,7 +32,7 @@ func main() {
 		// stored
 		StoragePath: "./storage",
 		// provide an environment to target [Develop, Sandbox]
-		Environment: account.TargetSandbox,
+		Environment: account.TargetProductionSandbox,
 		// provide the level of log granularity [Error, Warn, Info, Debug, Trace]
 		LogLevel: account.LogWarn,
 		// specify callbacks to handle events

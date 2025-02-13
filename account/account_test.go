@@ -46,7 +46,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 	cfg := &account.Config{
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: account.TargetSandbox,
+		Environment: account.TargetProductionSandbox,
 		LogLevel:    account.LogError,
 		Callbacks: account.Callbacks{
 			OnConnect: func(account *account.Account) {
