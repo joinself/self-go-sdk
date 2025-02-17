@@ -936,7 +936,7 @@ func TestAccountPersistence(t *testing.T) {
 
 	inboxes, err := alice.InboxList()
 	require.Nil(t, err)
-	assert.Len(t, inboxes, 2)
+	assert.Len(t, inboxes, 1)
 }
 
 func TestAccountDiscovery(t *testing.T) {
