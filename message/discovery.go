@@ -96,13 +96,13 @@ func newDiscoveryResponseBuilder(ptr *C.self_message_content_discovery_response_
 }
 
 // DecodeDiscoveryRequest decodes a message to a discovery request
-func DecodeDiscoveryRequest(msg *event.Message) (*DiscoveryRequest, error) {
-	content := contentPtr(msg.Content())
+func DecodeDiscoveryRequest(content *event.Content) (*DiscoveryRequest, error) {
+	contentPtr := contentPtr(content)
 
 	var discoveryRequestContent *C.self_message_content_discovery_request
 
 	result := C.self_message_content_as_discovery_request(
-		content,
+		contentPtr,
 		&discoveryRequestContent,
 	)
 
@@ -169,13 +169,13 @@ func (b *DiscoveryRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeDiscoveryResponse decodes a message to a discovery response
-func DecodeDiscoveryResponse(msg *event.Message) (*DiscoveryResponse, error) {
-	content := contentPtr(msg.Content())
+func DecodeDiscoveryResponse(content *event.Content) (*DiscoveryResponse, error) {
+	contentPtr := contentPtr(content)
 
 	var discoveryResponseContent *C.self_message_content_discovery_response
 
 	result := C.self_message_content_as_discovery_response(
-		content,
+		contentPtr,
 		&discoveryResponseContent,
 	)
 

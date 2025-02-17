@@ -171,7 +171,7 @@ func TestAccountMessaging(t *testing.T) {
 	messageFromAlice := wait(t, bobbyInbox, time.Second)
 	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
 
-	chatMessage, err := message.DecodeChat(messageFromAlice)
+	chatMessage, err := message.DecodeChat(messageFromAlice.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hello", chatMessage.Message())
 
@@ -192,7 +192,7 @@ func TestAccountMessaging(t *testing.T) {
 	messageFromBobby := wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
+	chatMessage, err = message.DecodeChat(messageFromBobby.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hi!", chatMessage.Message())
 
@@ -236,7 +236,7 @@ func TestAccountMessaging(t *testing.T) {
 
 	fmt.Println("sent and received in", time.Since(start))
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
+	chatMessage, err = message.DecodeChat(messageFromBobby.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hello again!", chatMessage.Message())
 
@@ -525,7 +525,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	messageFromAlice := wait(t, bobbyInbox, time.Second)
 	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
 
-	aliceIntroduction, err := message.DecodeIntroduction(messageFromAlice)
+	aliceIntroduction, err := message.DecodeIntroduction(messageFromAlice.Content())
 	require.Nil(t, err)
 	assert.True(t, aliceIntroduction.DocumentAddress().Matches(aliceIdentifier))
 
@@ -545,7 +545,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	messageFromBobby := wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
 
-	bobbyIntroduction, err := message.DecodeIntroduction(messageFromBobby)
+	bobbyIntroduction, err := message.DecodeIntroduction(messageFromBobby.Content())
 	require.Nil(t, err)
 	assert.True(t, bobbyIntroduction.DocumentAddress().Matches(bobbyIdentifier))
 
@@ -605,7 +605,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	messageFromAlice = wait(t, bobbyInbox, time.Second)
 	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
 
-	signingRequest, err := message.DecodeSigningRequest(messageFromAlice)
+	signingRequest, err := message.DecodeSigningRequest(messageFromAlice.Content())
 	require.Nil(t, err)
 	assert.True(t, signingRequest.RequiresLiveness())
 
@@ -698,7 +698,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	messageFromBobby = wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
 
-	signingResponse, err := message.DecodeSigningResponse(messageFromBobby)
+	signingResponse, err := message.DecodeSigningResponse(messageFromBobby.Content())
 	require.Nil(t, err)
 
 	signedPayload := signingResponse.Payload()
@@ -742,6 +742,142 @@ func TestAccountMessageSigning(t *testing.T) {
 	// execute the completed operation
 	err = alice.IdentityExecute(signedOperation)
 	require.Nil(t, err)
+}
+
+func TestAccountSDKSetup(t *testing.T) {
+	alice, aliceInbox, aliceWel := testAccount(t)
+	bobby, _, _ := testAccount(t)
+
+	aliceAddress, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	// fmt.Println("alice:", aliceAddress)
+	// fmt.Println("bobby:", bobbyAddress)
+
+	// create an identity document for alice that serves as our
+	// application identity document the sdk will be paired to
+	aliceIdentifier, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	aliceInvocation, err := alice.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	aliceIdentityOperation := identity.NewOperation().
+		Identifier(aliceIdentifier).
+		Sequence(0).
+		Timestamp(time.Now()).
+		GrantEmbedded(aliceInvocation, identity.RoleInvocation).
+		GrantEmbedded(aliceAddress, identity.RoleVerification|identity.RoleMessaging|identity.RoleAuthentication).
+		SignWith(aliceIdentifier).
+		SignWith(aliceInvocation).
+		SignWith(aliceAddress).
+		Finish()
+
+	err = alice.IdentityExecute(aliceIdentityOperation)
+	require.Nil(t, err)
+
+	// create a sdk pairing code for bobbys account
+	code, unpaired, err := bobby.SDKPairingCode()
+	require.Nil(t, err)
+	assert.True(t, unpaired)
+
+	anonymousMessage, err := event.AnonymousMessageDecodeFromString(code)
+	require.Nil(t, err)
+
+	discoveryRequest, err := message.DecodeDiscoveryRequest(anonymousMessage.Content())
+	require.Nil(t, err)
+
+	// negotiate a session with our sdk instance from the discovery request
+	err = alice.ConnectionNegotiate(
+		aliceAddress,
+		discoveryRequest.KeyPackage().FromAddress(),
+		time.Now().Add(time.Hour),
+	)
+
+	require.Nil(t, err)
+
+	// wait for negotiation to finish
+	<-aliceWel
+
+	// send a response to bobby
+	contentForBobby, err := message.NewDiscoveryResponse().
+		ResponseTo(anonymousMessage.ID()).
+		Status(message.ResponseStatusAccepted).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = alice.MessageSend(
+		discoveryRequest.KeyPackage().FromAddress(),
+		contentForBobby,
+	)
+
+	require.Nil(t, err)
+
+	// wait for pairing request from sdk and ensure it's from an address that we've entered the code from
+	messageFromBobby := wait(t, aliceInbox, time.Second)
+	assert.Equal(t, discoveryRequest.KeyPackage().FromAddress().String(), messageFromBobby.FromAddress().String())
+
+	pairingRequest, err := message.DecodeAccountPairingRequest(messageFromBobby.Content())
+	require.Nil(t, err)
+
+	// check the address matches the one we have been interacting with
+	assert.Equal(t, discoveryRequest.KeyPackage().FromAddress().String(), pairingRequest.Address().String())
+
+	aliceDocument, err := alice.IdentityResolve(aliceIdentifier)
+	require.Nil(t, err)
+
+	// create an operation to add the sdks key to the application identity document
+	operation := aliceDocument.
+		Create().
+		GrantEmbedded(pairingRequest.Address(), identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging).
+		SignWith(aliceInvocation).
+		Finish()
+
+	err = alice.IdentitySign(operation)
+	require.Nil(t, err)
+
+	// respond to the pairing request
+	// this response can also include credentials or presentations
+	// that the sdk can use to identify itself to others
+	contentForBobby, err = message.NewAccountPairingResponse().
+		ResponseTo(messageFromBobby.ID()).
+		Status(message.ResponseStatusCreated).
+		DocumentAddress(aliceIdentifier).
+		Operation(operation).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = alice.MessageSend(
+		pairingRequest.Address(),
+		contentForBobby,
+	)
+
+	require.Nil(t, err)
+
+	start := time.Now()
+
+	for {
+		_, unpaired, err := bobby.SDKPairingCode()
+		require.Nil(t, err)
+
+		if !unpaired {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 100)
+
+		if time.Since(start) > time.Second*2 {
+			t.FailNow()
+		}
+	}
+
+	time.Sleep(time.Second)
+
+	aliceDocument, err = bobby.IdentityResolve(aliceIdentifier)
+	require.Nil(t, err)
+	assert.True(t, aliceDocument.HasRolesAt(pairingRequest.Address(), identity.RoleVerification|identity.RoleAuthentication|identity.RoleMessaging, time.Now()))
 }
 
 func TestAccountPersistence(t *testing.T) {
@@ -894,7 +1030,7 @@ func TestStoragePerformance(t *testing.T) {
 	messageFromAlice := wait(t, bobbyInbox, time.Second)
 	assert.Equal(t, aliceAddress.String(), messageFromAlice.FromAddress().String())
 
-	chatMessage, err := message.DecodeChat(messageFromAlice)
+	chatMessage, err := message.DecodeChat(messageFromAlice.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hello", chatMessage.Message())
 
@@ -915,7 +1051,7 @@ func TestStoragePerformance(t *testing.T) {
 	messageFromBobby := wait(t, aliceInbox, time.Second)
 	assert.Equal(t, bobbyAddress.String(), messageFromBobby.FromAddress().String())
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
+	chatMessage, err = message.DecodeChat(messageFromBobby.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hi!", chatMessage.Message())
 
@@ -969,7 +1105,7 @@ func TestStoragePerformance(t *testing.T) {
 
 	fmt.Println("sent and received in", time.Since(start))
 
-	chatMessage, err = message.DecodeChat(messageFromBobby)
+	chatMessage, err = message.DecodeChat(messageFromBobby.Content())
 	require.Nil(t, err)
 	assert.Equal(t, "hello again!", chatMessage.Message())
 }

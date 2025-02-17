@@ -76,7 +76,7 @@ func main() {
 						"requestId", hex.EncodeToString(msg.ID()),
 					)
 
-					discoveryResponse, err := message.DecodeDiscoveryResponse(msg)
+					discoveryResponse, err := message.DecodeDiscoveryResponse(msg.Content())
 					if err != nil {
 						log.Warn("failed to decode discovery response", "error", err)
 						return
@@ -100,7 +100,7 @@ func main() {
 						"requestId", hex.EncodeToString(msg.ID()),
 					)
 
-					credentialPresentationResponse, err := message.DecodeCredentialPresentationResponse(msg)
+					credentialPresentationResponse, err := message.DecodeCredentialPresentationResponse(msg.Content())
 					if err != nil {
 						log.Warn("failed to decode discovery response", "error", err)
 						return

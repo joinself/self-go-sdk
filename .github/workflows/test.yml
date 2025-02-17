@@ -19,7 +19,7 @@ jobs:
           mkdir -m 0755 -p /etc/apt/keyrings
           curl -fsSL https://europe-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor -o /etc/apt/keyrings/self.gpg
           echo "deb [signed-by=/etc/apt/keyrings/self.gpg] https://europe-apt.pkg.dev/projects/principal-oxide-204416 apt main" > /etc/apt/sources.list.d/self.list
-          apt-get update && apt-get install -y self-sdk=0.60.0
+          apt-get update && apt-get install -y self-sdk=0.65.0
 
           curl https://gotest-release.s3.amazonaws.com/gotest_linux > /usr/local/bin/gotest
           chmod +x /usr/local/bin/gotest

@@ -135,24 +135,18 @@ func (a *AnonymousMessage) EncodeToString() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(encodedMessage), nil
 }
 
-// AnonymousMessageDecode decodes a message from an encoded string
-func AnonymousMessageDecode(encoded string) (*AnonymousMessage, error) {
-	decoded, err := base64.RawURLEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-
-	decodedBuf := C.CBytes(decoded)
-
+// AnonymousMessageDecodeFromString decodes a message from an encoded string
+func AnonymousMessageDecodeFromString(encoded string) (*AnonymousMessage, error) {
 	var anonymousMessage *C.self_anonymous_message
 
-	result := C.self_anonymous_message_decode(
+	encodedPtr := C.CString(encoded)
+
+	result := C.self_anonymous_message_decode_from_string(
 		&anonymousMessage,
-		(*C.uint8_t)(decodedBuf),
-		C.size_t(len(decoded)),
+		encodedPtr,
 	)
 
-	C.free(decodedBuf)
+	C.free(unsafe.Pointer(encodedPtr))
 
 	if result > 0 {
 		return nil, status.New(result)

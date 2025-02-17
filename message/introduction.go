@@ -58,13 +58,13 @@ func newIntroductionBuilder(ptr *C.self_message_content_introduction_builder) *I
 }
 
 // DeocodeIntroduction decodes an introduction message
-func DecodeIntroduction(msg *event.Message) (*Introduction, error) {
-	content := contentPtr(msg.Content())
+func DecodeIntroduction(content *event.Content) (*Introduction, error) {
+	contentPtr := contentPtr(content)
 
 	var introductionContent *C.self_message_content_introduction
 
 	result := C.self_message_content_as_introduction(
-		content,
+		contentPtr,
 		&introductionContent,
 	)
 

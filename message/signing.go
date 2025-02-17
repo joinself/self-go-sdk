@@ -191,13 +191,13 @@ func newSigningResponseBuilder(ptr *C.self_message_content_signing_response_buil
 }
 
 // DecodeSigningRequest decodes a message to a account pairing request
-func DecodeSigningRequest(msg *event.Message) (*SigningRequest, error) {
-	content := contentPtr(msg.Content())
+func DecodeSigningRequest(content *event.Content) (*SigningRequest, error) {
+	contentPtr := contentPtr(content)
 
 	var accountPairingRequestContent *C.self_message_content_signing_request
 
 	result := C.self_message_content_as_signing_request(
-		content,
+		contentPtr,
 		&accountPairingRequestContent,
 	)
 
@@ -279,13 +279,13 @@ func (b *SigningRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeSigningResponse decodes a message to a account pairing response
-func DecodeSigningResponse(msg *event.Message) (*SigningResponse, error) {
-	content := contentPtr(msg.Content())
+func DecodeSigningResponse(content *event.Content) (*SigningResponse, error) {
+	contentPtr := contentPtr(content)
 
 	var accountPairingResponseContent *C.self_message_content_signing_response
 
 	result := C.self_message_content_as_signing_response(
-		content,
+		contentPtr,
 		&accountPairingResponseContent,
 	)
 

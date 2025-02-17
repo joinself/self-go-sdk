@@ -110,15 +110,14 @@ static void c_on_response(void *user_data, self_status response) {
 */
 import "C"
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/event"
-	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -162,81 +161,41 @@ func goOnConnect(user_data unsafe.Pointer) {
 	if atomic.LoadInt32(&account.status) == 0 {
 		go func() {
 			for {
-				existing, err := account.valueLookup("s:pairing")
-				if err == nil && existing != nil {
-					if json.Unmarshal(existing, &account.pairing) == nil {
-						logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
-						atomic.StoreInt32(&account.status, 1)
-					}
-				}
-
-				inboxes, err := account.InboxList()
+				pairingCode, unpaired, err := account.SDKPairingCode()
 				if err != nil {
-					fmt.Printf("[WARN] failed to list inboxes: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
+					time.Sleep(time.Millisecond * 100)
 					continue
 				}
 
-				if len(inboxes) > 0 {
+				if !unpaired {
 					atomic.StoreInt32(&account.status, 1)
 					break
 				}
 
-				inbox, err := account.InboxOpen()
-				if err != nil {
-					fmt.Printf("[WARN] failed to create inbox: %s\n", err.Error())
-					time.Sleep(time.Second)
-					continue
+				d := 13
+				s := len(pairingCode) / d
+
+				fmt.Printf(
+					"%s BEGIN PAIRING CODE %s\n",
+					strings.Repeat("=", (len(pairingCode)/d-20)/2),
+					strings.Repeat("=", (len(pairingCode)/d-20)/2),
+				)
+
+				for i := 0; i < d; i++ {
+					fmt.Println(pairingCode[s*i : s*i+s])
 				}
 
-				keyPackage, err := account.ConnectionNegotiateOutOfBand(inbox, time.Now().Add(time.Hour*8760))
-				if err != nil {
-					fmt.Printf("[WARN] failed to generate pairing key package: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
-					continue
+				if len(pairingCode)%d > 0 {
+					fmt.Println(pairingCode[len(pairingCode)-(len(pairingCode)%d):])
 				}
 
-				content, err := message.NewDiscoveryRequest().
-					KeyPackage(keyPackage).
-					Expires(time.Now().Add(time.Hour * 8760)).
-					Finish()
-
-				if err != nil {
-					fmt.Printf("[WARN] failed to generate pairing discovery request: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
-					continue
-				}
-
-				pairingCode, err := event.NewAnonymousMessage(content).EncodeToString()
-				if err != nil {
-					fmt.Printf("[WARN] failed to encode pairing discovery request: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
-					continue
-				}
-
-				account.pairing = &pairing{
-					RequestID:   content.ID(),
-					PairingCode: pairingCode,
-				}
-
-				existing, err = json.Marshal(account.pairing)
-				if err != nil {
-					fmt.Printf("[WARN] failed to serialize pairing discovery request: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
-					continue
-				}
-
-				err = account.valueStore("s:pairing", existing)
-				if err != nil {
-					fmt.Printf("[WARN] failed to store pairing discovery request: %s\n", err.Error())
-					time.Sleep(time.Second * 10)
-					continue
-				}
-
-				logger()(LogInfo, fmt.Sprintf("SDK Pairing Code: %s\n", account.pairing.PairingCode))
+				fmt.Printf(
+					"%s END PAIRING CODE %s\n",
+					strings.Repeat("=", (len(pairingCode)/d-18)/2),
+					strings.Repeat("=", (len(pairingCode)/d-18)/2),
+				)
 
 				atomic.StoreInt32(&account.status, 1)
-
 				break
 			}
 		}()
