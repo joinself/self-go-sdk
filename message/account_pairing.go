@@ -109,13 +109,13 @@ func newAccountPairingResponseBuilder(ptr *C.self_message_content_account_pairin
 }
 
 // DecodeAccountPairingRequest decodes a message to a account pairing request
-func DecodeAccountPairingRequest(msg *event.Message) (*AccountPairingRequest, error) {
-	content := contentPtr(msg.Content())
+func DecodeAccountPairingRequest(content *event.Content) (*AccountPairingRequest, error) {
+	contentPtr := contentPtr(content)
 
 	var accountPairingRequestContent *C.self_message_content_account_pairing_request
 
 	result := C.self_message_content_as_account_pairing_request(
-		content,
+		contentPtr,
 		&accountPairingRequestContent,
 	)
 
@@ -198,13 +198,13 @@ func (b *AccountPairingRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeAccountPairingResponse decodes a message to a account pairing response
-func DecodeAccountPairingResponse(msg *event.Message) (*AccountPairingResponse, error) {
-	content := contentPtr(msg.Content())
+func DecodeAccountPairingResponse(content *event.Content) (*AccountPairingResponse, error) {
+	contentPtr := contentPtr(content)
 
 	var accountPairingResponseContent *C.self_message_content_account_pairing_response
 
 	result := C.self_message_content_as_account_pairing_response(
-		content,
+		contentPtr,
 		&accountPairingResponseContent,
 	)
 

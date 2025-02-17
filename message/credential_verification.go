@@ -98,13 +98,13 @@ func newCredentialVerificationResponseBuilder(ptr *C.self_message_content_creden
 }
 
 // DecodeCredentialVerificationRequest decodes a message to a credential verification request
-func DecodeCredentialVerificationRequest(msg *event.Message) (*CredentialVerificationRequest, error) {
-	content := contentPtr(msg.Content())
+func DecodeCredentialVerificationRequest(content *event.Content) (*CredentialVerificationRequest, error) {
+	contentPtr := contentPtr(content)
 
 	var credentialVerificationRequestContent *C.self_message_content_credential_verification_request
 
 	result := C.self_message_content_as_credential_verification_request(
-		content,
+		contentPtr,
 		&credentialVerificationRequestContent,
 	)
 
@@ -391,13 +391,13 @@ func (b *CredentialVerificationRequestBuilder) Finish() (*event.Content, error) 
 }
 
 // DecodeCredentialVerificationResponse decodes a message to a credential verification response
-func DecodeCredentialVerificationResponse(msg *event.Message) (*CredentialVerificationResponse, error) {
-	content := contentPtr(msg.Content())
+func DecodeCredentialVerificationResponse(content *event.Content) (*CredentialVerificationResponse, error) {
+	contentPtr := contentPtr(content)
 
 	var credentialVerificationResponseContent *C.self_message_content_credential_verification_response
 
 	result := C.self_message_content_as_credential_verification_response(
-		content,
+		contentPtr,
 		&credentialVerificationResponseContent,
 	)
 

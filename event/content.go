@@ -33,6 +33,7 @@ const (
 	TypeCustom                         Type = C.CONTENT_CUSTOM
 	TypeChat                           Type = C.CONTENT_CHAT
 	TypeReceipt                        Type = C.CONTENT_RECEIPT
+	TypeCredential                     Type = C.CONTENT_CREDENTIAL
 	TypeIntroduction                   Type = C.CONTENT_INTRODUCTION
 	TypeDiscoveryRequest               Type = C.CONTENT_DISCOVERY_REQUEST
 	TypeDiscoveryResponse              Type = C.CONTENT_DISCOVERY_RESPONSE
@@ -66,8 +67,10 @@ func contentPtr(c *Content) *C.self_message_content {
 
 // ContentType get the content type of the message
 func ContentType(message *Message) Type {
-	content := C.self_message_message_content(message.ptr)
+	return contentType(C.self_message_message_content(message.ptr))
+}
 
+func contentType(content *C.self_message_content) Type {
 	switch C.self_message_content_type_of(content) {
 	case C.CONTENT_CUSTOM:
 		return TypeCustom
@@ -75,6 +78,8 @@ func ContentType(message *Message) Type {
 		return TypeChat
 	case C.CONTENT_RECEIPT:
 		return TypeReceipt
+	case C.CONTENT_CREDENTIAL:
+		return TypeCredential
 	case C.CONTENT_INTRODUCTION:
 		return TypeIntroduction
 	case C.CONTENT_DISCOVERY_REQUEST:
@@ -108,4 +113,9 @@ func (c *Content) ID() []byte {
 		unsafe.Pointer(C.self_message_content_id(c.ptr)),
 		20,
 	)
+}
+
+// ContentType get the content type
+func (c *Content) ContentType() Type {
+	return contentType(c.ptr)
 }

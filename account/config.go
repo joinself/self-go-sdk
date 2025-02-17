@@ -41,6 +41,7 @@ var (
 // Config stores config for an account
 type Config struct {
 	SkipReady   bool
+	SkipSetup   bool
 	StorageKey  []byte
 	StoragePath string
 	Environment *Target

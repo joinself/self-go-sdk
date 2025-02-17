@@ -10,7 +10,6 @@ package account
 import "C"
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -117,7 +116,7 @@ func toPresentationTypeCollection(c []string) *C.self_collection_presentation_ty
 type Account struct {
 	account   *C.self_account
 	callbacks *Callbacks
-	pairing   *pairing
+	config    *Config
 	status    int32
 }
 
@@ -126,6 +125,7 @@ func New(cfg *Config) (*Account, error) {
 	account := &Account{
 		account:   C.self_account_init(),
 		callbacks: &cfg.Callbacks,
+		config:    cfg,
 	}
 
 	cfg.defaults()
@@ -176,7 +176,7 @@ func New(cfg *Config) (*Account, error) {
 
 	if !cfg.SkipReady {
 		for atomic.LoadInt32(&account.status) == 0 {
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond)
 		}
 	}
 
@@ -248,26 +248,39 @@ func (a *Account) Configure(cfg *Config) error {
 
 	if !cfg.SkipReady {
 		for atomic.LoadInt32(&a.status) == 0 {
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond)
 		}
 	}
 
 	return nil
 }
 
-// PairingCode returns the sdk pairing code used in linking an sdk instance to
-// an organisation identity. If the sdk has already been linked, or the pairing
+// SDKPairingCode returns the sdk pairing code used in linking an sdk instance to
+// an application identity. If the sdk has already been linked, or the pairing
 // code is not yet available, this will return false
-func (a *Account) PairingCode() (string, bool) {
-	if atomic.LoadInt32(&a.status) == 0 {
-		return "", false
+func (a *Account) SDKPairingCode() (string, bool, error) {
+	var buffer *C.self_string_buffer
+
+	result := C.self_account_sdk_pairing_code(
+		a.account,
+		&buffer,
+	)
+
+	if result > 0 {
+		return "", false, status.New(result)
 	}
 
-	if a.pairing == nil {
-		return "", false
+	if buffer == nil {
+		return "", false, nil
 	}
 
-	return a.pairing.PairingCode, true
+	code := C.GoString(
+		C.self_string_buffer_ptr(buffer),
+	)
+
+	C.self_string_buffer_destroy(buffer)
+
+	return code, true, nil
 }
 
 // KeychainSigningCreate creates a new signing keypair
@@ -767,19 +780,6 @@ func (a *Account) GroupMemberAs(groupAddress *signing.PublicKey) (*signing.Publi
 // ValueKeys returns all keys for key value pairs stored on the account
 // an optional param can be passed to filter keys with a given prefix
 func (a *Account) ValueKeys(prefix ...string) ([]string, error) {
-	// prefix user keys to avoid conflicts or accidental access
-	if len(prefix) > 0 {
-		return a.valueKeys(
-			fmt.Sprintf("u:%s", prefix[0]),
-		)
-	}
-
-	return a.valueKeys("u:")
-}
-
-// ValueKeys returns all keys for key value pairs stored on the account
-// an optional param can be passed to filter keys with a given prefix
-func (a *Account) valueKeys(prefix ...string) ([]string, error) {
 	var collection *C.self_collection_value_key
 
 	var pfx *C.char
@@ -824,13 +824,6 @@ func (a *Account) valueKeys(prefix ...string) ([]string, error) {
 
 // ValueLookup looks up a value by it's key
 func (a *Account) ValueLookup(key string) ([]byte, error) {
-	return a.valueLookup(
-		fmt.Sprintf("u:%s", key),
-	)
-}
-
-// ValueLookup looks up a value by it's key
-func (a *Account) valueLookup(key string) ([]byte, error) {
 	var value *C.self_bytes_buffer
 
 	keyPtr := C.CString(key)
@@ -859,14 +852,6 @@ func (a *Account) valueLookup(key string) ([]byte, error) {
 
 // ValueStore stores a value to the accounts storage
 func (a *Account) ValueStore(key string, value []byte) error {
-	return a.valueStore(
-		fmt.Sprintf("u:%s", key),
-		value,
-	)
-}
-
-// ValueStore stores a value to the accounts storage
-func (a *Account) valueStore(key string, value []byte) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -890,15 +875,6 @@ func (a *Account) valueStore(key string, value []byte) error {
 
 // ValueStoreWithExpiry stores a value to the accounts storage with an expiry
 func (a *Account) ValueStoreWithExpiry(key string, value []byte, expires time.Time) error {
-	return a.valueStoreWithExpiry(
-		fmt.Sprintf("u:%s", key),
-		value,
-		expires,
-	)
-}
-
-// ValueStoreWithExpiry stores a value to the accounts storage with an expiry
-func (a *Account) valueStoreWithExpiry(key string, value []byte, expires time.Time) error {
 	keyPtr := C.CString(key)
 	valueBuf := C.CBytes(value)
 	valueLen := len(value)
@@ -923,13 +899,6 @@ func (a *Account) valueStoreWithExpiry(key string, value []byte, expires time.Ti
 
 // ValueRemove removes a value by it's key
 func (a *Account) ValueRemove(key string) error {
-	return a.valueRemove(
-		fmt.Sprintf("u:%s", key),
-	)
-}
-
-// ValueRemove removes a value by it's key
-func (a *Account) valueRemove(key string) error {
 	keyPtr := C.CString(key)
 
 	result := C.self_account_value_remove(
