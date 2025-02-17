@@ -44,6 +44,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 	signal := make(chan bool, 1)
 
 	cfg := &account.Config{
+		SkipSetup:   true,
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
 		Environment: account.TargetSandbox,

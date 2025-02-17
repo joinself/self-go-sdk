@@ -161,6 +161,11 @@ func goOnConnect(user_data unsafe.Pointer) {
 	if atomic.LoadInt32(&account.status) == 0 {
 		go func() {
 			for {
+				if account.config.SkipSetup {
+					atomic.StoreInt32(&account.status, 1)
+					break
+				}
+
 				pairingCode, unpaired, err := account.SDKPairingCode()
 				if err != nil {
 					time.Sleep(time.Millisecond * 100)
