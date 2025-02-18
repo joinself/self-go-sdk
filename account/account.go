@@ -207,6 +207,7 @@ func (a *Account) Configure(cfg *Config) error {
 	}
 
 	a.callbacks = &cfg.Callbacks
+	a.config = cfg
 
 	cfg.defaults()
 
