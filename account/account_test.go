@@ -746,8 +746,8 @@ func TestAccountMessageSigning(t *testing.T) {
 }
 
 func TestAccountSDKSetup(t *testing.T) {
-	alice, aliceInbox, aliceWel := testAccount(t)
-	bobby, _, _ := testAccount(t)
+	alice, aliceInbox, _ := testAccount(t)
+	bobby, _, bobbyWel := testAccount(t)
 
 	aliceAddress, err := alice.InboxOpen()
 	require.Nil(t, err)
@@ -789,16 +789,15 @@ func TestAccountSDKSetup(t *testing.T) {
 	require.Nil(t, err)
 
 	// negotiate a session with our sdk instance from the discovery request
-	err = alice.ConnectionNegotiate(
+	_, err = alice.ConnectionEstablish(
 		aliceAddress,
-		discoveryRequest.KeyPackage().FromAddress(),
-		time.Now().Add(time.Hour),
+		discoveryRequest.KeyPackage(),
 	)
 
 	require.Nil(t, err)
 
 	// wait for negotiation to finish
-	<-aliceWel
+	<-bobbyWel
 
 	// send a response to bobby
 	contentForBobby, err := message.NewDiscoveryResponse().
