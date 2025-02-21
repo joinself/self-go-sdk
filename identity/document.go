@@ -17,6 +17,11 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
+type AddressDescription interface {
+	Address() keypair.PublicKey
+	Controller() *signing.PublicKey
+}
+
 //go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
 
@@ -154,6 +159,44 @@ func (d *Document) SigningKeysWithRolesAt(roles Role, at time.Time) []*signing.P
 	)
 
 	return keys
+}
+
+// DescriptionsAt returns all key descriptions at a given time
+func (d *Document) DescriptionsAt(at time.Time) []AddressDescription {
+	collection := C.self_identity_document_descriptions_at(
+		d.ptr,
+		C.int64_t(at.Unix()),
+	)
+
+	collectionLen := int(C.self_collection_identity_operation_description_len(
+		collection,
+	))
+
+	descriptions := make([]AddressDescription, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_identity_operation_description_at(
+			collection,
+			C.size_t(i),
+		)
+
+		switch C.self_identity_operation_description_description_type(ptr) {
+		case C.OPERATION_DESCRIPTION_EMBEDDED:
+			descriptions[i] = newEmbeddedDescription(
+				C.self_identity_operation_description_as_embedded(ptr),
+			)
+		case C.OPERATION_DESCRIPTION_REFERENCE:
+			descriptions[i] = newReferenceDescription(
+				C.self_identity_operation_description_as_reference(ptr),
+			)
+		}
+	}
+
+	C.self_collection_identity_operation_description_destroy(
+		collection,
+	)
+
+	return descriptions
 }
 
 // Create creates a new operation to update the document

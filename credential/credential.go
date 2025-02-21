@@ -20,13 +20,15 @@ import (
 )
 
 var (
-	CredentialTypeEmail                = []string{"VerifiableCredential", "EmailCredential"}
-	CredentialTypePhone                = []string{"VerifiableCredential", "PhoneCredential"}
-	CredentialTypePassport             = []string{"VerifiableCredential", "PassportCredential"}
-	CredentialTypeLiveness             = []string{"VerifiableCredential", "LivenessCredential"}
-	CredentialTypeProfileName          = []string{"VerifiableCredential", "ProfileNameCredential"}
-	CredentialTypeProfileImage         = []string{"VerifiableCredential", "ProfileImageCredential"}
-	CredentialTypeApplicationPublisher = []string{"VerifiableCredential", "ApplicationPublisherCredential"}
+	CredentialTypeEmail              = []string{"VerifiableCredential", "EmailCredential"}
+	CredentialTypePhone              = []string{"VerifiableCredential", "PhoneCredential"}
+	CredentialTypePassport           = []string{"VerifiableCredential", "PassportCredential"}
+	CredentialTypeLiveness           = []string{"VerifiableCredential", "LivenessCredential"}
+	CredentialTypeProfileName        = []string{"VerifiableCredential", "ProfileNameCredential"}
+	CredentialTypeProfileImage       = []string{"VerifiableCredential", "ProfileImageCredential"}
+	CredentialTypeOrganisation       = []string{"VerifiableCredential", "OrganisationCredential"}
+	CredentialTypeApplication        = []string{"VerifiableCredential", "ApplicationCredential"}
+	CredentialTypeApplicationInstall = []string{"VerifiableCredential", "ApplicationInstallCredential"}
 )
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject

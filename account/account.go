@@ -363,6 +363,31 @@ func (a *Account) KeychainSigningAssociatedWith(address *signing.PublicKey, role
 	return keys, nil
 }
 
+// KeychainSigningAssociatedTo lists all document addresses a key is associated to
+func (a *Account) KeychainSigningAssociatedTo(address *signing.PublicKey) ([]*signing.PublicKey, error) {
+	var collection *C.self_collection_signing_public_key
+
+	result := C.self_account_keychain_signing_associated_to(
+		a.account,
+		signingPublicKeyPtr(address),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	keys := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return keys, nil
+}
+
 // IdentityList lists identities associated with or owned by the account
 func (a *Account) IdentityList() ([]*signing.PublicKey, error) {
 	var collection *C.self_collection_signing_public_key

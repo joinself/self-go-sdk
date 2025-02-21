@@ -837,6 +837,10 @@ func TestAccountSDKSetup(t *testing.T) {
 	err = alice.IdentitySign(operation)
 	require.Nil(t, err)
 
+	addresses, err := alice.IdentityList()
+	fmt.Println(addresses, err)
+	fmt.Println(aliceIdentifier)
+
 	// respond to the pairing request
 	// this response can also include credentials or presentations
 	// that the sdk can use to identify itself to others
