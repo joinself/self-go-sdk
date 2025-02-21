@@ -17,10 +17,12 @@ import (
 )
 
 type QREncoding int
+type MessageFlag uint64
 
 const (
-	QREncodingSVG     QREncoding = C.QR_SVG
-	QREncodingUnicode QREncoding = C.QR_UNICODE
+	QREncodingSVG            QREncoding  = C.QR_SVG
+	QREncodingUnicode        QREncoding  = C.QR_UNICODE
+	MessageFlagTargetSandbox MessageFlag = C.MESSAGE_FLAG_TARGET_SANDBOX
 )
 
 type AnonymousMessage struct {
@@ -82,6 +84,21 @@ func (a *AnonymousMessage) Content() *Content {
 	return newContent(
 		C.self_anonymous_message_message_content(a.ptr),
 	)
+}
+
+// Flags returns the messages content
+func (a *AnonymousMessage) Flags() MessageFlag {
+	return MessageFlag(C.self_anonymous_message_flags(a.ptr))
+}
+
+// SetFlags sets the messages flags
+func (a *AnonymousMessage) SetFlags(flags MessageFlag) {
+	C.self_anonymous_message_set_flags(a.ptr, C.uint64_t(flags))
+}
+
+// HasFlags returns true if the message has flags
+func (a *AnonymousMessage) HasFlags(flags MessageFlag) bool {
+	return bool(C.self_anonymous_message_has_flags(a.ptr, C.uint64_t(flags)))
 }
 
 // Content returns the messages content
