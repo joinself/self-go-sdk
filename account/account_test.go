@@ -610,7 +610,12 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.Nil(t, err)
 	assert.True(t, signingRequest.RequiresLiveness())
 
-	unsignedPayload := signingRequest.Payload()
+	unsignedPayloads, err := signingRequest.Payloads()
+	require.Nil(t, err)
+	require.Len(t, unsignedPayloads, 1)
+
+	unsignedPayload := unsignedPayloads[0]
+
 	unsignedIdentityDocumentOperation, err := unsignedPayload.AsIdentityDocumentOperation()
 	require.Nil(t, err)
 
@@ -681,8 +686,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	contentForAlice, err = message.NewSigningResponse().
 		ResponseTo(messageFromAlice.ID()).
 		Status(message.ResponseStatusAccepted).
-		Payload(unsignedPayload).
-		SignWith(bobbyInvocation).
+		Payload(unsignedPayload, []*signing.PublicKey{bobbyInvocation}).
 		Presentation(verifiedPresentation).
 		Finish()
 
@@ -702,7 +706,11 @@ func TestAccountMessageSigning(t *testing.T) {
 	signingResponse, err := message.DecodeSigningResponse(messageFromBobby.Content())
 	require.Nil(t, err)
 
-	signedPayload := signingResponse.Payload()
+	signedPayloads, err := signingResponse.Payloads()
+	require.Nil(t, err)
+	require.Len(t, signedPayloads, 1)
+
+	signedPayload := signedPayloads[0]
 
 	// IMPORTANT - verify we have signed this operation to ensure it's the same
 	// one we sent in the original request BEFORE we execute it
@@ -836,10 +844,6 @@ func TestAccountSDKSetup(t *testing.T) {
 
 	err = alice.IdentitySign(operation)
 	require.Nil(t, err)
-
-	addresses, err := alice.IdentityList()
-	fmt.Println(addresses, err)
-	fmt.Println(aliceIdentifier)
 
 	// respond to the pairing request
 	// this response can also include credentials or presentations

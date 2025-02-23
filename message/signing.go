@@ -21,6 +21,9 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
+//go:linkname toSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.toSigningPublicKeyCollection
+func toSigningPublicKeyCollection(p []*signing.PublicKey) *C.self_collection_signing_public_key
+
 type SigningPayloadType int
 
 const (
@@ -48,6 +51,25 @@ func newSigningPayload(ptr *C.self_message_content_signing_payload) *SigningPayl
 
 func signingPayloadPtr(p *SigningPayload) *C.self_message_content_signing_payload {
 	return p.ptr
+}
+
+func fromSigningPayloadCollection(collection *C.self_collection_message_content_signing_payload) []*SigningPayload {
+	collectionLen := int(C.self_collection_message_content_signing_payload_len(
+		collection,
+	))
+
+	payloads := make([]*SigningPayload, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_message_content_signing_payload_at(
+			collection,
+			C.size_t(i),
+		)
+
+		payloads[i] = newSigningPayload(ptr)
+	}
+
+	return payloads
 }
 
 // PayloadType returns the type of signing payload
@@ -209,10 +231,19 @@ func DecodeSigningRequest(content *event.Content) (*SigningRequest, error) {
 }
 
 // Payload returns the Signing payload of the
-func (c *SigningRequest) Payload() *SigningPayload {
-	return newSigningPayload(C.self_message_content_signing_request_payload(
+func (c *SigningRequest) Payloads() ([]*SigningPayload, error) {
+	var payloads *C.self_collection_message_content_signing_payload
+
+	result := C.self_message_content_signing_request_payloads(
 		c.ptr,
-	))
+		&payloads,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return fromSigningPayloadCollection(payloads), nil
 }
 
 // RequiresLiveness returns true if the request requires an accompanying liveness check
@@ -314,10 +345,19 @@ func (c *SigningResponse) Status() ResponseStatus {
 }
 
 // Payload returns the signing payload of the
-func (c *SigningResponse) Payload() *SigningPayload {
-	return newSigningPayload(C.self_message_content_signing_response_payload(
+func (c *SigningResponse) Payloads() ([]*SigningPayload, error) {
+	var payloads *C.self_collection_message_content_signing_payload
+
+	result := C.self_message_content_signing_response_payloads(
 		c.ptr,
-	))
+		&payloads,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return fromSigningPayloadCollection(payloads), nil
 }
 
 // Presentations returns any presentations that can be used by the linked by
@@ -391,20 +431,12 @@ func (b *SigningResponseBuilder) Status(status ResponseStatus) *SigningResponseB
 	return b
 }
 
-// Payload sets the signing payload of the response
-func (b *SigningResponseBuilder) Payload(payload *SigningPayload) *SigningResponseBuilder {
+// Payload sets the signing payload of the response and which keys to sign it with
+func (b *SigningResponseBuilder) Payload(payload *SigningPayload, signers []*signing.PublicKey) *SigningResponseBuilder {
 	C.self_message_content_signing_response_builder_payload(
 		b.ptr,
 		payload.ptr,
-	)
-	return b
-}
-
-// SignWith specifies a key the presentation should be signed with
-func (b *SigningResponseBuilder) SignWith(signer *signing.PublicKey) *SigningResponseBuilder {
-	C.self_message_content_signing_response_builder_sign_with(
-		b.ptr,
-		signingPublicKeyPtr(signer),
+		toSigningPublicKeyCollection(signers),
 	)
 	return b
 }

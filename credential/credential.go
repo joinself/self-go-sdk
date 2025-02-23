@@ -328,14 +328,11 @@ func (c *VerifiableCredential) CredentialSubjectClaim(claimKey string) (string, 
 		return "", false
 	}
 
-	claimValue := C.GoBytes(
-		unsafe.Pointer(C.self_credential_claim_value_buf(value)),
-		C.int(C.self_credential_claim_value_len(value)),
-	)
+	claimValue := C.GoString(C.self_string_buffer_ptr(value))
 
-	C.self_credential_claim_value_destroy(value)
+	C.self_string_buffer_destroy(value)
 
-	return string(claimValue), true
+	return claimValue, true
 }
 
 // CredentialSubjectClaims returns all of the claims about the subject
@@ -347,11 +344,11 @@ func (c *VerifiableCredential) CredentialSubjectClaims() (map[string]interface{}
 	)
 
 	claimValue := C.GoBytes(
-		unsafe.Pointer(C.self_credential_claim_value_buf(value)),
-		C.int(C.self_credential_claim_value_len(value)),
+		unsafe.Pointer(C.self_bytes_buffer_buf(value)),
+		C.int(C.self_bytes_buffer_len(value)),
 	)
 
-	C.self_credential_claim_value_destroy(value)
+	C.self_bytes_buffer_destroy(value)
 
 	return claims, json.Unmarshal(claimValue, &claims)
 }
