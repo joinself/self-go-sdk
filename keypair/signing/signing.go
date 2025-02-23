@@ -163,3 +163,16 @@ func fromSigningPublicKeyCollection(collection *C.self_collection_signing_public
 
 	return keys
 }
+
+func toSigningPublicKeyCollection(keys []*PublicKey) *C.self_collection_signing_public_key {
+	collection := C.self_collection_signing_public_key_init()
+
+	for i := 0; i < len(keys); i++ {
+		C.self_collection_signing_public_key_append(
+			collection,
+			keys[i].ptr,
+		)
+	}
+
+	return collection
+}
