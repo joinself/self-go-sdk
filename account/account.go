@@ -100,6 +100,9 @@ func contentPtr(c *event.Content) *C.self_message_content
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
+//go:linkname fromCredentialExchangeCollection github.com/joinself/self-go-sdk/credential.fromCredentialExchangeCollection
+func fromCredentialExchangeCollection(ptr *C.self_collection_credential_exchange) []*credential.Exchange
+
 //go:linkname fromVerifiableCredentialCollection github.com/joinself/self-go-sdk/credential.fromVerifiableCredentialCollection
 func fromVerifiableCredentialCollection(ptr *C.self_collection_verifiable_credential) []*credential.VerifiableCredential
 
@@ -574,6 +577,10 @@ func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*
 		&collection,
 	)
 
+	C.self_collection_credential_type_destroy(
+		credentialTypeCollection,
+	)
+
 	if result > 0 {
 		return nil, status.New(result)
 	}
@@ -582,11 +589,185 @@ func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*
 		collection,
 	)
 
+	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialLookupByCredentialHash looks up credentials held by it's hash
+func (a *Account) CredentialLookupByCredentialHash(credentialHash []byte) ([]*credential.VerifiableCredential, error) {
+	var collection *C.self_collection_verifiable_credential
+
+	hashPtr := C.CBytes(credentialHash)
+	hashLen := len(credentialHash)
+
+	result := C.self_account_credential_lookup_by_credential_hash(
+		a.account,
+		(*C.uint8_t)(hashPtr),
+		C.size_t(hashLen),
+		&collection,
+	)
+
+	C.free(hashPtr)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromVerifiableCredentialCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialSharedWithAddress returns all credentials shared with a given address of a given credential type
+func (a *Account) CredentialSharedWithAddress(withAddress *signing.PublicKey) ([]*credential.VerifiableCredential, error) {
+	var collection *C.self_collection_verifiable_credential
+
+	result := C.self_account_credential_shared_with_address(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromVerifiableCredentialCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialSharedWithAddress returns all credentials shared with a given address
+func (a *Account) CredentialSharedWithAddressByCredentialType(withAddress *signing.PublicKey, credentialType []string) ([]*credential.VerifiableCredential, error) {
+	var collection *C.self_collection_verifiable_credential
+
+	credentialTypeCollection := toCredentialTypeCollection(credentialType)
+
+	result := C.self_account_credential_shared_with_address_by_credential_type(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		credentialTypeCollection,
+		&collection,
+	)
+
 	C.self_collection_credential_type_destroy(
 		credentialTypeCollection,
 	)
 
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromVerifiableCredentialCollection(
+		collection,
+	)
+
 	C.self_collection_verifiable_credential_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialExchangeTrack tracks an credential exchange with a given addresss
+func (a *Account) CredentialExchangeTrack(withAddress *signing.PublicKey, credential *credential.VerifiableCredential, underLicense *credential.License) error {
+	result := C.self_account_credential_exchange_track(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		verifiableCredentialPtr(credential),
+		nil,
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+// CredentialExchangeLog returns a log of credentials shared
+func (a *Account) CredentialExchangeLog() ([]*credential.Exchange, error) {
+	var collection *C.self_collection_credential_exchange
+
+	result := C.self_account_credential_exchange_log(
+		a.account,
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromCredentialExchangeCollection(
+		collection,
+	)
+
+	C.self_collection_credential_exchange_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialExchangeLogWithAddress returns a log of credentials shared with an address
+func (a *Account) CredentialExchangeLogWithAddress(withAddress *signing.PublicKey) ([]*credential.Exchange, error) {
+	var collection *C.self_collection_credential_exchange
+
+	result := C.self_account_credential_exchange_log_with_address(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromCredentialExchangeCollection(
+		collection,
+	)
+
+	C.self_collection_credential_exchange_destroy(
+		collection,
+	)
+
+	return credentials, nil
+}
+
+// CredentialExchangeLogCredential returns a log of every exchange of a given credential
+func (a *Account) CredentialExchangeLogCredential(verifiableCredential *credential.VerifiableCredential) ([]*credential.Exchange, error) {
+	var collection *C.self_collection_credential_exchange
+
+	result := C.self_account_credential_exchange_log_credential(
+		a.account,
+		verifiableCredentialPtr(verifiableCredential),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromCredentialExchangeCollection(
+		collection,
+	)
+
+	C.self_collection_credential_exchange_destroy(
 		collection,
 	)
 
