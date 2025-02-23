@@ -202,8 +202,26 @@ func main() {
 		// create a new request and store a reference to it
 		content, err = message.NewCredentialPresentationRequest().
 			Type([]string{"VerifiablePresentation", "CustomPresentation"}).
-			Details(credential.CredentialTypeLiveness, "livenessImageHash").
-			Details(credential.CredentialTypeEmail, "emailAddress").
+			Details(
+				credential.CredentialTypeLiveness,
+				[]*message.CredentialPresentationDetailParameter{
+					message.NewCredentialPresentationDetailParameter(
+						message.OperatorNotEquals,
+						"sourceImageHash",
+						"",
+					),
+				},
+			).
+			Details(
+				credential.CredentialTypeEmail,
+				[]*message.CredentialPresentationDetailParameter{
+					message.NewCredentialPresentationDetailParameter(
+						message.OperatorNotEquals,
+						"emailAddress",
+						"",
+					),
+				},
+			).
 			Finish()
 
 		if err != nil {
