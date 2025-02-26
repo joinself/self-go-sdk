@@ -150,7 +150,7 @@ func (c *CredentialVerificationRequest) Proof() []*credential.VerifiablePresenta
 }
 
 // Evidence returns associated data to be used as evidence to support the verification request
-func (c *CredentialVerificationRequest) Evidence() []*credential.CredentialVerificationEvidence {
+func (c *CredentialVerificationRequest) Evidence() []*CredentialVerificationEvidence {
 	collection := C.self_message_content_credential_verification_request_evidence(
 		c.ptr,
 	)
@@ -167,7 +167,7 @@ func (c *CredentialVerificationRequest) Evidence() []*credential.CredentialVerif
 }
 
 // Parameters returns associated data to be used as parameters to support the verification request
-func (c *CredentialVerificationRequest) Parameters() []*credential.CredentialVerificationParameter {
+func (c *CredentialVerificationRequest) Parameters() []*CredentialVerificationParameter {
 	collection := C.self_message_content_credential_verification_request_parameters(
 		c.ptr,
 	)
@@ -499,4 +499,253 @@ func (b *CredentialVerificationResponseBuilder) Finish() (*event.Content, error)
 		return nil, status.New(result)
 	}
 	return newContent(finishedContent), nil
+}
+
+type CredentialVerificationParameter struct {
+	ptr *C.self_credential_verification_parameter
+}
+
+func newCredentialVerificationParameter(ptr *C.self_credential_verification_parameter) *CredentialVerificationParameter {
+	c := &CredentialVerificationParameter{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialVerificationParameter) {
+		C.self_credential_verification_parameter_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+// Key returns the parameters key
+func (c *CredentialVerificationParameter) Key() string {
+	return C.GoString(
+		C.self_credential_verification_parameter_parameter_key(
+			c.ptr,
+		),
+	)
+}
+
+// Value returns the value of the parameter
+func (c *CredentialVerificationParameter) Value() any {
+	ptr := C.self_credential_verification_parameter_value(
+		c.ptr,
+	)
+
+	defer func() {
+		C.self_message_content_parameter_value_destroy(ptr)
+	}()
+
+	switch C.self_message_content_parameter_value_value_type(
+		ptr,
+	) {
+	case C.PARAMETER_VALUE_BYTES:
+		buf := C.self_message_content_parameter_value_as_bytes(
+			ptr,
+		)
+
+		bytes := C.GoBytes(
+			unsafe.Pointer(C.self_bytes_buffer_buf(
+				buf,
+			)),
+			C.int(C.self_bytes_buffer_len(
+				buf,
+			)),
+		)
+
+		C.self_bytes_buffer_destroy(
+			buf,
+		)
+
+		return bytes
+	case C.PARAMETER_VALUE_STRING:
+		buf := C.self_message_content_parameter_value_as_string(
+			ptr,
+		)
+
+		str := C.GoString(
+			C.self_string_buffer_ptr(
+				buf,
+			),
+		)
+
+		C.self_string_buffer_destroy(
+			buf,
+		)
+
+		return str
+	case C.PARAMETER_VALUE_INT8:
+		return C.self_message_content_parameter_value_as_int8(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT16:
+		return C.self_message_content_parameter_value_as_int16(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT32:
+		return C.self_message_content_parameter_value_as_int32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_INT64:
+		return C.self_message_content_parameter_value_as_int64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT8:
+		return C.self_message_content_parameter_value_as_uint8(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT16:
+		return C.self_message_content_parameter_value_as_uint16(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT32:
+		return C.self_message_content_parameter_value_as_uint32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_UINT64:
+		return C.self_message_content_parameter_value_as_uint64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_FLOAT32:
+		return C.self_message_content_parameter_value_as_float32(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_FLOAT64:
+		return C.self_message_content_parameter_value_as_float64(
+			ptr,
+		)
+	case C.PARAMETER_VALUE_ARRAY_BYTES:
+		collection := C.self_message_content_parameter_value_as_array_bytes(
+			ptr,
+		)
+
+		collectionLen := int(C.self_collection_bytes_buffer_len(collection))
+
+		values := make([][]byte, collectionLen)
+
+		for i := 0; i < collectionLen; i++ {
+			buf := C.self_collection_bytes_buffer_at(collection, C.ulong(i))
+
+			values[i] = C.GoBytes(
+				unsafe.Pointer(C.self_bytes_buffer_buf(
+					buf,
+				)),
+				C.int(C.self_bytes_buffer_len(
+					buf,
+				)),
+			)
+
+			C.self_bytes_buffer_destroy(
+				buf,
+			)
+		}
+
+		C.self_collection_bytes_buffer_destroy(
+			collection,
+		)
+
+		return values
+	case C.PARAMETER_VALUE_ARRAY_STRING:
+		collection := C.self_message_content_parameter_value_as_array_string(
+			ptr,
+		)
+
+		collectionLen := int(C.self_collection_string_buffer_len(collection))
+
+		values := make([]string, collectionLen)
+
+		for i := 0; i < collectionLen; i++ {
+			buf := C.self_collection_string_buffer_at(collection, C.ulong(i))
+
+			values[i] = C.GoString(C.self_string_buffer_ptr(
+				buf,
+			))
+
+			C.self_string_buffer_destroy(
+				buf,
+			)
+		}
+
+		C.self_collection_string_buffer_destroy(
+			collection,
+		)
+
+		return values
+	default:
+		return nil
+	}
+}
+
+type CredentialVerificationEvidence struct {
+	ptr *C.self_credential_verification_evidence
+}
+
+func newCredentialVerificationEvidence(ptr *C.self_credential_verification_evidence) *CredentialVerificationEvidence {
+	c := &CredentialVerificationEvidence{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialVerificationEvidence) {
+		C.self_credential_verification_evidence_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+// EvidenceType returns the evidence type
+func (c *CredentialVerificationEvidence) EvidenceType() string {
+	return C.GoString(
+		C.self_credential_verification_evidence_evidence_type(
+			c.ptr,
+		),
+	)
+}
+
+// Object returns the object that makes up the content of the evidence
+func (c *CredentialVerificationEvidence) Object() *object.Object {
+	return newObject(C.self_credential_verification_evidence_object(
+		c.ptr,
+	))
+}
+
+func fromCredentialVerificationEvidenceCollection(collection *C.self_collection_credential_verification_evidence) []*CredentialVerificationEvidence {
+	collectionLen := int(C.self_collection_credential_verification_evidence_len(
+		collection,
+	))
+
+	details := make([]*CredentialVerificationEvidence, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_verification_evidence_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialVerificationEvidence(ptr)
+	}
+
+	return details
+}
+
+func fromCredentialVerificationParameterCollection(collection *C.self_collection_credential_verification_parameter) []*CredentialVerificationParameter {
+	collectionLen := int(C.self_collection_credential_verification_parameter_len(
+		collection,
+	))
+
+	details := make([]*CredentialVerificationParameter, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_verification_parameter_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialVerificationParameter(ptr)
+	}
+
+	return details
 }

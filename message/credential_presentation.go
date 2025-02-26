@@ -24,9 +24,6 @@ func fromCredentialTypeCollection(c *C.self_collection_credential_type) []string
 //go:linkname fromPresentationTypeCollection github.com/joinself/self-go-sdk/credential.fromPresentationTypeCollection
 func fromPresentationTypeCollection(c *C.self_collection_presentation_type) []string
 
-//go:linkname fromPresentationDetailCollection github.com/joinself/self-go-sdk/credential.fromPresentationDetailCollection
-func fromPresentationDetailCollection(c *C.self_collection_credential_presentation_detail) []*credential.CredentialPresentationDetail
-
 //go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk/credential.toCredentialTypeCollection
 func toCredentialTypeCollection(credentialType []string) *C.self_collection_credential_type
 
@@ -39,53 +36,11 @@ func fromVerifiableCredentialCollection(c *C.self_collection_verifiable_credenti
 //go:linkname fromVerifiablePresentationCollection github.com/joinself/self-go-sdk/credential.fromVerifiablePresentationCollection
 func fromVerifiablePresentationCollection(c *C.self_collection_verifiable_presentation) []*credential.VerifiablePresentation
 
-//go:linkname fromCredentialVerificationEvidenceCollection github.com/joinself/self-go-sdk/credential.fromCredentialVerificationEvidenceCollection
-func fromCredentialVerificationEvidenceCollection(c *C.self_collection_credential_verification_evidence) []*credential.CredentialVerificationEvidence
-
-//go:linkname fromCredentialVerificationParameterCollection github.com/joinself/self-go-sdk/credential.fromCredentialVerificationParameterCollection
-func fromCredentialVerificationParameterCollection(c *C.self_collection_credential_verification_parameter) []*credential.CredentialVerificationParameter
-
 //go:linkname verifiableCredentialPtr github.com/joinself/self-go-sdk/credential.verifiableCredentialPtr
 func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verifiable_credential
 
 //go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
-
-type CredentialPresentationDetailParameter struct {
-	ptr *C.self_credential_presentation_detail_parameter
-}
-
-func NewCredentialPresentationDetailParameter(operator ComparisonOperator, claimField, claimValue string) *CredentialPresentationDetailParameter {
-	claimFieldPtr := C.CString(claimField)
-	claimValuePtr := C.CString(claimValue)
-
-	parameter := newCredentialPresentationDetailParameter(
-		C.self_credential_presentation_detail_parameter_init(
-			uint32(operator),
-			claimFieldPtr,
-			claimValuePtr,
-		),
-	)
-
-	C.free(unsafe.Pointer(claimFieldPtr))
-	C.free(unsafe.Pointer(claimValuePtr))
-
-	return parameter
-}
-
-func newCredentialPresentationDetailParameter(ptr *C.self_credential_presentation_detail_parameter) *CredentialPresentationDetailParameter {
-	c := &CredentialPresentationDetailParameter{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *CredentialPresentationDetailParameter) {
-		C.self_credential_presentation_detail_parameter_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
 
 type CredentialPresentationRequest struct {
 	ptr *C.self_message_content_credential_presentation_request
@@ -193,7 +148,7 @@ func (c *CredentialPresentationRequest) Type() []string {
 }
 
 // Details returns details of the requested credential presentations
-func (c *CredentialPresentationRequest) Details() []*credential.CredentialPresentationDetail {
+func (c *CredentialPresentationRequest) Details() []*CredentialPresentationDetail {
 	collection := C.self_message_content_credential_presentation_request_details(
 		c.ptr,
 	)
@@ -398,6 +353,108 @@ func (b *CredentialPresentationResponseBuilder) Finish() (*event.Content, error)
 	return newContent(finishedContent), nil
 }
 
+type CredentialPresentationDetail struct {
+	ptr *C.self_credential_presentation_detail
+}
+
+func newCredentialPresentationDetail(ptr *C.self_credential_presentation_detail) *CredentialPresentationDetail {
+	c := &CredentialPresentationDetail{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialPresentationDetail) {
+		C.self_credential_presentation_detail_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+func (p *CredentialPresentationDetail) CredentialType() []string {
+	credentialTypeCollection := C.self_credential_presentation_detail_credential_type(
+		p.ptr,
+	)
+
+	credentialType := fromCredentialTypeCollection(credentialTypeCollection)
+
+	C.self_collection_credential_type_destroy(
+		credentialTypeCollection,
+	)
+
+	return credentialType
+}
+
+type CredentialPresentationDetailParameter struct {
+	ptr *C.self_credential_presentation_detail_parameter
+}
+
+func newCredentialPresentationDetailParameter(ptr *C.self_credential_presentation_detail_parameter) *CredentialPresentationDetailParameter {
+	c := &CredentialPresentationDetailParameter{
+		ptr: ptr,
+	}
+
+	runtime.SetFinalizer(c, func(c *CredentialPresentationDetailParameter) {
+		C.self_credential_presentation_detail_parameter_destroy(
+			c.ptr,
+		)
+	})
+
+	return c
+}
+
+func NewCredentialPresentationDetailParameter(operator ComparisonOperator, claimField, claimValue string) *CredentialPresentationDetailParameter {
+	claimFieldPtr := C.CString(claimField)
+	claimValuePtr := C.CString(claimValue)
+
+	parameter := newCredentialPresentationDetailParameter(
+		C.self_credential_presentation_detail_parameter_init(
+			uint32(operator),
+			claimFieldPtr,
+			claimValuePtr,
+		),
+	)
+
+	C.free(unsafe.Pointer(claimFieldPtr))
+	C.free(unsafe.Pointer(claimValuePtr))
+
+	return parameter
+}
+
+func (p *CredentialPresentationDetailParameter) Operator() ComparisonOperator {
+	return ComparisonOperator(C.self_credential_presentation_detail_parameter_comparison_operator(
+		p.ptr,
+	))
+}
+
+func (p *CredentialPresentationDetailParameter) ClaimField() string {
+	claimFieldPtr := C.self_credential_presentation_detail_parameter_claim_field(
+		p.ptr,
+	)
+
+	claimField := C.GoString(
+		C.self_string_buffer_ptr(claimFieldPtr),
+	)
+
+	C.self_string_buffer_destroy(claimFieldPtr)
+
+	return claimField
+}
+
+func (p *CredentialPresentationDetailParameter) ClaimValue() string {
+	claimValuePtr := C.self_credential_presentation_detail_parameter_claim_value(
+		p.ptr,
+	)
+
+	claimValue := C.GoString(
+		C.self_string_buffer_ptr(claimValuePtr),
+	)
+
+	C.self_string_buffer_destroy(claimValuePtr)
+
+	return claimValue
+}
+
 func toCredentialPresentationDetailParameterCollection(parameters []*CredentialPresentationDetailParameter) *C.self_collection_credential_presentation_detail_parameter {
 	collection := C.self_collection_credential_presentation_detail_parameter_init()
 
@@ -409,4 +466,23 @@ func toCredentialPresentationDetailParameterCollection(parameters []*CredentialP
 	}
 
 	return collection
+}
+
+func fromPresentationDetailCollection(collection *C.self_collection_credential_presentation_detail) []*CredentialPresentationDetail {
+	collectionLen := int(C.self_collection_credential_presentation_detail_len(
+		collection,
+	))
+
+	details := make([]*CredentialPresentationDetail, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_presentation_detail_at(
+			collection,
+			C.size_t(i),
+		)
+
+		details[i] = newCredentialPresentationDetail(ptr)
+	}
+
+	return details
 }
