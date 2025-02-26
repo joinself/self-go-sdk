@@ -385,6 +385,20 @@ func (p *CredentialPresentationDetail) CredentialType() []string {
 	return credentialType
 }
 
+func (p *CredentialPresentationDetail) Parameters() []*CredentialPresentationDetailParameter {
+	parameterCollection := C.self_credential_presentation_detail_parameters(
+		p.ptr,
+	)
+
+	parameters := fromPresentationDetailParameterCollection(parameterCollection)
+
+	C.self_collection_credential_presentation_detail_parameter_destroy(
+		parameterCollection,
+	)
+
+	return parameters
+}
+
 type CredentialPresentationDetailParameter struct {
 	ptr *C.self_credential_presentation_detail_parameter
 }
@@ -485,4 +499,23 @@ func fromPresentationDetailCollection(collection *C.self_collection_credential_p
 	}
 
 	return details
+}
+
+func fromPresentationDetailParameterCollection(collection *C.self_collection_credential_presentation_detail_parameter) []*CredentialPresentationDetailParameter {
+	collectionLen := int(C.self_collection_credential_presentation_detail_parameter_len(
+		collection,
+	))
+
+	parameters := make([]*CredentialPresentationDetailParameter, collectionLen)
+
+	for i := 0; i < collectionLen; i++ {
+		ptr := C.self_collection_credential_presentation_detail_parameter_at(
+			collection,
+			C.size_t(i),
+		)
+
+		parameters[i] = newCredentialPresentationDetailParameter(ptr)
+	}
+
+	return parameters
 }
