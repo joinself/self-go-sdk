@@ -66,8 +66,8 @@ func main() {
 			},
 			// invoked when there is a message sent to an encrypted group we are subscribed to
 			OnMessage: func(selfAccount *account.Account, msg *event.Message) {
-				switch event.ContentType(msg) {
-				case event.TypeDiscoveryResponse:
+				switch event.ContentTypeOf(msg) {
+				case event.ContentTypeDiscoveryResponse:
 					log.Info(
 						"received response to discovery request",
 						"from", msg.FromAddress().String(),
@@ -90,7 +90,7 @@ func main() {
 					}
 
 					completer.(chan *event.Message) <- msg
-				case event.TypeChat:
+				case event.ContentTypeChat:
 					chat, err := message.DecodeChat(msg.Content())
 					if err != nil {
 						log.Warn("failed to decode chat", "error", err)

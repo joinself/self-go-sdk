@@ -22,29 +22,29 @@ func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
 //go:linkname newPlatformAttestation github.com/joinself/self-go-sdk/platform.newPlatformAttestation
 func newPlatformAttestation(*C.self_platform_attestation) *platform.Attestation
 
-type Type int
+type ContentType int
 
 type Content struct {
 	ptr *C.self_message_content
 }
 
 const (
-	TypeUnknown                        Type = 1<<63 - 1
-	TypeCustom                         Type = C.CONTENT_CUSTOM
-	TypeChat                           Type = C.CONTENT_CHAT
-	TypeReceipt                        Type = C.CONTENT_RECEIPT
-	TypeCredential                     Type = C.CONTENT_CREDENTIAL
-	TypeIntroduction                   Type = C.CONTENT_INTRODUCTION
-	TypeDiscoveryRequest               Type = C.CONTENT_DISCOVERY_REQUEST
-	TypeDiscoveryResponse              Type = C.CONTENT_DISCOVERY_RESPONSE
-	TypeSigningRequest                 Type = C.CONTENT_SIGNING_REQUEST
-	TypeSigningResponse                Type = C.CONTENT_SIGNING_RESPONSE
-	TypeAccountPairingRequest          Type = C.CONTENT_ACCOUNT_PAIRING_REQUEST
-	TypeAccountPairingResponse         Type = C.CONTENT_ACCOUNT_PAIRING_RESPONSE
-	TypeCredentialVerificationRequest  Type = C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST
-	TypeCredentialVerificationResponse Type = C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE
-	TypeCredentialPresentationRequest  Type = C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST
-	TypeCredentialPresentationResponse Type = C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE
+	ContentTypeUnknown                        ContentType = 1<<63 - 1
+	ContentTypeCustom                         ContentType = C.CONTENT_CUSTOM
+	ContentTypeChat                           ContentType = C.CONTENT_CHAT
+	ContentTypeReceipt                        ContentType = C.CONTENT_RECEIPT
+	ContentTypeCredential                     ContentType = C.CONTENT_CREDENTIAL
+	ContentTypeIntroduction                   ContentType = C.CONTENT_INTRODUCTION
+	ContentTypeDiscoveryRequest               ContentType = C.CONTENT_DISCOVERY_REQUEST
+	ContentTypeDiscoveryResponse              ContentType = C.CONTENT_DISCOVERY_RESPONSE
+	ContentTypeSigningRequest                 ContentType = C.CONTENT_SIGNING_REQUEST
+	ContentTypeSigningResponse                ContentType = C.CONTENT_SIGNING_RESPONSE
+	ContentTypeAccountPairingRequest          ContentType = C.CONTENT_ACCOUNT_PAIRING_REQUEST
+	ContentTypeAccountPairingResponse         ContentType = C.CONTENT_ACCOUNT_PAIRING_RESPONSE
+	ContentTypeCredentialVerificationRequest  ContentType = C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST
+	ContentTypeCredentialVerificationResponse ContentType = C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE
+	ContentTypeCredentialPresentationRequest  ContentType = C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST
+	ContentTypeCredentialPresentationResponse ContentType = C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE
 )
 
 func newContent(ptr *C.self_message_content) *Content {
@@ -65,45 +65,45 @@ func contentPtr(c *Content) *C.self_message_content {
 	return c.ptr
 }
 
-// ContentType get the content type of the message
-func ContentType(message *Message) Type {
+// ContentTypeOf get the content type of the message
+func ContentTypeOf(message *Message) ContentType {
 	return contentType(C.self_message_message_content(message.ptr))
 }
 
-func contentType(content *C.self_message_content) Type {
+func contentType(content *C.self_message_content) ContentType {
 	switch C.self_message_content_type_of(content) {
 	case C.CONTENT_CUSTOM:
-		return TypeCustom
+		return ContentTypeCustom
 	case C.CONTENT_CHAT:
-		return TypeChat
+		return ContentTypeChat
 	case C.CONTENT_RECEIPT:
-		return TypeReceipt
+		return ContentTypeReceipt
 	case C.CONTENT_CREDENTIAL:
-		return TypeCredential
+		return ContentTypeCredential
 	case C.CONTENT_INTRODUCTION:
-		return TypeIntroduction
+		return ContentTypeIntroduction
 	case C.CONTENT_DISCOVERY_REQUEST:
-		return TypeDiscoveryRequest
+		return ContentTypeDiscoveryRequest
 	case C.CONTENT_DISCOVERY_RESPONSE:
-		return TypeDiscoveryResponse
+		return ContentTypeDiscoveryResponse
 	case C.CONTENT_SIGNING_REQUEST:
-		return TypeSigningRequest
+		return ContentTypeSigningRequest
 	case C.CONTENT_SIGNING_RESPONSE:
-		return TypeSigningResponse
+		return ContentTypeSigningResponse
 	case C.CONTENT_ACCOUNT_PAIRING_REQUEST:
-		return TypeAccountPairingRequest
+		return ContentTypeAccountPairingRequest
 	case C.CONTENT_ACCOUNT_PAIRING_RESPONSE:
-		return TypeAccountPairingResponse
+		return ContentTypeAccountPairingResponse
 	case C.CONTENT_CREDENTIAL_VERIFICATION_REQUEST:
-		return TypeCredentialVerificationRequest
+		return ContentTypeCredentialVerificationRequest
 	case C.CONTENT_CREDENTIAL_VERIFICATION_RESPONSE:
-		return TypeCredentialVerificationResponse
+		return ContentTypeCredentialVerificationResponse
 	case C.CONTENT_CREDENTIAL_PRESENTATION_REQUEST:
-		return TypeCredentialPresentationRequest
+		return ContentTypeCredentialPresentationRequest
 	case C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE:
-		return TypeCredentialPresentationResponse
+		return ContentTypeCredentialPresentationResponse
 	default:
-		return TypeUnknown
+		return ContentTypeUnknown
 	}
 }
 
@@ -116,6 +116,6 @@ func (c *Content) ID() []byte {
 }
 
 // ContentType get the content type
-func (c *Content) ContentType() Type {
+func (c *Content) ContentType() ContentType {
 	return contentType(c.ptr)
 }
