@@ -162,6 +162,23 @@ func (c *CredentialPresentationRequest) Details() []*CredentialPresentationDetai
 	return details
 }
 
+// Proof returns associated verifiable credential proof to support the presentation request
+func (c *CredentialPresentationRequest) Proof() []*credential.VerifiablePresentation {
+	collection := C.self_message_content_credential_presentation_request_proof(
+		c.ptr,
+	)
+
+	presentations := fromVerifiablePresentationCollection(
+		collection,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		collection,
+	)
+
+	return presentations
+}
+
 // Type returns the time the request expires at
 func (c *CredentialPresentationRequest) Expires() time.Time {
 	return time.Unix(int64(C.self_message_content_credential_presentation_request_expires(
@@ -211,6 +228,15 @@ func (b *CredentialPresentationRequestBuilder) Details(credentialType []string, 
 		parameterCollection,
 	)
 
+	return b
+}
+
+// Proof attaches proof to the credential presentation request
+func (b *CredentialPresentationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialPresentationRequestBuilder {
+	C.self_message_content_credential_presentation_request_builder_proof(
+		b.ptr,
+		verifiablePresentationPtr(proof),
+	)
 	return b
 }
 
