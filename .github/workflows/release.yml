@@ -1,0 +1,9 @@
+name: Release
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: joinself/github-workflows-public/.github/workflows/release.yml@main
+    secrets: inherit
