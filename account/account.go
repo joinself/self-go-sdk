@@ -22,7 +22,9 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
+	"github.com/joinself/self-go-sdk/token"
 )
 
 var pins = make(map[*Account]*runtime.Pinner)
@@ -88,6 +90,15 @@ func newObject(ptr *C.self_object) *object.Object
 //go:linkname objectPtr github.com/joinself/self-go-sdk/object.objectPtr
 func objectPtr(o *object.Object) *C.self_object
 
+//go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
+func newToken(ptr *C.self_token) *token.Token
+
+//go:linkname tokenPtr github.com/joinself/self-go-sdk/token.tokenPtr
+func tokenPtr(t *token.Token) *C.self_token
+
+//go:linkname platformPushPtr github.com/joinself/self-go-sdk/platform.platformPushPtr
+func platformPushPtr(t *platform.Push) *C.self_platform_push
+
 //go:linkname keyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
 func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 
@@ -96,6 +107,9 @@ func welcomePtr(w *event.Welcome) *C.self_welcome
 
 //go:linkname contentPtr github.com/joinself/self-go-sdk/event.contentPtr
 func contentPtr(c *event.Content) *C.self_message_content
+
+//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/event.contentSummaryPtr
+func contentSummaryPtr(c *event.ContentSummary) *C.self_message_content_summary
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -875,6 +889,23 @@ func (a *Account) PresentationLookupByPresentationType(presentationType []string
 	return presentations, nil
 }
 
+// TokenStore stores a token
+func (a *Account) TokenStore(fromAddress, toAddress, forAddress *signing.PublicKey, token *token.Token) error {
+	result := C.self_account_token_store(
+		a.account,
+		signingPublicKeyPtr(fromAddress),
+		signingPublicKeyPtr(toAddress),
+		signingPublicKeyPtr(forAddress),
+		tokenPtr(token),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
 // InboxOpen opens a new inbox that can be used to send and receive messages
 func (a *Account) InboxOpen() (*signing.PublicKey, error) {
 	var address *C.self_signing_public_key
@@ -1278,6 +1309,21 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Conte
 	return nil
 }
 
+// NotificationSend sends a push notification
+func (a *Account) NotificationSend(toAddress *signing.PublicKey, summary *event.ContentSummary) error {
+	result := C.self_account_notification_send(
+		a.account,
+		signingPublicKeyPtr(toAddress),
+		contentSummaryPtr(summary),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
 // Close shuts down the account
 func (a *Account) Close() error {
 	result := C.self_account_destroy(
@@ -1289,4 +1335,24 @@ func (a *Account) Close() error {
 	}
 
 	return nil
+}
+
+// issues a push token. mobile specific so not exported
+func tokenIssuePush(a *Account, forAddress *signing.PublicKey, providerAddress *exchange.PublicKey, pushCredential *platform.Push, delegatable bool) (*token.Token, error) {
+	var token *C.self_token
+
+	result := C.self_account_token_issue_push(
+		a.account,
+		signingPublicKeyPtr(forAddress),
+		exchangePublicKeyPtr(providerAddress),
+		platformPushPtr(pushCredential),
+		C.bool(delegatable),
+		&token,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newToken(token), nil
 }

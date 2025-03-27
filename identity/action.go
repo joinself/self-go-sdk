@@ -37,7 +37,7 @@ func operationActionPtr(a *ActionSummary) *C.self_identity_operation_action {
 
 // Action returns the action being performed
 func (a *ActionSummary) Action() Action {
-	return Action(C.self_identity_operation_action_action_type(
+	return Action(C.self_identity_operation_action_type_of(
 		a.ptr,
 	))
 }

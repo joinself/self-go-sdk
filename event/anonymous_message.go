@@ -46,7 +46,7 @@ func newAnonymousMessage(ptr *C.self_anonymous_message) *AnonymousMessage {
 // NewAnonymousMessage creates a new anonymous message from content
 func NewAnonymousMessage(content *Content) *AnonymousMessage {
 	return newAnonymousMessage(C.self_anonymous_message_init(
-		content.ptr,
+		contentPtr(content),
 	))
 }
 

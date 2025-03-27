@@ -14,6 +14,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/platform"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 //go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
@@ -118,4 +119,20 @@ func (c *Content) ID() []byte {
 // ContentType get the content type
 func (c *Content) ContentType() ContentType {
 	return contentType(c.ptr)
+}
+
+// Summary creates a summary of the content used for sending a push notification
+func (c *Content) Summary() (*ContentSummary, error) {
+	var summary *C.self_message_content_summary
+
+	result := C.self_message_content_summary_of(
+		c.ptr,
+		&summary,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newContentSummary(summary), nil
 }
