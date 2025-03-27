@@ -50,7 +50,7 @@ func main() {
 				// accept the invite to join the encrypted group created by the user.
 				groupAddres, err := selfAccount.ConnectionAccept(
 					wlc.ToAddress(),
-					wlc,
+					wlc.Welcome(),
 				)
 
 				if err != nil {
@@ -67,7 +67,7 @@ func main() {
 			// invoked when there is a message sent to an encrypted group we are subscribed to
 			OnMessage: func(selfAccount *account.Account, msg *event.Message) {
 				switch event.ContentTypeOf(msg) {
-				case event.ContentTypeDiscoveryResponse:
+				case message.ContentTypeDiscoveryResponse:
 					log.Info(
 						"received response to discovery request",
 						"from", msg.FromAddress().String(),

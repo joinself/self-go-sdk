@@ -14,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
@@ -213,7 +212,7 @@ func newSigningResponseBuilder(ptr *C.self_message_content_signing_response_buil
 }
 
 // DecodeSigningRequest decodes a message to a account pairing request
-func DecodeSigningRequest(content *event.Content) (*SigningRequest, error) {
+func DecodeSigningRequest(content *Content) (*SigningRequest, error) {
 	contentPtr := contentPtr(content)
 
 	var accountPairingRequestContent *C.self_message_content_signing_request
@@ -294,7 +293,7 @@ func (b *SigningRequestBuilder) RequireLiveness() *SigningRequestBuilder {
 }
 
 // Finish finalises the request and builds the content
-func (b *SigningRequestBuilder) Finish() (*event.Content, error) {
+func (b *SigningRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_signing_request_builder_finish(
@@ -310,7 +309,7 @@ func (b *SigningRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeSigningResponse decodes a message to a account pairing response
-func DecodeSigningResponse(content *event.Content) (*SigningResponse, error) {
+func DecodeSigningResponse(content *Content) (*SigningResponse, error) {
 	contentPtr := contentPtr(content)
 
 	var accountPairingResponseContent *C.self_message_content_signing_response
@@ -462,7 +461,7 @@ func (b *SigningResponseBuilder) Asset(asset *object.Object) *SigningResponseBui
 }
 
 // Finish finalises the response and builds the content
-func (b *SigningResponseBuilder) Finish() (*event.Content, error) {
+func (b *SigningResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_signing_response_builder_finish(

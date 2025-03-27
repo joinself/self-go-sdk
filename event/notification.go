@@ -13,10 +13,17 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 )
 
-// NOTE : types and functions in this file are mobile specific
-// so are not exported publicly
+//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/message.contentSummaryPtr
+func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summary
+
+//go:linkname newContentSummary github.com/joinself/self-go-sdk/message.newContentSummary
+func newContentSummary(ptr *C.self_message_content_summary) *message.ContentSummary
+
+// NOTE : types and functions in this file are mobile
+// specific, so are not exported publicly
 type notification struct {
 	ptr *C.self_notification
 }
@@ -58,7 +65,7 @@ func notificationToAddress(n *notification) *signing.PublicKey {
 }
 
 // Content returns the notifications content
-func notificationContentSummary(n *notification) *ContentSummary {
+func notificationContentSummary(n *notification) *message.ContentSummary {
 	return newContentSummary(
 		C.self_notification_content_summary(n.ptr),
 	)

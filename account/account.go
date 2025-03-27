@@ -17,10 +17,12 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/crypto"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
@@ -105,11 +107,23 @@ func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 //go:linkname welcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
 func welcomePtr(w *event.Welcome) *C.self_welcome
 
-//go:linkname contentPtr github.com/joinself/self-go-sdk/event.contentPtr
-func contentPtr(c *event.Content) *C.self_message_content
+//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
+func newCryptoKeyPackage(e *C.self_key_package) *crypto.KeyPackage
 
-//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/event.contentSummaryPtr
-func contentSummaryPtr(c *event.ContentSummary) *C.self_message_content_summary
+//go:linkname cryptoKeyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
+func cryptoKeyPackagePtr(w *crypto.KeyPackage) *C.self_key_package
+
+//go:linkname newCryptoWelcome github.com/joinself/self-go-sdk/crypto.newWelcome
+func newCryptoWelcome(e *C.self_welcome) *crypto.Welcome
+
+//go:linkname cryptoWelcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
+func cryptoWelcomePtr(w *crypto.Welcome) *C.self_welcome
+
+//go:linkname contentPtr github.com/joinself/self-go-sdk/message.contentPtr
+func contentPtr(c *message.Content) *C.self_message_content
+
+//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/message.contentSummaryPtr
+func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summary
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -1238,7 +1252,7 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 
 // ConnectionNegotiateOutOfBand negotiates a new encrypted group connection with an address. returns a
 // key pacakge for use in an out of band message, like an anonymous message encoded to a QR code
-func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*event.KeyPackage, error) {
+func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*crypto.KeyPackage, error) {
 	var keyPackage *C.self_key_package
 
 	result := C.self_account_connection_negotiate_out_of_band(
@@ -1252,18 +1266,18 @@ func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, exp
 		return nil, status.New(result)
 	}
 
-	return newKeyPackage(keyPackage), nil
+	return newCryptoKeyPackage(keyPackage), nil
 }
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox
 // using the key package the initiator sent to us, returns the address of the group
-func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *event.KeyPackage) (*signing.PublicKey, error) {
+func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *crypto.KeyPackage) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
 	result := C.self_account_connection_establish(
 		a.account,
 		signingPublicKeyPtr(asAddress),
-		keyPackagePtr(keyPackage),
+		cryptoKeyPackagePtr(keyPackage),
 		&groupAddress,
 	)
 
@@ -1275,13 +1289,13 @@ func (a *Account) ConnectionEstablish(asAddress *signing.PublicKey, keyPackage *
 }
 
 // ConnectionAccept accepts a welcome to a encrypted group, returns the address of the group
-func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *event.Welcome) (*signing.PublicKey, error) {
+func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *crypto.Welcome) (*signing.PublicKey, error) {
 	var groupAddress *C.self_signing_public_key
 
 	result := C.self_account_connection_accept(
 		a.account,
 		signingPublicKeyPtr(asAddress),
-		welcomePtr(welcome),
+		cryptoWelcomePtr(welcome),
 		&groupAddress,
 	)
 
@@ -1295,7 +1309,7 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *event.
 // MessageSend sends a message to an address that we have established an encrypted group with
 // the OnAcknowledgement and OnError callback will be invoked upon receiving the servers response,
 // referencing the id of the messages content
-func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Content) error {
+func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
 	result := C.self_account_message_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),
@@ -1310,7 +1324,7 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Conte
 }
 
 // NotificationSend sends a push notification
-func (a *Account) NotificationSend(toAddress *signing.PublicKey, summary *event.ContentSummary) error {
+func (a *Account) NotificationSend(toAddress *signing.PublicKey, summary *message.ContentSummary) error {
 	result := C.self_account_notification_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),

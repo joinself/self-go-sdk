@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/platform"
@@ -62,7 +61,7 @@ func newChatBuilder(ptr *C.self_message_content_chat_builder) *ChatBuilder {
 }
 
 // DeocodeChat decodes a chat message
-func DecodeChat(content *event.Content) (*Chat, error) {
+func DecodeChat(content *Content) (*Chat, error) {
 	contentPtr := contentPtr(content)
 
 	var chatContent *C.self_message_content_chat
@@ -158,7 +157,7 @@ func (b *ChatBuilder) Attach(attachment *object.Object) *ChatBuilder {
 }
 
 // Finish finalizes the chat message and prepares it for sending
-func (b *ChatBuilder) Finish() (*event.Content, error) {
+func (b *ChatBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_chat_builder_finish(

@@ -1,4 +1,4 @@
-package event
+package crypto
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
@@ -10,15 +10,15 @@ package event
 import "C"
 import (
 	"runtime"
-	"time"
 
-	"github.com/joinself/self-go-sdk/crypto"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newCryptoKeyPackage(ptr *C.self_key_package) *crypto.KeyPackage
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
+func newSigningPublicKey(ptr *C.self_signing_public_key) *signing.PublicKey
 
+// NOTE this serves to provide a means of breaking an import cycle between message and event packages
+// the underlying C type is the same as the `event.KeyPackage` type
 type KeyPackage struct {
 	ptr *C.self_key_package
 }
@@ -53,23 +53,4 @@ func (c *KeyPackage) FromAddress() *signing.PublicKey {
 	return newSigningPublicKey(C.self_key_package_from_address(
 		c.ptr,
 	))
-}
-
-// Sequence returns the sequence of this event as determined by it's sender
-func (c *KeyPackage) Sequence() uint64 {
-	return uint64(C.self_key_package_sequence(
-		c.ptr,
-	))
-}
-
-// Timestamp returns the timestamp the event was sent at
-func (c *KeyPackage) Timestamp() time.Time {
-	return time.Unix(int64(C.self_key_package_timestamp(
-		c.ptr,
-	)), 0)
-}
-
-// KeyPackage returns the events key package
-func (c *KeyPackage) KeyPackage() *crypto.KeyPackage {
-	return newCryptoKeyPackage(c.ptr)
 }

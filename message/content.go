@@ -1,4 +1,4 @@
-package event
+package message
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
@@ -12,16 +12,8 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/joinself/self-go-sdk/keypair/signing"
-	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
 )
-
-//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
-func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
-
-//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk/platform.newPlatformAttestation
-func newPlatformAttestation(*C.self_platform_attestation) *platform.Attestation
 
 type ContentType int
 
@@ -64,11 +56,6 @@ func newContent(ptr *C.self_message_content) *Content {
 
 func contentPtr(c *Content) *C.self_message_content {
 	return c.ptr
-}
-
-// ContentTypeOf get the content type of the message
-func ContentTypeOf(message *Message) ContentType {
-	return contentType(C.self_message_message_content(message.ptr))
 }
 
 func contentType(content *C.self_message_content) ContentType {
