@@ -14,18 +14,11 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/status"
 )
-
-//go:linkname contentPtr github.com/joinself/self-go-sdk/event.contentPtr
-func contentPtr(c *event.Content) *C.self_message_content
-
-//go:linkname newContent github.com/joinself/self-go-sdk/event.newContent
-func newContent(ptr *C.self_message_content) *event.Content
 
 //go:linkname operationPtr github.com/joinself/self-go-sdk/identity.operationPtr
 func operationPtr(o *identity.Operation) *C.self_identity_operation
@@ -109,7 +102,7 @@ func newAccountPairingResponseBuilder(ptr *C.self_message_content_account_pairin
 }
 
 // DecodeAccountPairingRequest decodes a message to a account pairing request
-func DecodeAccountPairingRequest(content *event.Content) (*AccountPairingRequest, error) {
+func DecodeAccountPairingRequest(content *Content) (*AccountPairingRequest, error) {
 	contentPtr := contentPtr(content)
 
 	var accountPairingRequestContent *C.self_message_content_account_pairing_request
@@ -182,7 +175,7 @@ func (b *AccountPairingRequestBuilder) Expires(expires time.Time) *AccountPairin
 }
 
 // Finish finalises the request and builds the content
-func (b *AccountPairingRequestBuilder) Finish() (*event.Content, error) {
+func (b *AccountPairingRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_account_pairing_request_builder_finish(
@@ -198,7 +191,7 @@ func (b *AccountPairingRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeAccountPairingResponse decodes a message to a account pairing response
-func DecodeAccountPairingResponse(content *event.Content) (*AccountPairingResponse, error) {
+func DecodeAccountPairingResponse(content *Content) (*AccountPairingResponse, error) {
 	contentPtr := contentPtr(content)
 
 	var accountPairingResponseContent *C.self_message_content_account_pairing_response
@@ -358,7 +351,7 @@ func (b *AccountPairingResponseBuilder) Asset(asset *object.Object) *AccountPair
 }
 
 // Finish finalises the response and builds the content
-func (b *AccountPairingResponseBuilder) Finish() (*event.Content, error) {
+func (b *AccountPairingResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_account_pairing_response_builder_finish(

@@ -14,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/crypto"
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -97,7 +96,7 @@ func newDiscoveryResponseBuilder(ptr *C.self_message_content_discovery_response_
 }
 
 // DecodeDiscoveryRequest decodes a message to a discovery request
-func DecodeDiscoveryRequest(content *event.Content) (*DiscoveryRequest, error) {
+func DecodeDiscoveryRequest(content *Content) (*DiscoveryRequest, error) {
 	contentPtr := contentPtr(content)
 
 	var discoveryRequestContent *C.self_message_content_discovery_request
@@ -154,7 +153,7 @@ func (b *DiscoveryRequestBuilder) Expires(expires time.Time) *DiscoveryRequestBu
 }
 
 // Finish finalises the request and builds the content
-func (b *DiscoveryRequestBuilder) Finish() (*event.Content, error) {
+func (b *DiscoveryRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_discovery_request_builder_finish(
@@ -170,7 +169,7 @@ func (b *DiscoveryRequestBuilder) Finish() (*event.Content, error) {
 }
 
 // DecodeDiscoveryResponse decodes a message to a discovery response
-func DecodeDiscoveryResponse(content *event.Content) (*DiscoveryResponse, error) {
+func DecodeDiscoveryResponse(content *Content) (*DiscoveryResponse, error) {
 	contentPtr := contentPtr(content)
 
 	var discoveryResponseContent *C.self_message_content_discovery_response
@@ -242,7 +241,7 @@ func (b *DiscoveryResponseBuilder) Status(status ResponseStatus) *DiscoveryRespo
 }
 
 // Finish finalises the response and builds the content
-func (b *DiscoveryResponseBuilder) Finish() (*event.Content, error) {
+func (b *DiscoveryResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_discovery_response_builder_finish(

@@ -1,4 +1,4 @@
-package event
+package message
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
@@ -14,15 +14,6 @@ import (
 
 	"github.com/joinself/self-go-sdk/object"
 )
-
-//go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
-func newObject(ptr *C.self_object) *object.Object
-
-//go:linkname fromCredentialTypeCollection github.com/joinself/self-go-sdk/credential.fromCredentialTypeCollection
-func fromCredentialTypeCollection(c *C.self_collection_credential_type) []string
-
-//go:linkname fromPresentationTypeCollection github.com/joinself/self-go-sdk/credential.fromPresentationTypeCollection
-func fromPresentationTypeCollection(c *C.self_collection_presentation_type) []string
 
 type ContentSummaryDescriptionType int
 
@@ -252,14 +243,11 @@ func (d *ContentSummaryDescription) Asset() (*object.Object, bool) {
 	return newObject(assetPtr), true
 }
 
-/*
-// TODO this creates an import cycle, so refactor it
-func (d *ContentSummaryDescription) Signature() (message.SigningPayloadType, bool) {
+func (d *ContentSummaryDescription) Signature() (SigningPayloadType, bool) {
 	switch C.self_message_content_summary_description_as_signature(d.ptr) {
 	case C.SIGNING_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
-		return message.SigningPayloadIdentityDocumentOperation, true
+		return SigningPayloadIdentityDocumentOperation, true
 	default:
-		return message.SigningPayloadUnknown, false
+		return SigningPayloadUnknown, false
 	}
 }
-*/

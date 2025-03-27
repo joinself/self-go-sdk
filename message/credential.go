@@ -12,7 +12,6 @@ import (
 	"runtime"
 
 	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/status"
 )
@@ -54,7 +53,7 @@ func newCredentialBuilder(ptr *C.self_message_content_credential_builder) *Crede
 }
 
 // DecodeCredential decodes a message to a credential
-func DecodeCredential(content *event.Content) (*Credential, error) {
+func DecodeCredential(content *Content) (*Credential, error) {
 	contentPtr := contentPtr(content)
 
 	var credentialContent *C.self_message_content_credential
@@ -157,7 +156,7 @@ func (b *CredentialBuilder) Asset(asset *object.Object) *CredentialBuilder {
 }
 
 // Finish finalises the response and builds the content
-func (b *CredentialBuilder) Finish() (*event.Content, error) {
+func (b *CredentialBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_builder_finish(

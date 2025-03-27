@@ -13,8 +13,19 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/status"
 )
+
+//go:linkname contentPtr github.com/joinself/self-go-sdk/message.contentPtr
+func contentPtr(c *message.Content) *C.self_message_content
+
+//go:linkname newContent github.com/joinself/self-go-sdk/message.newContent
+func newContent(ptr *C.self_message_content) *message.Content
+
+//go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
+func newSigningPublicKey(ptr *C.self_signing_public_key) *signing.PublicKey
 
 type QREncoding int
 type MessageFlag uint64
@@ -44,7 +55,7 @@ func newAnonymousMessage(ptr *C.self_anonymous_message) *AnonymousMessage {
 }
 
 // NewAnonymousMessage creates a new anonymous message from content
-func NewAnonymousMessage(content *Content) *AnonymousMessage {
+func NewAnonymousMessage(content *message.Content) *AnonymousMessage {
 	return newAnonymousMessage(C.self_anonymous_message_init(
 		contentPtr(content),
 	))
@@ -80,7 +91,7 @@ func (a *AnonymousMessage) ID() []byte {
 }
 
 // Content returns the messages content
-func (a *AnonymousMessage) Content() *Content {
+func (a *AnonymousMessage) Content() *message.Content {
 	return newContent(
 		C.self_anonymous_message_message_content(a.ptr),
 	)

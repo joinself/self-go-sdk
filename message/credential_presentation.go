@@ -14,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
-	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -115,7 +114,7 @@ func newCredentialPresentationResponseBuilder(ptr *C.self_message_content_creden
 }
 
 // DecodeCredentialPresentationRequest decodes a message to a credential presentation request
-func DecodeCredentialPresentationRequest(content *event.Content) (*CredentialPresentationRequest, error) {
+func DecodeCredentialPresentationRequest(content *Content) (*CredentialPresentationRequest, error) {
 	contentPtr := contentPtr(content)
 
 	var credentialPresentationRequestContent *C.self_message_content_credential_presentation_request
@@ -250,7 +249,7 @@ func (b *CredentialPresentationRequestBuilder) Expires(expires time.Time) *Crede
 }
 
 // Finish finalises the request and builds the content
-func (b *CredentialPresentationRequestBuilder) Finish() (*event.Content, error) {
+func (b *CredentialPresentationRequestBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_presentation_request_builder_finish(
@@ -266,7 +265,7 @@ func (b *CredentialPresentationRequestBuilder) Finish() (*event.Content, error) 
 }
 
 // DecodeCredentialPresentationResponse decodes a message to a credential presentation response
-func DecodeCredentialPresentationResponse(content *event.Content) (*CredentialPresentationResponse, error) {
+func DecodeCredentialPresentationResponse(content *Content) (*CredentialPresentationResponse, error) {
 	contentPtr := contentPtr(content)
 
 	var credentialPresentationResponseContent *C.self_message_content_credential_presentation_response
@@ -364,7 +363,7 @@ func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentat
 }
 
 // Finish finalises the response and builds the content
-func (b *CredentialPresentationResponseBuilder) Finish() (*event.Content, error) {
+func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
 	var finishedContent *C.self_message_content
 
 	result := C.self_message_content_credential_presentation_response_builder_finish(

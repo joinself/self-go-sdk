@@ -13,8 +13,15 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/platform"
 )
+
+//go:linkname newPlatformAttestation github.com/joinself/self-go-sdk/platform.newPlatformAttestation
+func newPlatformAttestation(ptr *C.self_platform_attestation) *platform.Attestation
+
+//go:linkname contentType github.com/joinself/self-go-sdk/message.contentType
+func contentType(ptr *C.self_message_content) message.ContentType
 
 type Message struct {
 	ptr *C.self_message
@@ -32,6 +39,11 @@ func newMessage(ptr *C.self_message) *Message {
 	})
 
 	return e
+}
+
+// ContentTypeOf get the content type of the message
+func ContentTypeOf(message *Message) message.ContentType {
+	return contentType(C.self_message_message_content(message.ptr))
 }
 
 // ID returns the id of the messages content
@@ -57,7 +69,7 @@ func (m *Message) ToAddress() *signing.PublicKey {
 }
 
 // Content returns the messages content
-func (m *Message) Content() *Content {
+func (m *Message) Content() *message.Content {
 	return newContent(
 		C.self_message_message_content(m.ptr),
 	)
