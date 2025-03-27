@@ -118,6 +118,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -130,7 +131,7 @@ type pairing struct {
 }
 
 //go:linkname newContent github.com/joinself/self-go-sdk/event.newContent
-func newContent(m *C.self_message_content) *event.Content
+func newContent(m *C.self_message_content) *message.Content
 
 //go:linkname newMessage github.com/joinself/self-go-sdk/event.newMessage
 func newMessage(e *C.self_message) *event.Message

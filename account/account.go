@@ -22,6 +22,7 @@ import (
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
@@ -118,11 +119,11 @@ func newCryptoWelcome(e *C.self_welcome) *crypto.Welcome
 //go:linkname cryptoWelcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
 func cryptoWelcomePtr(w *crypto.Welcome) *C.self_welcome
 
-//go:linkname contentPtr github.com/joinself/self-go-sdk/event.contentPtr
-func contentPtr(c *event.Content) *C.self_message_content
+//go:linkname contentPtr github.com/joinself/self-go-sdk/message.contentPtr
+func contentPtr(c *message.Content) *C.self_message_content
 
-//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/event.contentSummaryPtr
-func contentSummaryPtr(c *event.ContentSummary) *C.self_message_content_summary
+//go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/message.contentSummaryPtr
+func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summary
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -1308,7 +1309,7 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *crypto
 // MessageSend sends a message to an address that we have established an encrypted group with
 // the OnAcknowledgement and OnError callback will be invoked upon receiving the servers response,
 // referencing the id of the messages content
-func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Content) error {
+func (a *Account) MessageSend(toAddress *signing.PublicKey, content *message.Content) error {
 	result := C.self_account_message_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),
@@ -1323,7 +1324,7 @@ func (a *Account) MessageSend(toAddress *signing.PublicKey, content *event.Conte
 }
 
 // NotificationSend sends a push notification
-func (a *Account) NotificationSend(toAddress *signing.PublicKey, summary *event.ContentSummary) error {
+func (a *Account) NotificationSend(toAddress *signing.PublicKey, summary *message.ContentSummary) error {
 	result := C.self_account_notification_send(
 		a.account,
 		signingPublicKeyPtr(toAddress),
