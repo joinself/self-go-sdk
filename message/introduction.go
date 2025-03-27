@@ -9,6 +9,7 @@ package message
 */
 import "C"
 import (
+	"go/token"
 	"runtime"
 
 	"github.com/joinself/self-go-sdk/credential"
@@ -17,6 +18,12 @@ import (
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/status"
 )
+
+//go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
+func newToken(ptr *C.self_token) *token.Token
+
+//go:linkname tokenPtr github.com/joinself/self-go-sdk/token.tokenPtr
+func tokenPtr(ptr *token.Token) *C.self_token
 
 //go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
@@ -106,6 +113,32 @@ func (c *Introduction) Assets() []*object.Object {
 	return attachments
 }
 
+// Tokens returns the any tokens that the sender has issued
+func (c *Introduction) Tokens() ([]*token.Token, error) {
+	var collection *C.self_collection_token
+
+	result := C.self_message_content_introduction_tokens(
+		c.ptr,
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	var tokens []*token.Token
+
+	for i := 0; i < int(C.self_collection_token_len(collection)); i++ {
+		tokens = append(tokens, newToken(
+			C.self_collection_token_at(collection, C.size_t(i)),
+		))
+	}
+
+	C.self_collection_token_destroy(collection)
+
+	return tokens, nil
+}
+
 // NewIntroduction constructs a new introduction message
 func NewIntroduction() *IntroductionBuilder {
 	return newIntroductionBuilder(C.self_message_content_introduction_builder_init())
@@ -136,6 +169,16 @@ func (b *IntroductionBuilder) Asset(attachment *object.Object) *IntroductionBuil
 	C.self_message_content_introduction_builder_asset(
 		b.ptr,
 		objectPtr(attachment),
+	)
+
+	return b
+}
+
+// Token attaches a token to the introduction that can be used by the recipient(s)
+func (b *IntroductionBuilder) Token(token *token.Token) *IntroductionBuilder {
+	C.self_message_content_introduction_builder_token(
+		b.ptr,
+		tokenPtr(token),
 	)
 
 	return b

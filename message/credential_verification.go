@@ -538,7 +538,7 @@ func (c *CredentialVerificationParameter) Value() any {
 		C.self_message_content_parameter_value_destroy(ptr)
 	}()
 
-	switch C.self_message_content_parameter_value_value_type(
+	switch C.self_message_content_parameter_value_type_of(
 		ptr,
 	) {
 	case C.PARAMETER_VALUE_BYTES:

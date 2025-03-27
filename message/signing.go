@@ -74,7 +74,7 @@ func fromSigningPayloadCollection(collection *C.self_collection_message_content_
 
 // PayloadType returns the type of signing payload
 func (p *SigningPayload) PayloadType() SigningPayloadType {
-	switch C.self_message_content_signing_payload_payload_type(signingPayloadPtr(p)) {
+	switch C.self_message_content_signing_payload_type_of(signingPayloadPtr(p)) {
 	case C.SIGNING_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
 		return SigningPayloadIdentityDocumentOperation
 	default:
