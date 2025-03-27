@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -44,9 +45,9 @@ func newAnonymousMessage(ptr *C.self_anonymous_message) *AnonymousMessage {
 }
 
 // NewAnonymousMessage creates a new anonymous message from content
-func NewAnonymousMessage(content *Content) *AnonymousMessage {
+func NewAnonymousMessage(content *message.Content) *AnonymousMessage {
 	return newAnonymousMessage(C.self_anonymous_message_init(
-		content.ptr,
+		contentPtr(content),
 	))
 }
 

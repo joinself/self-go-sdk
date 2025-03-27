@@ -22,6 +22,7 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
 	"github.com/joinself/self-go-sdk/token"
 )
@@ -89,8 +90,14 @@ func newObject(ptr *C.self_object) *object.Object
 //go:linkname objectPtr github.com/joinself/self-go-sdk/object.objectPtr
 func objectPtr(o *object.Object) *C.self_object
 
+//go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
+func newToken(ptr *C.self_token) *token.Token
+
 //go:linkname tokenPtr github.com/joinself/self-go-sdk/token.tokenPtr
-func tokenPtr(o *token.Token) *C.self_token
+func tokenPtr(t *token.Token) *C.self_token
+
+//go:linkname platformPushPtr github.com/joinself/self-go-sdk/platform.platformPushPtr
+func platformPushPtr(t *platform.Push) *C.self_platform_push
 
 //go:linkname keyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
 func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
@@ -1328,4 +1335,24 @@ func (a *Account) Close() error {
 	}
 
 	return nil
+}
+
+// issues a push token. mobile specific so not exported
+func tokenIssuePush(a *Account, forAddress *signing.PublicKey, providerAddress *exchange.PublicKey, pushCredential *platform.Push, delegatable bool) (*token.Token, error) {
+	var token *C.self_token
+
+	result := C.self_account_token_issue_push(
+		a.account,
+		signingPublicKeyPtr(forAddress),
+		exchangePublicKeyPtr(providerAddress),
+		platformPushPtr(pushCredential),
+		C.bool(delegatable),
+		&token,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newToken(token), nil
 }
