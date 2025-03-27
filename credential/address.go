@@ -13,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 //go:linkname newSigningPublicKey github.com/joinself/self-go-sdk/keypair/signing.newSigningPublicKey
@@ -45,6 +46,26 @@ func newAddress(ptr *C.self_credential_address) *Address {
 	})
 
 	return a
+}
+
+// DecodeAddress decodes a did address
+func DecodeAddress(did string) (*Address, error) {
+	didPtr := C.CString(did)
+
+	var address *C.self_credential_address
+
+	result := C.self_credential_address_decode(
+		didPtr,
+		&address,
+	)
+
+	C.free(unsafe.Pointer(didPtr))
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newAddress(address), nil
 }
 
 // AddressAure creates a new aure method address
@@ -102,14 +123,13 @@ func (a *Address) String() string {
 		a.ptr,
 	)
 
-	encodedAddress := C.GoBytes(
-		unsafe.Pointer(C.self_bytes_buffer_buf(encodedAddressBuffer)),
-		C.int(C.self_bytes_buffer_len(encodedAddressBuffer)),
+	encodedAddress := C.GoString(
+		C.self_string_buffer_ptr(encodedAddressBuffer),
 	)
 
-	C.self_bytes_buffer_destroy(
+	C.self_string_buffer_destroy(
 		encodedAddressBuffer,
 	)
 
-	return string(encodedAddress)
+	return encodedAddress
 }

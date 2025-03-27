@@ -135,7 +135,7 @@ func (b *PresentationBuilder) Finish() (*Presentation, error) {
 
 // PresentationType returns the type of presentation
 func (p *VerifiablePresentation) PresentationType() []string {
-	collection := C.self_verifiable_presentation_presentation_type(
+	collection := C.self_verifiable_presentation_type_of(
 		p.ptr,
 	)
 

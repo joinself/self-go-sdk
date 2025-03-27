@@ -1,4 +1,4 @@
-package message
+package event
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl
@@ -17,6 +17,12 @@ import (
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
+
+//go:linkname fromCredentialTypeCollection github.com/joinself/self-go-sdk/credential.fromCredentialTypeCollection
+func fromCredentialTypeCollection(c *C.self_collection_credential_type) []string
+
+//go:linkname fromPresentationTypeCollection github.com/joinself/self-go-sdk/credential.fromPresentationTypeCollection
+func fromPresentationTypeCollection(c *C.self_collection_presentation_type) []string
 
 type ContentSummaryDescriptionType int
 
@@ -199,20 +205,61 @@ func (d *ContentSummaryDescription) ChatAttachment() (*object.Object, bool) {
 }
 
 func (d *ContentSummaryDescription) Credential() ([]string, bool) {
-	credentialPtr := C.self_message_content_summary_description_as_credential(
+	collection := C.self_message_content_summary_description_as_credential(
 		d.ptr,
 	)
 
-	collection := toCredentialTypeCollection(credentialPtr)
+	if collection == nil {
+		return nil, false
+	}
 
-	C.self_credential_builder_credential_type(
-		b.ptr,
-		collection,
-	)
+	credentials := fromCredentialTypeCollection(collection)
 
 	C.self_collection_credential_type_destroy(
 		collection,
 	)
 
-	return b, true
+	return credentials, true
 }
+
+func (d *ContentSummaryDescription) Presentation() ([]string, bool) {
+	collection := C.self_message_content_summary_description_as_presentation(
+		d.ptr,
+	)
+
+	if collection == nil {
+		return nil, false
+	}
+
+	presentations := fromPresentationTypeCollection(collection)
+
+	C.self_collection_presentation_type_destroy(
+		collection,
+	)
+
+	return presentations, true
+}
+
+func (d *ContentSummaryDescription) Asset() (*object.Object, bool) {
+	assetPtr := C.self_message_content_summary_description_as_asset(
+		d.ptr,
+	)
+
+	if assetPtr == nil {
+		return nil, false
+	}
+
+	return newObject(assetPtr), true
+}
+
+/*
+// TODO this creates an import cycle, so refactor it
+func (d *ContentSummaryDescription) Signature() (message.SigningPayloadType, bool) {
+	switch C.self_message_content_summary_description_as_signature(d.ptr) {
+	case C.SIGNING_PAYLOAD_IDENTITY_DOCUMENT_OPERATION:
+		return message.SigningPayloadIdentityDocumentOperation, true
+	default:
+		return message.SigningPayloadUnknown, false
+	}
+}
+*/

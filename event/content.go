@@ -1,4 +1,4 @@
-package message
+package event
 
 /*
 #cgo LDFLAGS: -lstdc++ -lm -ldl

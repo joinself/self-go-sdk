@@ -180,7 +180,7 @@ func (d *Document) DescriptionsAt(at time.Time) []AddressDescription {
 			C.size_t(i),
 		)
 
-		switch C.self_identity_operation_description_description_type(ptr) {
+		switch C.self_identity_operation_description_type_of(ptr) {
 		case C.OPERATION_DESCRIPTION_EMBEDDED:
 			descriptions[i] = newEmbeddedDescription(
 				C.self_identity_operation_description_as_embedded(ptr),

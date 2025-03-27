@@ -239,7 +239,7 @@ func DecodeVerifiableCredential(encodedCredential []byte) (*VerifiableCredential
 
 // CredentialType returns the type of credential
 func (c *VerifiableCredential) CredentialType() []string {
-	collection := C.self_verifiable_credential_credential_type(
+	collection := C.self_verifiable_credential_type_of(
 		c.ptr,
 	)
 
