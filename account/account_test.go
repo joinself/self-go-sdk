@@ -68,7 +68,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 			OnKeyPackage: func(account *account.Account, keyPackage *event.KeyPackage) {
 				_, err := account.ConnectionEstablish(
 					keyPackage.ToAddress(),
-					keyPackage,
+					keyPackage.KeyPackage(),
 				)
 				if err != nil {
 					panic(err)
@@ -77,7 +77,7 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 			OnWelcome: func(account *account.Account, welcome *event.Welcome) {
 				_, err := account.ConnectionAccept(
 					welcome.ToAddress(),
-					welcome,
+					welcome.Welcome(),
 				)
 				if err != nil {
 					panic(err)
