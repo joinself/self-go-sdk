@@ -108,13 +108,13 @@ func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 func welcomePtr(w *event.Welcome) *C.self_welcome
 
 //go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newCryptoKeyPackage(e *C.self_key_package) *crypto.KeyPackage
+func newCryptoKeyPackage(e *C.self_key_package, owned bool) *crypto.KeyPackage
 
 //go:linkname cryptoKeyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
 func cryptoKeyPackagePtr(w *crypto.KeyPackage) *C.self_key_package
 
 //go:linkname newCryptoWelcome github.com/joinself/self-go-sdk/crypto.newWelcome
-func newCryptoWelcome(e *C.self_welcome) *crypto.Welcome
+func newCryptoWelcome(e *C.self_welcome, owned bool) *crypto.Welcome
 
 //go:linkname cryptoWelcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
 func cryptoWelcomePtr(w *crypto.Welcome) *C.self_welcome
@@ -1266,7 +1266,7 @@ func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, exp
 		return nil, status.New(result)
 	}
 
-	return newCryptoKeyPackage(keyPackage), nil
+	return newCryptoKeyPackage(keyPackage, true), nil
 }
 
 // ConnectionEstablish establishes and sets up an encrypted connection with an address via a new group inbox

@@ -20,16 +20,18 @@ type Welcome struct {
 	ptr *C.self_welcome
 }
 
-func newWelcome(ptr *C.self_welcome) *Welcome {
+func newWelcome(ptr *C.self_welcome, owned bool) *Welcome {
 	e := &Welcome{
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *Welcome) {
-		C.self_welcome_destroy(
-			e.ptr,
-		)
-	})
+	if owned {
+		runtime.SetFinalizer(e, func(e *Welcome) {
+			C.self_welcome_destroy(
+				e.ptr,
+			)
+		})
+	}
 
 	return e
 }

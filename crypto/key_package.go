@@ -23,16 +23,18 @@ type KeyPackage struct {
 	ptr *C.self_key_package
 }
 
-func newKeyPackage(ptr *C.self_key_package) *KeyPackage {
+func newKeyPackage(ptr *C.self_key_package, owned bool) *KeyPackage {
 	e := &KeyPackage{
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *KeyPackage) {
-		C.self_key_package_destroy(
-			e.ptr,
-		)
-	})
+	if owned {
+		runtime.SetFinalizer(e, func(e *KeyPackage) {
+			C.self_key_package_destroy(
+				e.ptr,
+			)
+		})
+	}
 
 	return e
 }

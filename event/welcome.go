@@ -17,7 +17,7 @@ import (
 )
 
 //go:linkname newCryptoWelcome github.com/joinself/self-go-sdk/crypto.newWelcome
-func newCryptoWelcome(ptr *C.self_welcome) *crypto.Welcome
+func newCryptoWelcome(ptr *C.self_welcome, owned bool) *crypto.Welcome
 
 type Welcome struct {
 	ptr *C.self_welcome
@@ -71,5 +71,5 @@ func (w *Welcome) Timestamp() time.Time {
 
 // Welcome returns the event's welcome
 func (w *Welcome) Welcome() *crypto.Welcome {
-	return newCryptoWelcome(w.ptr)
+	return newCryptoWelcome(w.ptr, false)
 }

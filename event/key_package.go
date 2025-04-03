@@ -17,7 +17,7 @@ import (
 )
 
 //go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newCryptoKeyPackage(ptr *C.self_key_package) *crypto.KeyPackage
+func newCryptoKeyPackage(ptr *C.self_key_package, owned bool) *crypto.KeyPackage
 
 type KeyPackage struct {
 	ptr *C.self_key_package
@@ -71,5 +71,5 @@ func (c *KeyPackage) Timestamp() time.Time {
 
 // KeyPackage returns the events key package
 func (c *KeyPackage) KeyPackage() *crypto.KeyPackage {
-	return newCryptoKeyPackage(c.ptr)
+	return newCryptoKeyPackage(c.ptr, false)
 }
