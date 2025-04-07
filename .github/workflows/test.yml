@@ -27,8 +27,3 @@ jobs:
 
           cd account
           gotest -v
-      - name: Failure notification
-        if: ${{ github.ref == 'refs/heads/main' && failure() }}
-        uses: joinself/github-actions-public/failure-notification@main
-        with:
-          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
