@@ -16,6 +16,7 @@ import (
 	"github.com/joinself/self-go-sdk/keypair"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
 	"github.com/joinself/self-go-sdk/keypair/signing"
+	"github.com/joinself/self-go-sdk/status"
 )
 
 type Role uint64
@@ -62,6 +63,28 @@ func newOperation(ptr *C.self_identity_operation) *Operation {
 
 func operationPtr(o *Operation) *C.self_identity_operation {
 	return o.ptr
+}
+
+func DecodeOperation(documentAddress *signing.PublicKey, encodedOperation []byte) (*Operation, error) {
+	var operation *C.self_identity_operation
+
+	operationPtr := (*C.uint8_t)(C.CBytes(encodedOperation))
+	operationLen := C.size_t(len(encodedOperation))
+
+	result := C.self_identity_operation_decode(
+		signingPublicKeyPtr(documentAddress),
+		operationPtr,
+		operationLen,
+		&operation,
+	)
+
+	C.free(unsafe.Pointer(operationPtr))
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newOperation(operation), nil
 }
 
 // Sequence the sequence number of the operation
@@ -115,6 +138,24 @@ func (o *Operation) Actions() []*ActionSummary {
 	)
 
 	return actions
+}
+
+func (o *Operation) Encode() ([]byte, error) {
+	var buf *C.self_bytes_buffer
+
+	result := C.self_identity_operation_encode(o.ptr, &buf)
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	operation := C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(buf)),
+		C.int(C.self_bytes_buffer_len(buf)),
+	)
+
+	C.self_bytes_buffer_destroy(buf)
+
+	return operation, nil
 }
 
 type OperationBuilder struct {
