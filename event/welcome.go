@@ -71,5 +71,5 @@ func (w *Welcome) Timestamp() time.Time {
 
 // Welcome returns the event's welcome
 func (w *Welcome) Welcome() *crypto.Welcome {
-	return newCryptoWelcome(w.ptr, false)
+	return newCryptoWelcome(C.self_welcome_clone(w.ptr), false)
 }

@@ -71,5 +71,5 @@ func (c *KeyPackage) Timestamp() time.Time {
 
 // KeyPackage returns the events key package
 func (c *KeyPackage) KeyPackage() *crypto.KeyPackage {
-	return newCryptoKeyPackage(c.ptr, false)
+	return newCryptoKeyPackage(C.self_key_package_clone(c.ptr), false)
 }
