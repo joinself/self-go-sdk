@@ -74,8 +74,8 @@ func credentialPtr(c *credential.Credential) *C.self_credential
 //go:linkname presentationPtr github.com/joinself/self-go-sdk/credential.presentationPtr
 func presentationPtr(c *credential.Presentation) *C.self_presentation
 
-//go:linkname newVerfiablePresentation github.com/joinself/self-go-sdk/credential.newVerfiablePresentation
-func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *credential.VerifiablePresentation
+//go:linkname newVerifiablePresentation github.com/joinself/self-go-sdk/credential.newVerifiablePresentation
+func newVerifiablePresentation(ptr *C.self_verifiable_presentation) *credential.VerifiablePresentation
 
 //go:linkname newVerifiableCredential github.com/joinself/self-go-sdk/credential.newVerifiableCredential
 func newVerifiableCredential(ptr *C.self_verifiable_credential) *credential.VerifiableCredential
@@ -816,7 +816,7 @@ func (a *Account) PresentationIssue(presentation *credential.Presentation) (*cre
 		return nil, status.New(result)
 	}
 
-	return newVerfiablePresentation(verifiablePresentation), nil
+	return newVerifiablePresentation(verifiablePresentation), nil
 }
 
 // PresentationSign signs a verifiable presentation

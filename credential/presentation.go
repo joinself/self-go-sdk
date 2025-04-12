@@ -67,7 +67,7 @@ type VerifiablePresentation struct {
 	ptr *C.self_verifiable_presentation
 }
 
-func newVerfiablePresentation(ptr *C.self_verifiable_presentation) *VerifiablePresentation {
+func newVerifiablePresentation(ptr *C.self_verifiable_presentation) *VerifiablePresentation {
 	return &VerifiablePresentation{
 		ptr: ptr,
 	}
@@ -131,6 +131,30 @@ func (b *PresentationBuilder) Finish() (*Presentation, error) {
 	}
 
 	return newPresentation(presentation), nil
+}
+
+// DecodeVerifiablePresentation decodes a verifiable credential from it's json form
+func DecodeVerifiablePresentation(encodedPresentation []byte) (*VerifiablePresentation, error) {
+	var verifiablePresentation *C.self_verifiable_presentation
+
+	encodedBuf := C.CBytes(encodedPresentation)
+	encodedLen := len(encodedPresentation)
+
+	defer func() {
+		C.free(encodedBuf)
+	}()
+
+	result := C.self_verifiable_presentation_decode(
+		&verifiablePresentation,
+		(*C.uint8_t)(encodedBuf),
+		(C.size_t)(encodedLen),
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newVerifiablePresentation(verifiablePresentation), nil
 }
 
 // PresentationType returns the type of presentation
@@ -260,7 +284,7 @@ func fromVerifiablePresentationCollection(collection *C.self_collection_verifiab
 			C.size_t(i),
 		)
 
-		presentations[i] = newVerfiablePresentation(ptr)
+		presentations[i] = newVerifiablePresentation(ptr)
 	}
 
 	return presentations
