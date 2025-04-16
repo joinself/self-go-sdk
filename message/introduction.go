@@ -9,13 +9,13 @@ package message
 */
 import "C"
 import (
-	"go/token"
 	"runtime"
 
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/status"
+	"github.com/joinself/self-go-sdk/token"
 )
 
 //go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
