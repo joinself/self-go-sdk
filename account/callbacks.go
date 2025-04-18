@@ -181,25 +181,27 @@ func goOnConnect(user_data unsafe.Pointer) {
 				d := 13
 				s := len(pairingCode) / d
 
-				fmt.Printf(
-					"%s BEGIN PAIRING CODE %s\n",
-					strings.Repeat("=", (len(pairingCode)/d-20)/2),
-					strings.Repeat("=", (len(pairingCode)/d-20)/2),
-				)
+				if account.config.LogLevel >= LogInfo {
+					fmt.Printf(
+						"%s BEGIN PAIRING CODE %s\n",
+						strings.Repeat("=", (len(pairingCode)/d-20)/2),
+						strings.Repeat("=", (len(pairingCode)/d-20)/2),
+					)
 
-				for i := 0; i < d; i++ {
-					fmt.Println(pairingCode[s*i : s*i+s])
+					for i := 0; i < d; i++ {
+						fmt.Println(pairingCode[s*i : s*i+s])
+					}
+
+					if len(pairingCode)%d > 0 {
+						fmt.Println(pairingCode[len(pairingCode)-(len(pairingCode)%d):])
+					}
+
+					fmt.Printf(
+						"%s END PAIRING CODE %s\n",
+						strings.Repeat("=", (len(pairingCode)/d-18)/2),
+						strings.Repeat("=", (len(pairingCode)/d-18)/2),
+					)
 				}
-
-				if len(pairingCode)%d > 0 {
-					fmt.Println(pairingCode[len(pairingCode)-(len(pairingCode)%d):])
-				}
-
-				fmt.Printf(
-					"%s END PAIRING CODE %s\n",
-					strings.Repeat("=", (len(pairingCode)/d-18)/2),
-					strings.Repeat("=", (len(pairingCode)/d-18)/2),
-				)
 
 				atomic.StoreInt32(&account.status, 1)
 				break

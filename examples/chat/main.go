@@ -90,6 +90,41 @@ func main() {
 					}
 
 					completer.(chan *event.Message) <- msg
+
+				case message.ContentTypeIntroduction:
+					introduction, err := message.DecodeIntroduction(msg.Content())
+					if err != nil {
+						log.Warn("failed to decode introduction", "error", err)
+						return
+					}
+
+					tokens, err := introduction.Tokens()
+					if err != nil {
+						log.Warn("failed to decode introduction tokens", "error", err)
+						return
+					}
+
+					for _, token := range tokens {
+						err = selfAccount.TokenStore(
+							msg.FromAddress(),
+							msg.ToAddress(),
+							msg.ToAddress(),
+							token,
+						)
+
+						if err != nil {
+							log.Warn("failed to store introduction tokens", "error", err)
+							return
+						}
+					}
+
+					log.Info(
+						"received introduction",
+						"from", msg.FromAddress().String(),
+						"messageId", hex.EncodeToString(msg.ID()),
+						"tokens", len(tokens),
+					)
+
 				case message.ContentTypeChat:
 					chat, err := message.DecodeChat(msg.Content())
 					if err != nil {
@@ -118,12 +153,6 @@ func main() {
 		log.Fatal("failed to initialize account", "error", err)
 	}
 
-	// TODO : this will look slightly different in production.
-	// right now, we can just open an inbox to send and receive
-	// messages from it. In the future we will hide some of this
-	// and do proper linking with the application identity.
-	// NB: this does not need to happen every time we start the SDK,
-	// only once!
 	inboxAddress, err := selfAccount.InboxOpen()
 	if err != nil {
 		log.Fatal("failed to open account inbox", "error", err)
@@ -216,6 +245,25 @@ func main() {
 
 		log.Info(
 			"sent message",
+			"toAddress", response.FromAddress().String(),
+		)
+
+		summary, err := content.Summary()
+		if err != nil {
+			log.Fatal("failed to create chat summary", "error", err)
+		}
+
+		err = selfAccount.NotificationSend(
+			response.FromAddress(),
+			summary,
+		)
+
+		if err != nil {
+			log.Fatal("failed to send chat notification", "error", err)
+		}
+
+		log.Info(
+			"sent notification",
 			"toAddress", response.FromAddress().String(),
 		)
 	}
