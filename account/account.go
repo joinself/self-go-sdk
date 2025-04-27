@@ -1414,10 +1414,15 @@ func tokenIssuePush(a *Account, forAddress *signing.PublicKey, providerAddress *
 // registers and requests an identity token. mobile specific so not exported
 func sdkRegister(a *Account, forAddress *signing.PublicKey) (*token.Token, error) {
 	var token *C.self_token
+	var address *C.self_signing_public_key
+
+	if forAddress != nil {
+		address = signingPublicKeyPtr(forAddress)
+	}
 
 	result := C.self_account_sdk_register(
 		a.account,
-		signingPublicKeyPtr(forAddress),
+		address,
 		&token,
 	)
 
