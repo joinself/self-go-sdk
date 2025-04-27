@@ -379,6 +379,11 @@ func (c *VerifiableCredential) Validate() error {
 	return nil
 }
 
+// PrimaryType returns the primary type of a credential or presentation
+func PrimaryType(typ []string) string {
+	return typ[1]
+}
+
 func toCredentialTypeCollection(credentialType []string) *C.self_collection_credential_type {
 	collection := C.self_collection_credential_type_init()
 
