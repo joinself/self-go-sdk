@@ -79,7 +79,7 @@ func (a *Attestation) IntegrityToken() []byte {
 func playIntegrity(application *signing.PublicKey, token []byte) *Attestation {
 	tokenBuf := C.CBytes(token)
 	tokenLen := len(token)
-	defer C.free(unsafe.Pointer(&tokenBuf))
+	defer C.free(unsafe.Pointer(tokenBuf))
 
 	return newPlatformAttestation(
 		C.self_platform_attestation_play_integrity(
