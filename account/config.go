@@ -8,7 +8,10 @@ package account
 #include <stdlib.h>
 */
 import "C"
-import "github.com/joinself/self-go-sdk/event"
+import (
+	"github.com/joinself/self-go-sdk/event"
+	"github.com/joinself/self-go-sdk/platform"
+)
 
 var (
 	TargetProduction = &Target{
@@ -60,6 +63,7 @@ type Callbacks struct {
 	OnKeyPackage      func(account *Account, keyPackage *event.KeyPackage)
 	OnProposal        func(account *Account, proposal *event.Proposal)
 	OnWelcome         func(account *Account, welcome *event.Welcome)
+	onIntegrity       func(account *Account, requestHash []byte) *platform.Attestation
 }
 
 func (c *Config) defaults() {
@@ -70,4 +74,9 @@ func (c *Config) defaults() {
 	if c.Environment == nil {
 		c.Environment = TargetSandbox
 	}
+}
+
+// NOTE mobile specific api, don't export
+func setOnIntegrity(callbacks *Callbacks, onIntegrity func(account *Account, requestHash []byte) *platform.Attestation) {
+	callbacks.onIntegrity = onIntegrity
 }

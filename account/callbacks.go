@@ -14,6 +14,7 @@ typedef const self_key_package cself_key_package_t;
 typedef const self_proposal cself_proposal_t;
 typedef const self_reference cself_reference_t;
 typedef const self_welcome cself_welcome_t;
+typedef const self_integrity_request cself_integrity_request_t;
 typedef const uint8_t cuint8_t;
 
 extern void goOnConnect(void*);
@@ -27,6 +28,7 @@ extern void goOnProposal(void*, cself_proposal_t*);
 extern void goOnWelcome(void*, cself_welcome_t*);
 extern void goOnLog(self_log_entry*);
 extern void goOnResponse(void*, self_status);
+extern struct self_platform_attestation* goOnIntegrity(void*, cself_integrity_request_t*);
 
 static void c_on_connect(void* user_data) {
   goOnConnect(user_data);
@@ -68,7 +70,11 @@ static void c_on_log(self_log_entry *entry) {
 	goOnLog(entry);
 }
 
-static self_account_callbacks *account_callbacks() {
+struct self_platform_attestation* c_on_integrity(void *user_data, self_integrity_request *integrity) {
+	return goOnIntegrity(user_data, integrity);
+}
+
+static self_account_callbacks *account_callbacks(bool integrity) {
 	self_account_callbacks *callbacks = malloc(sizeof(self_account_callbacks));
 
 	callbacks->on_connect = c_on_connect;
@@ -81,7 +87,13 @@ static self_account_callbacks *account_callbacks() {
 	callbacks->on_proposal = c_on_proposal;
 	callbacks->on_welcome = c_on_welcome;
 	callbacks->on_log = c_on_log;
-	callbacks->on_integrity = NULL;
+
+	if (integrity) {
+	    callbacks->on_integrity = malloc(sizeof(*c_on_integrity));
+        *callbacks->on_integrity = c_on_integrity;
+	} else {
+		callbacks->on_integrity = NULL;
+	}
 
 	return callbacks;
 }
@@ -151,8 +163,8 @@ func newReference(e *C.self_reference) *event.Reference
 //go:linkname newWelcome github.com/joinself/self-go-sdk/event.newWelcome
 func newWelcome(e *C.self_welcome) *event.Welcome
 
-func accountCallbacks() *C.self_account_callbacks {
-	return C.account_callbacks()
+func accountCallbacks(integrity bool) *C.self_account_callbacks {
+	return C.account_callbacks(C.bool(integrity))
 }
 
 //export goOnConnect
@@ -310,6 +322,25 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 
 		return
 	}
+}
+
+//export goOnIntegrity
+func goOnIntegrity(user_data unsafe.Pointer, integrity *C.cself_integrity_request_t) *C.self_platform_attestation {
+	account := (*Account)(user_data)
+
+	hashBuf := C.self_integrity_request_hash_buf(integrity)
+	hashLen := C.self_integrity_request_hash_len(integrity)
+	defer C.self_integrity_request_destroy(integrity)
+
+	requestHash := C.GoBytes(
+		unsafe.Pointer(hashBuf),
+		C.int(hashLen),
+	)
+
+	return platformAttestationPtr(account.callbacks.onIntegrity(
+		account,
+		requestHash,
+	))
 }
 
 //export goOnLog

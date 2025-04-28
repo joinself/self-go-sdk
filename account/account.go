@@ -134,6 +134,9 @@ func contentPtr(c *message.Content) *C.self_message_content
 //go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/message.contentSummaryPtr
 func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summary
 
+//go:linkname platformAttestationPtr github.com/joinself/self-go-sdk/platform.platformAttestationPtr
+func platformAttestationPtr(a *platform.Attestation) *C.self_platform_attestation
+
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
@@ -206,7 +209,9 @@ func New(cfg *Config) (*Account, error) {
 		storageKeyBuf,
 		storageKeyLen,
 		uint32(cfg.LogLevel),
-		accountCallbacks(),
+		accountCallbacks(
+			cfg.Callbacks.onIntegrity != nil,
+		),
 		pinnedAccount,
 	)
 
@@ -279,7 +284,9 @@ func (a *Account) Configure(cfg *Config) error {
 		storageKeyBuf,
 		storageKeyLen,
 		uint32(cfg.LogLevel),
-		accountCallbacks(),
+		accountCallbacks(
+			cfg.Callbacks.onIntegrity != nil,
+		),
 		pinnedAccount,
 	)
 
