@@ -226,7 +226,6 @@ func main() {
 		}
 
 		err = selfAccount.ObjectUpload(
-			inboxAddress,
 			agreementTerms,
 			false,
 		)
