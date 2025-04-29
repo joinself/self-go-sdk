@@ -70,7 +70,7 @@ static void c_on_log(self_log_entry *entry) {
 	goOnLog(entry);
 }
 
-struct self_platform_attestation* c_on_integrity(void *user_data, self_integrity_request *integrity) {
+static struct self_platform_attestation* c_on_integrity(void *user_data, self_integrity_request *integrity) {
 	return goOnIntegrity(user_data, integrity);
 }
 
