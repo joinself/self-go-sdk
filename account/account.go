@@ -86,6 +86,15 @@ func verifiableCredentialPtr(v *credential.VerifiableCredential) *C.self_verifia
 //go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(v *credential.VerifiablePresentation) *C.self_verifiable_presentation
 
+//go:linkname toVerifiablePresentationCollection github.com/joinself/self-go-sdk/credential.toVerifiablePresentationCollection
+func toVerifiablePresentationCollection(presentations []*credential.VerifiablePresentation) *C.self_collection_verifiable_presentation
+
+//go:linkname trustedIssuerRegistryPtr github.com/joinself/self-go-sdk/credential.trustedIssuerRegistryPtr
+func trustedIssuerRegistryPtr(r *credential.TrustedIssuerRegistry) *C.self_trusted_issuer_registry
+
+//go:linkname credentialAddressPtr github.com/joinself/self-go-sdk/credential.credentialAddressPtr
+func credentialAddressPtr(a *credential.Address) *C.self_credential_address
+
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
@@ -124,6 +133,9 @@ func contentPtr(c *message.Content) *C.self_message_content
 
 //go:linkname contentSummaryPtr github.com/joinself/self-go-sdk/message.contentSummaryPtr
 func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summary
+
+//go:linkname platformAttestationPtr github.com/joinself/self-go-sdk/platform.platformAttestationPtr
+func platformAttestationPtr(a *platform.Attestation) *C.self_platform_attestation
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -197,7 +209,9 @@ func New(cfg *Config) (*Account, error) {
 		storageKeyBuf,
 		storageKeyLen,
 		uint32(cfg.LogLevel),
-		accountCallbacks(),
+		accountCallbacks(
+			cfg.Callbacks.onIntegrity != nil,
+		),
 		pinnedAccount,
 	)
 
@@ -270,7 +284,9 @@ func (a *Account) Configure(cfg *Config) error {
 		storageKeyBuf,
 		storageKeyLen,
 		uint32(cfg.LogLevel),
-		accountCallbacks(),
+		accountCallbacks(
+			cfg.Callbacks.onIntegrity != nil,
+		),
 		pinnedAccount,
 	)
 
@@ -503,6 +519,39 @@ func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (
 	}
 
 	return newVerifiableCredential(verifiableCredential), nil
+}
+
+// CredentialGraphValidFor validates and filters credentials from a given collection of verifiable presentations, validating credentials, presentations and ensuring that an issuer, subject or holder keys have not been revoked and were valid at the time of use.
+func (a *Account) CredentialGraphValidFor(address *credential.Address, registry *credential.TrustedIssuerRegistry, presentations []*credential.VerifiablePresentation) ([]*credential.VerifiableCredential, error) {
+	var verifiableCredentials *C.self_collection_verifiable_credential
+
+	verifiablePresentations := toVerifiablePresentationCollection(presentations)
+
+	result := C.self_account_credential_graph_valid_for(
+		a.account,
+		credentialAddressPtr(address),
+		trustedIssuerRegistryPtr(registry),
+		verifiablePresentations,
+		&verifiableCredentials,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		verifiablePresentations,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromVerifiableCredentialCollection(
+		verifiableCredentials,
+	)
+
+	C.self_collection_verifiable_credential_destroy(
+		verifiableCredentials,
+	)
+
+	return credentials, nil
 }
 
 // CredentialStore stores a verifiable credential
@@ -1168,10 +1217,9 @@ func (a *Account) ValueRemove(key string) error {
 }
 
 // ObjectUpload uploads an encrypted object, optionally storing it our to local storage
-func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object, persistLocally bool) error {
+func (a *Account) ObjectUpload(obj *object.Object, persistLocally bool) error {
 	result := C.self_account_object_upload(
 		a.account,
-		signingPublicKeyPtr(asAddress),
 		objectPtr(obj),
 		C.bool(persistLocally),
 	)
@@ -1184,10 +1232,9 @@ func (a *Account) ObjectUpload(asAddress *signing.PublicKey, obj *object.Object,
 }
 
 // ObjectDownload downloads and decrypts an object
-func (a *Account) ObjectDownload(asAddress *signing.PublicKey, obj *object.Object) error {
+func (a *Account) ObjectDownload(obj *object.Object) error {
 	result := C.self_account_object_download(
 		a.account,
-		signingPublicKeyPtr(asAddress),
 		objectPtr(obj),
 	)
 
@@ -1361,6 +1408,28 @@ func tokenIssuePush(a *Account, forAddress *signing.PublicKey, providerAddress *
 		exchangePublicKeyPtr(providerAddress),
 		platformPushPtr(pushCredential),
 		C.bool(delegatable),
+		&token,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newToken(token), nil
+}
+
+// registers and requests an identity token. mobile specific so not exported
+func sdkRegister(a *Account, forAddress *signing.PublicKey) (*token.Token, error) {
+	var token *C.self_token
+	var address *C.self_signing_public_key
+
+	if forAddress != nil {
+		address = signingPublicKeyPtr(forAddress)
+	}
+
+	result := C.self_account_sdk_register(
+		a.account,
+		address,
 		&token,
 	)
 

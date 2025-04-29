@@ -271,6 +271,20 @@ func fromPresentationTypeCollection(collection *C.self_collection_presentation_t
 	return presentationType
 }
 
+func toVerifiablePresentationCollection(presentations []*VerifiablePresentation) *C.self_collection_verifiable_presentation {
+	collection := C.self_collection_verifiable_presentation_init()
+
+	for i := 0; i < len(presentations); i++ {
+
+		C.self_collection_verifiable_presentation_append(
+			collection,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
+
+	return collection
+}
+
 func fromVerifiablePresentationCollection(collection *C.self_collection_verifiable_presentation) []*VerifiablePresentation {
 	collectionLen := int(C.self_collection_verifiable_presentation_len(
 		collection,

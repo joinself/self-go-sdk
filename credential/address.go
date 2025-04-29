@@ -48,6 +48,10 @@ func newAddress(ptr *C.self_credential_address) *Address {
 	return a
 }
 
+func credentialAddressPtr(a *Address) *C.self_credential_address {
+	return a.ptr
+}
+
 // DecodeAddress decodes a did address
 func DecodeAddress(did string) (*Address, error) {
 	didPtr := C.CString(did)

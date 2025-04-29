@@ -74,3 +74,18 @@ func (a *Attestation) IntegrityToken() []byte {
 		C.int(C.self_platform_attestation_integrity_token_len(a.ptr)),
 	)
 }
+
+// NOTE don't export, mobile only api
+func playIntegrity(application *signing.PublicKey, token []byte) *Attestation {
+	tokenBuf := C.CBytes(token)
+	tokenLen := len(token)
+	defer C.free(unsafe.Pointer(tokenBuf))
+
+	return newPlatformAttestation(
+		C.self_platform_attestation_play_integrity(
+			signingPublicKeyPtr(application),
+			(*C.uint8_t)(tokenBuf),
+			C.size_t(tokenLen),
+		),
+	)
+}
