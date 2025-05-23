@@ -43,10 +43,10 @@ func main() {
 					log.Info("messaging socket disconnected")
 				}
 			},
-			// invoked when there is a response to a discovery request from a new address.
+			// invoked when there is an invite to a new encrypted group
 			OnWelcome: func(selfAccount *account.Account, wlc *event.Welcome) {
-				// we have received a response to our discovery request that is from a new
-				// user/address that we do not have an  end to end encrypted session.
+				// a user has scanned the qr code and is attempting to create
+				// a new encrypted group with this account (if one does not exist).
 				// accept the invite to join the encrypted group created by the user.
 				groupAddres, err := selfAccount.ConnectionAccept(
 					wlc.ToAddress(),
