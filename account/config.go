@@ -14,11 +14,6 @@ import (
 )
 
 var (
-	TargetProduction = &Target{
-		Rpc:     defaultRpcProduction,
-		Object:  defaultObjectProduction,
-		Message: defaultMessageProduction,
-	}
 	TargetSandbox = &Target{
 		Rpc:     defaultRpcSandbox,
 		Object:  defaultObjectSandbox,
