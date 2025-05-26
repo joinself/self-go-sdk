@@ -5,14 +5,11 @@ A straightforward demonstration of the Self SDK's core chat capabilities, design
 ## 🚀 Quick Start
 
 ```bash
-# Terminal 1: Start first chat client
-go run main.go
-
-# Terminal 2: Start second chat client (in another terminal)
+# Start the chat server
 go run main.go
 ```
 
-Then scan the QR code from the first terminal with the second terminal to connect and start chatting!
+Then scan the QR code with the Self developer app to connect and start chatting!
 
 ## 📊 Complexity Rating
 
@@ -29,19 +26,18 @@ Then scan the QR code from the first terminal with the second terminal to connec
 - ✅ **Real-time messaging** - Instant bidirectional communication
 - ✅ **End-to-end encryption** - Automatic message encryption
 - ✅ **QR code discovery** - Secure peer connection establishment
-- ✅ **Smart responses** - Context-aware message handling
-- ✅ **Multi-peer support** - Multiple clients can connect
+- ✅ **Mobile app integration** - Connect via Self developer app
 - ✅ **Decentralized identity** - No central servers required
 
 ### Educational Learning Path
-1. **Client Setup** - Initialize Self SDK for messaging
+1. **Server Setup** - Initialize Self SDK chat server
 2. **Message Handlers** - Configure incoming message processing
-3. **Peer Discovery** - Connect securely via QR codes
-4. **Chat Demonstration** - Send and receive encrypted messages
+3. **Mobile Connection** - Connect securely via QR codes
+4. **Chat Demonstration** - Exchange encrypted messages with developer app
 
 ## 🏃‍♂️ How to Run
 
-### Step 1: Start First Client
+### Step 1: Start the Chat Server
 ```bash
 go run main.go
 ```
@@ -51,21 +47,15 @@ You'll see:
 - A QR code for peer connection
 - Status messages showing the setup process
 
-### Step 2: Start Second Client
-```bash
-# In another terminal window
-go run main.go
-```
-
-### Step 3: Connect the Peers
-- Copy the QR code text from the first terminal
-- Paste it when the second terminal prompts for QR scanning
+### Step 2: Connect with Developer App
+- Open the Self developer app on your phone
+- Use the QR code scanner to scan the displayed QR code
 - Wait for the secure connection to establish
 
-### Step 4: Watch the Demo
-- The demo automatically sends several test messages
+### Step 3: Watch the Demo
+- The demo automatically sends several test messages to your developer app
+- Try sending messages from your developer app to see real-time chat with the server
 - Each message gets a smart response based on content
-- Try sending messages from either terminal to see real-time chat
 
 ## 📋 What You'll See
 
@@ -84,10 +74,10 @@ This demo shows basic chat messaging between peers.
 🔍 Discovering peer for chat...
 🔑 Generating QR code for secure connection...
 
-📱 SCAN THIS QR CODE with another Self client:
-   • Run another instance of this program
-   • Use the Self mobile app
-   • Any Self SDK application
+📱 SCAN THIS QR CODE with the Self developer app:
+   • Open the Self developer app on your phone
+   • Use the built-in QR code scanner
+   • Point your camera at the QR code below
 
 [QR CODE DISPLAYED HERE]
 
@@ -108,11 +98,11 @@ This demo shows basic chat messaging between peers.
 ✅ Basic chat demo completed!
 
 🎓 What happened:
-   1. Created a Self client for messaging
+   1. Created a Self chat server for messaging
    2. Set up handlers to receive and process messages
-   3. Used QR code to discover and connect to a peer
-   4. Exchanged encrypted messages in real-time
-   5. Demonstrated echo functionality
+   3. Generated QR code for developer app connection
+   4. Exchanged encrypted messages between server and developer app
+   5. Demonstrated smart response functionality
 ```
 
 ## 🔍 Key Code Sections
@@ -131,22 +121,12 @@ This demo shows basic chat messaging between peers.
 ### Core Concepts
 - **Decentralized Identity (DID)**: Each client has a unique identifier
 - **End-to-End Encryption**: Messages are automatically encrypted
-- **Peer-to-Peer**: No central servers, direct client connections
 - **QR Code Discovery**: Secure connection establishment method
 
-### Smart Response System
-The demo includes intelligent responses based on message content:
-- `"hello"` or `"hi"` → Friendly greeting
-- `"how are you"` → Status response
-- `"help"` → Available commands
-- `"time"` → Current timestamp
-- Other messages → Echo with timestamp
-
 ### Real-time Features
-- **Instant delivery** when peers are online
+- **Instant delivery** when developer app is connected
 - **Automatic encryption** for all messages
-- **Multi-peer support** using the same QR code
-- **Event-driven handlers** for incoming messages
+- **Cross-platform support** between Go server and developer app
 
 ## 🔧 Customization Ideas
 
@@ -163,29 +143,24 @@ After understanding this example, explore:
 
 | Example | Complexity | Description |
 |---------|------------|-------------|
-| `../credentials_exchange/` | 6/10 | Identity verification and credential sharing |
-| `../group_chat/` | 5/10 | Multi-participant chat rooms |
-| `../file_sharing/` | 7/10 | Secure file transfer between peers |
+| [`../credentials_exchange/`](../credentials_exchange/) | 6/10 | Identity verification and credential sharing |
+| [`../group_chat/`](../group_chat/) | 5/10 | Multi-participant chat rooms |
+| [`../file_sharing/`](../file_sharing/) | 7/10 | Secure file transfer between peers |
 
 ## 🛠️ Prerequisites
 
 - Go 1.19 or later
-- Self SDK dependencies (handled by go.mod)
-- Two terminal windows for testing
+- Self-go-sdk dependencies (check the [README.md](/README.md))
+- Self developer app installed on your phone
 
 ## 💡 Troubleshooting
 
 **Connection Issues:**
-- Ensure both terminals are running the same version
-- Check that QR code is copied completely
-- Wait up to 10 minutes for peer discovery timeout
-
-**Message Not Received:**
-- Verify both clients show "Peer connected" status
-- Check that message handlers are set up before sending
-- Ensure clients remain running to receive messages
+- Ensure your developer app is updated to the latest version
+- Check that QR code is scanned completely and clearly
 
 **Build Issues:**
 - Run `go mod tidy` to ensure dependencies
 - Check Go version with `go version`
 - Verify you're in the correct directory
+- Verify self-go-sdk dependencies are accomplished (check the [README.md](/README.md))
