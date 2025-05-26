@@ -103,8 +103,9 @@ func (a *AnonymousMessage) Flags() MessageFlag {
 }
 
 // SetFlags sets the messages flags
-func (a *AnonymousMessage) SetFlags(flags MessageFlag) {
+func (a *AnonymousMessage) SetFlags(flags MessageFlag) *AnonymousMessage {
 	C.self_anonymous_message_set_flags(a.ptr, C.uint64_t(flags))
+	return a
 }
 
 // HasFlags returns true if the message has flags

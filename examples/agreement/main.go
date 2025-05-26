@@ -186,6 +186,7 @@ func main() {
 		// for use in rendering on a web page, or Unicode, for encoding
 		// in text based environments like a terminal
 		qrCode, err := event.NewAnonymousMessage(content).
+			SetFlags(event.MessageFlagTargetSandbox).
 			EncodeToQR(event.QREncodingUnicode)
 
 		if err != nil {
