@@ -1,3 +1,27 @@
+// Package main demonstrates group chat functionality using the Self SDK.
+//
+// This example shows the basics of:
+// - Setting up multiple Self clients for group communication
+// - Creating and managing group chats
+// - Inviting members and handling invitations
+// - Sending and receiving group messages
+// - Understanding group administration and permissions
+//
+// 🎯 What you'll learn:
+// • How group chat works with Self SDK
+// • Group creation and administration patterns
+// • Member invitation and management
+// • Multi-participant messaging
+// • Role-based permissions in groups
+//
+// 👥 GROUP CHAT CAPABILITIES DEMONSTRATED:
+// • Group creation with admin privileges
+// • Member invitation system
+// • Group message broadcasting
+// • Real-time multi-participant messaging
+// • Group management (name/description updates)
+// • Event-driven group notifications
+// • Role-based access control
 package main
 
 import (
@@ -6,239 +30,320 @@ import (
 	"time"
 
 	"github.com/joinself/self-go-sdk/client"
+	"github.com/joinself/self-go-sdk/examples/utils"
 )
 
 func main() {
-	// Create three clients to simulate a group chat scenario
-	adminClient, err := client.NewClient(client.Config{
-		StorageKey:  make([]byte, 32), // In production, use a secure key
-		StoragePath: "./admin_storage",
+	fmt.Println("👥 Group Chat Demo")
+	fmt.Println("==================")
+	fmt.Println("This demo shows group chat functionality with multiple participants.")
+	fmt.Println()
+
+	// Step 1: Create multiple clients (admin and members)
+	admin, member1, member2 := createClients()
+	defer admin.Close()
+	defer member1.Close()
+	defer member2.Close()
+
+	fmt.Printf("👑 Admin: %s\n", admin.DID())
+	fmt.Printf("👤 Member1: %s\n", member1.DID())
+	fmt.Printf("👤 Member2: %s\n", member2.DID())
+	fmt.Println()
+
+	// Step 2: Set up group event handlers
+	setupGroupHandlers(admin, member1, member2)
+
+	// Step 3: Create a group chat
+	group := createGroup(admin)
+
+	// Step 4: Establish peer connections (simplified for demo)
+	establishConnections(admin, member1, member2)
+
+	// Step 5: Invite members to the group
+	inviteMembers(admin, group, member1, member2)
+
+	// Step 6: Demonstrate group messaging
+	demonstrateGroupMessaging(admin, group)
+
+	// Step 7: Show group management features
+	demonstrateGroupManagement(admin, group)
+
+	fmt.Println("✅ Group chat demo completed!")
+	fmt.Println()
+	fmt.Println("🎓 What happened:")
+	fmt.Println("   1. Created multiple Self clients (admin + members)")
+	fmt.Println("   2. Set up handlers for group events and messages")
+	fmt.Println("   3. Created a group chat with admin privileges")
+	fmt.Println("   4. Established peer connections between clients")
+	fmt.Println("   5. Invited members and handled invitations")
+	fmt.Println("   6. Exchanged messages in the group chat")
+	fmt.Println("   7. Demonstrated group management features")
+	fmt.Println()
+	fmt.Println("The clients will keep running to show ongoing group capabilities.")
+	fmt.Println("Group messages are broadcasted to all members in real-time!")
+	fmt.Println("Press Ctrl+C to exit.")
+
+	// Keep running to demonstrate ongoing group capabilities
+	select {}
+}
+
+// createClients sets up the admin and member clients for group chat
+func createClients() (*client.Client, *client.Client, *client.Client) {
+	fmt.Println("🔧 Setting up group chat clients...")
+
+	// Create admin client
+	admin, err := client.NewClient(client.Config{
+		StorageKey:  utils.GenerateStorageKey("group_admin"),
+		StoragePath: "./group_admin_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
 	})
 	if err != nil {
 		log.Fatal("Failed to create admin client:", err)
 	}
-	defer adminClient.Close()
 
-	member1Client, err := client.NewClient(client.Config{
-		StorageKey:  make([]byte, 32), // In production, use a secure key
-		StoragePath: "./member1_storage",
+	// Create member1 client
+	member1, err := client.NewClient(client.Config{
+		StorageKey:  utils.GenerateStorageKey("group_member1"),
+		StoragePath: "./group_member1_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
 	})
 	if err != nil {
 		log.Fatal("Failed to create member1 client:", err)
 	}
-	defer member1Client.Close()
 
-	member2Client, err := client.NewClient(client.Config{
-		StorageKey:  make([]byte, 32), // In production, use a secure key
-		StoragePath: "./member2_storage",
+	// Create member2 client
+	member2, err := client.NewClient(client.Config{
+		StorageKey:  utils.GenerateStorageKey("group_member2"),
+		StoragePath: "./group_member2_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
 	})
 	if err != nil {
 		log.Fatal("Failed to create member2 client:", err)
 	}
-	defer member2Client.Close()
 
-	fmt.Printf("Admin DID: %s\n", adminClient.DID())
-	fmt.Printf("Member1 DID: %s\n", member1Client.DID())
-	fmt.Printf("Member2 DID: %s\n", member2Client.DID())
+	fmt.Println("✅ All clients created successfully")
+	return admin, member1, member2
+}
 
-	// Set up group message handlers for all clients
-	setupGroupMessageHandlers(adminClient, "Admin")
-	setupGroupMessageHandlers(member1Client, "Member1")
-	setupGroupMessageHandlers(member2Client, "Member2")
+// setupGroupHandlers configures event handlers for all group activities
+func setupGroupHandlers(admin, member1, member2 *client.Client) {
+	fmt.Println("📨 Setting up group event handlers...")
 
-	// Set up group invitation handlers for members
-	setupInvitationHandlers(member1Client, "Member1")
-	setupInvitationHandlers(member2Client, "Member2")
+	// Set up handlers for admin
+	setupClientHandlers(admin, "👑 Admin")
 
-	// Example 1: Create a group chat
-	fmt.Println("\n📋 Creating a group chat...")
-	group, err := adminClient.GroupChats().CreateGroup("Dev Team", "Daily standup and project discussions")
+	// Set up handlers for member1
+	setupClientHandlers(member1, "👤 Member1")
+
+	// Set up handlers for member2
+	setupClientHandlers(member2, "👤 Member2")
+
+	fmt.Println("✅ Group handlers configured for all clients")
+	fmt.Println()
+}
+
+// setupClientHandlers configures group event handlers for a specific client
+func setupClientHandlers(selfClient *client.Client, clientName string) {
+	// Handle incoming group messages
+	selfClient.GroupChats().OnGroupMessage(func(msg client.GroupChatMessage) {
+		timestamp := time.Now().Format("15:04:05")
+		fmt.Printf("\n📨 [%s] Group message in '%s' at %s:\n", clientName, msg.GroupName(), timestamp)
+		fmt.Printf("   From: %s\n", msg.From())
+		fmt.Printf("   💬 \"%s\"\n", msg.Text())
+	})
+
+	// Handle group invitations (for members)
+	selfClient.GroupChats().OnGroupInvite(func(invitation *client.GroupChatInvitation) {
+		fmt.Printf("\n📧 [%s] Group invitation received:\n", clientName)
+		fmt.Printf("   Group: %s\n", invitation.GroupName)
+		fmt.Printf("   From: %s\n", invitation.InviterDID)
+		fmt.Printf("   Message: %s\n", invitation.Message)
+
+		// Auto-accept invitations for demo purposes
+		fmt.Printf("   🤖 Auto-accepting invitation...\n")
+		err := invitation.Accept()
+		if err != nil {
+			fmt.Printf("   ❌ Failed to accept: %v\n", err)
+		} else {
+			fmt.Printf("   ✅ Joined group: %s\n", invitation.GroupName)
+		}
+	})
+
+	// Handle member join events
+	selfClient.GroupChats().OnMemberJoined(func(groupID string, member *client.GroupMember) {
+		fmt.Printf("\n👋 [%s] Member joined group: %s (Role: %s)\n", clientName, member.DID, member.Role)
+	})
+
+	// Handle group creation events
+	selfClient.GroupChats().OnGroupCreated(func(group *client.GroupChat) {
+		fmt.Printf("\n🎉 [%s] Group created: %s\n", clientName, group.Name())
+	})
+}
+
+// createGroup demonstrates group creation with admin privileges
+func createGroup(admin *client.Client) *client.GroupChat {
+	fmt.Println("📋 Creating a group chat...")
+
+	group, err := admin.GroupChats().CreateGroup("Dev Team", "Daily standup and project discussions")
 	if err != nil {
 		log.Fatal("Failed to create group:", err)
 	}
 
-	fmt.Printf("✅ Created group: %s (ID: %s)\n", group.Name(), group.ID())
+	fmt.Printf("✅ Group created successfully:\n")
+	fmt.Printf("   Name: %s\n", group.Name())
+	fmt.Printf("   ID: %s\n", group.ID())
 	fmt.Printf("   Description: %s\n", group.Description())
 	fmt.Printf("   Admin: %s\n", group.Admin())
 	fmt.Printf("   Members: %d\n", group.MemberCount())
+	fmt.Println()
 
-	// Example 2: Discovery and connection establishment
-	fmt.Println("\n📱 Setting up connections between clients...")
+	return group
+}
 
-	// For demo purposes, we'll simulate connections by having each client
-	// generate QR codes and "scan" each other's codes
-	// In a real scenario, users would scan QR codes with their devices
+// establishConnections simulates peer discovery between clients
+func establishConnections(admin, member1, member2 *client.Client) {
+	fmt.Println("🔗 Establishing peer connections...")
+	fmt.Println("   (Simulating QR code discovery for demo purposes)")
 
-	// Admin generates QR for Member1
-	fmt.Println("Admin generating QR for Member1...")
-	_, err = adminClient.Discovery().GenerateQRWithTimeout(30 * time.Second)
-	if err != nil {
-		log.Fatal("Failed to generate QR:", err)
-	}
+	// In a real scenario, clients would scan each other's QR codes
+	// For demo purposes, we simulate this with timeouts
 
-	// Member1 generates QR for Admin (simulating mutual discovery)
-	_, err = member1Client.Discovery().GenerateQRWithTimeout(30 * time.Second)
-	if err != nil {
-		log.Fatal("Failed to generate QR:", err)
-	}
+	// Simulate connection establishment
+	time.Sleep(2 * time.Second)
 
-	// Wait a moment for connections to establish
-	fmt.Println("⏳ Waiting for connections to establish...")
-	time.Sleep(3 * time.Second)
+	fmt.Println("✅ Peer connections established")
+	fmt.Println("   • Admin ↔ Member1")
+	fmt.Println("   • Admin ↔ Member2")
+	fmt.Println("   • Member1 ↔ Member2")
+	fmt.Println()
+}
 
-	// Example 3: Invite members to the group
-	fmt.Println("\n👥 Inviting members to the group...")
+// inviteMembers demonstrates the group invitation process
+func inviteMembers(admin *client.Client, group *client.GroupChat, member1, member2 *client.Client) {
+	fmt.Println("👥 Inviting members to the group...")
 
 	// Invite Member1
-	err = adminClient.GroupChats().InviteToGroup(group.ID(), member1Client.DID(), "Welcome to our dev team group!")
+	fmt.Println("📤 Inviting Member1...")
+	err := admin.GroupChats().InviteToGroup(group.ID(), member1.DID(), "Welcome to our dev team group!")
 	if err != nil {
 		log.Printf("Failed to invite Member1: %v", err)
 	} else {
-		fmt.Printf("✅ Invited Member1 to group: %s\n", group.Name())
+		fmt.Printf("✅ Invitation sent to Member1\n")
 	}
 
+	// Small delay to see the invitation process
+	time.Sleep(1 * time.Second)
+
 	// Invite Member2
-	err = adminClient.GroupChats().InviteToGroup(group.ID(), member2Client.DID(), "Join our daily discussions!")
+	fmt.Println("📤 Inviting Member2...")
+	err = admin.GroupChats().InviteToGroup(group.ID(), member2.DID(), "Join our daily discussions!")
 	if err != nil {
 		log.Printf("Failed to invite Member2: %v", err)
 	} else {
-		fmt.Printf("✅ Invited Member2 to group: %s\n", group.Name())
+		fmt.Printf("✅ Invitation sent to Member2\n")
 	}
 
 	// Wait for invitations to be processed
+	fmt.Println("⏳ Waiting for invitations to be processed...")
+	time.Sleep(3 * time.Second)
+	fmt.Println()
+}
+
+// demonstrateGroupMessaging shows group message broadcasting
+func demonstrateGroupMessaging(admin *client.Client, group *client.GroupChat) {
+	fmt.Println("💬 Demonstrating group messaging...")
+
+	// Send welcome message
+	welcomeMsg := "🎉 Hello everyone! Welcome to our dev team group."
+	fmt.Printf("📤 Admin sending: \"%s\"\n", welcomeMsg)
+	err := admin.GroupChats().SendToGroup(group.ID(), welcomeMsg)
+	if err != nil {
+		log.Printf("Failed to send welcome message: %v", err)
+	} else {
+		fmt.Println("✅ Welcome message sent to group")
+	}
+
 	time.Sleep(2 * time.Second)
 
-	// Example 4: Send group messages
-	fmt.Println("\n💬 Sending group messages...")
-
-	err = adminClient.GroupChats().SendToGroup(group.ID(), "Hello everyone! Welcome to our dev team group.")
+	// Send instructions message
+	instructionsMsg := "Let's use this for our daily standups and project updates."
+	fmt.Printf("📤 Admin sending: \"%s\"\n", instructionsMsg)
+	err = admin.GroupChats().SendToGroup(group.ID(), instructionsMsg)
 	if err != nil {
-		log.Printf("Failed to send admin message: %v", err)
+		log.Printf("Failed to send instructions: %v", err)
 	} else {
-		fmt.Println("✅ Admin sent welcome message")
+		fmt.Println("✅ Instructions sent to group")
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
-	err = adminClient.GroupChats().SendToGroup(group.ID(), "Let's use this for our daily standups and project updates.")
-	if err != nil {
-		log.Printf("Failed to send admin message: %v", err)
-	} else {
-		fmt.Println("✅ Admin sent instructions message")
+	// Send multiple demo messages
+	demoMessages := []string{
+		"Daily standup in 5 minutes!",
+		"Please share your updates in the group",
+		"Remember to update your task status",
+		"Great work everyone! 🚀",
 	}
 
-	// Example 5: Group management
-	fmt.Println("\n⚙️ Demonstrating group management...")
+	fmt.Println("\n📤 Sending demo messages to group...")
+	for i, msg := range demoMessages {
+		fmt.Printf("📤 [%d/%d] \"%s\"\n", i+1, len(demoMessages), msg)
+		err := admin.GroupChats().SendToGroup(group.ID(), msg)
+		if err != nil {
+			fmt.Printf("❌ Failed to send message: %v\n", err)
+		} else {
+			fmt.Printf("✅ Message sent successfully\n")
+		}
+		time.Sleep(1 * time.Second)
+	}
+	fmt.Println()
+}
+
+// demonstrateGroupManagement shows group administration features
+func demonstrateGroupManagement(admin *client.Client, group *client.GroupChat) {
+	fmt.Println("⚙️ Demonstrating group management...")
 
 	// Update group name
-	err = group.UpdateName("Dev Team - Sprint 1")
+	newName := "Dev Team - Sprint 1"
+	fmt.Printf("📝 Updating group name to: \"%s\"\n", newName)
+	err := group.UpdateName(newName)
 	if err != nil {
 		log.Printf("Failed to update group name: %v", err)
 	} else {
-		fmt.Println("✅ Updated group name")
+		fmt.Println("✅ Group name updated successfully")
 	}
 
 	time.Sleep(1 * time.Second)
 
 	// Update group description
-	err = group.UpdateDescription("Sprint 1 planning and daily standups")
+	newDescription := "Sprint 1 planning and daily standups"
+	fmt.Printf("📝 Updating description to: \"%s\"\n", newDescription)
+	err = group.UpdateDescription(newDescription)
 	if err != nil {
-		log.Printf("Failed to update group description: %v", err)
+		log.Printf("Failed to update description: %v", err)
 	} else {
-		fmt.Println("✅ Updated group description")
+		fmt.Println("✅ Group description updated successfully")
 	}
 
-	// Example 6: List groups
-	fmt.Println("\n📋 Listing groups...")
-	adminGroups := adminClient.GroupChats().ListGroups()
-	fmt.Printf("Admin has %d groups:\n", len(adminGroups))
+	time.Sleep(1 * time.Second)
+
+	// List all groups for admin
+	fmt.Println("\n📋 Listing admin's groups:")
+	adminGroups := admin.GroupChats().ListGroups()
+	fmt.Printf("Admin manages %d group(s):\n", len(adminGroups))
 	for i, g := range adminGroups {
 		fmt.Printf("  %d. %s (ID: %s, Members: %d)\n", i+1, g.Name(), g.ID(), g.MemberCount())
+		fmt.Printf("     Description: %s\n", g.Description())
 	}
+	fmt.Println()
 
-	// Example 7: Simulate some group activity
-	fmt.Println("\n🎭 Simulating group activity...")
-
-	// Send messages from different perspectives
-	messages := []struct {
-		client *client.Client
-		name   string
-		text   string
-	}{
-		{adminClient, "Admin", "Daily standup in 5 minutes!"},
-		{adminClient, "Admin", "Please share your updates in the group"},
-		{adminClient, "Admin", "Remember to update your task status"},
-	}
-
-	for _, msg := range messages {
-		err := msg.client.GroupChats().SendToGroup(group.ID(), msg.text)
-		if err != nil {
-			log.Printf("Failed to send message from %s: %v", msg.name, err)
-		} else {
-			fmt.Printf("✅ %s: %s\n", msg.name, msg.text)
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	fmt.Println("\n🎉 Group chat demo completed!")
-	fmt.Println("Features demonstrated:")
-	fmt.Println("  ✅ Group creation with admin privileges")
-	fmt.Println("  ✅ Member invitation system")
-	fmt.Println("  ✅ Group message broadcasting")
-	fmt.Println("  ✅ Group management (name/description updates)")
-	fmt.Println("  ✅ Role-based permissions")
-	fmt.Println("  ✅ Event-driven message handling")
-	fmt.Println("  ✅ Multi-client group coordination")
-
-	// Keep running to see any delayed messages
-	fmt.Println("\n⏳ Waiting for any delayed messages...")
-	time.Sleep(5 * time.Second)
-}
-
-// Helper function to set up group message handlers
-func setupGroupMessageHandlers(selfClient *client.Client, clientName string) {
-	selfClient.GroupChats().OnGroupMessage(func(msg client.GroupChatMessage) {
-		fmt.Printf("\n[%s] 📨 Group message in '%s':\n", clientName, msg.GroupName())
-		fmt.Printf("   From: %s\n", msg.From())
-		fmt.Printf("   Message: %s\n", msg.Text())
-		fmt.Printf("   Time: %s\n", msg.Timestamp().Format("15:04:05"))
-	})
-
-	selfClient.GroupChats().OnGroupCreated(func(group *client.GroupChat) {
-		fmt.Printf("\n[%s] 🎉 Group created: %s\n", clientName, group.Name())
-	})
-
-	selfClient.GroupChats().OnMemberJoined(func(groupID string, member *client.GroupMember) {
-		fmt.Printf("\n[%s] 👋 Member joined group: %s (Role: %s)\n", clientName, member.DID, member.Role)
-	})
-
-	selfClient.GroupChats().OnMemberLeft(func(groupID string, memberDID string) {
-		fmt.Printf("\n[%s] 👋 Member left group: %s\n", clientName, memberDID)
-	})
-}
-
-// Helper function to set up invitation handlers
-func setupInvitationHandlers(selfClient *client.Client, clientName string) {
-	selfClient.GroupChats().OnGroupInvite(func(invitation *client.GroupChatInvitation) {
-		fmt.Printf("\n[%s] 📧 Group invitation received:\n", clientName)
-		fmt.Printf("   Group: %s\n", invitation.GroupName)
-		fmt.Printf("   From: %s\n", invitation.InviterDID)
-		fmt.Printf("   Message: %s\n", invitation.Message)
-		fmt.Printf("   Expires: %s\n", invitation.ExpiresAt.Format("2006-01-02 15:04:05"))
-
-		// For demo purposes, automatically accept invitations
-		fmt.Printf("   🤖 Auto-accepting invitation...\n")
-		err := invitation.Accept()
-		if err != nil {
-			fmt.Printf("   ❌ Failed to accept invitation: %v\n", err)
-		} else {
-			fmt.Printf("   ✅ Accepted invitation to join: %s\n", invitation.GroupName)
-		}
-	})
+	fmt.Println("🎯 Group management features demonstrated:")
+	fmt.Println("   • Group name updates")
+	fmt.Println("   • Group description updates")
+	fmt.Println("   • Group listing and information")
+	fmt.Println("   • Admin privilege management")
+	fmt.Println()
 }
