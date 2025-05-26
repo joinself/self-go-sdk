@@ -73,7 +73,7 @@ func main() {
 func createClients() (*client.Client, *client.Client) {
 	fmt.Println("🔧 Setting up clients...")
 
-	issuer, err := client.NewClient(client.Config{
+	issuer, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("multi_issuer"),
 		StoragePath: "./multi_issuer_storage",
 		Environment: client.Sandbox,
@@ -83,7 +83,7 @@ func createClients() (*client.Client, *client.Client) {
 		log.Fatal("Failed to create issuer:", err)
 	}
 
-	holder, err := client.NewClient(client.Config{
+	holder, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("multi_holder"),
 		StoragePath: "./multi_holder_storage",
 		Environment: client.Sandbox,

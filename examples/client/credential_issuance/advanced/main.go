@@ -24,7 +24,7 @@
 // • Request/response handling workflows
 //
 // 🔧 KEY SDK COMPONENTS SHOWCASED:
-// • client.NewClient() - Client initialization and configuration
+// • client.New() - Client initialization and configuration
 // • NewCredentialBuilder() - Fluent API for credential construction
 // • CreateAsset() - Evidence and file attachment management
 // • CreatePresentation() - Verifiable presentation creation
@@ -139,7 +139,7 @@ func setupClients() (*client.Client, *client.Client) {
 	// 🏢 ISSUER CLIENT: Creates and signs verifiable credentials
 	// The issuer client has the authority to create credentials for subjects
 	fmt.Println("🏢 Creating issuer client...")
-	issuerClient, err := client.NewClient(client.Config{
+	issuerClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("issuer"), // Unique key for issuer storage encryption
 		StoragePath: issuerStorageDir,                   // Dedicated storage directory for issuer
 		Environment: client.Sandbox,                     // Use Sandbox environment for development
@@ -152,7 +152,7 @@ func setupClients() (*client.Client, *client.Client) {
 	// 👤 HOLDER CLIENT: Receives and stores verifiable credentials
 	// The holder client manages credentials issued by various issuers
 	fmt.Println("👤 Creating holder client...")
-	holderClient, err := client.NewClient(client.Config{
+	holderClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("holder"), // Unique key for holder storage encryption
 		StoragePath: holderStorageDir,                   // Dedicated storage directory for holder
 		Environment: client.Sandbox,                     // Use Sandbox environment for development
@@ -598,7 +598,7 @@ func printSummary() {
 	fmt.Println("   • Request/response handler configuration")
 	fmt.Println()
 	fmt.Println("🔧 KEY SDK COMPONENTS UTILIZED:")
-	fmt.Println("   • client.NewClient() - Client initialization and configuration")
+	fmt.Println("   • client.New() - Client initialization and configuration")
 	fmt.Println("   • NewCredentialBuilder() - Fluent API for credential construction")
 	fmt.Println("   • CreateAsset() - Evidence and file attachment management")
 	fmt.Println("   • CreatePresentation() - Verifiable presentation packaging")

@@ -77,7 +77,7 @@ func main() {
 func createIntegrationClient() *client.Client {
 	fmt.Println("🔧 Setting up integration client...")
 
-	integrationClient, err := client.NewClient(client.Config{
+	integrationClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("integration_demo"),
 		StoragePath: "./integration_demo_storage",
 		Environment: client.Sandbox,

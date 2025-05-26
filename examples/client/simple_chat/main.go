@@ -74,7 +74,7 @@ func main() {
 func createClient() *client.Client {
 	fmt.Println("🔧 Setting up chat client...")
 
-	chatClient, err := client.NewClient(client.Config{
+	chatClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("simple_chat"),
 		StoragePath: "./simple_chat_storage",
 		Environment: client.Sandbox,

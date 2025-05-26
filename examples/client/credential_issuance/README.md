@@ -204,7 +204,7 @@ After completing all examples, you'll understand:
 ## 🔧 Key SDK Components Covered
 
 ### Client Management
-- `client.NewClient()` - Client initialization
+- `client.New()` - Client initialization
 - `client.Config` - Configuration options
 - Storage and environment setup
 

@@ -80,7 +80,7 @@ func main() {
 func createPairingClient() *client.Client {
 	fmt.Println("🔧 Setting up pairing client...")
 
-	pairingClient, err := client.NewClient(client.Config{
+	pairingClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("pairing_demo"),
 		StoragePath: "./pairing_demo_storage",
 		Environment: client.Sandbox,

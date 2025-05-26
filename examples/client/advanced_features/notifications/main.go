@@ -82,7 +82,7 @@ func main() {
 func createNotificationClient() *client.Client {
 	fmt.Println("🔧 Setting up notification client...")
 
-	notificationClient, err := client.NewClient(client.Config{
+	notificationClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("notification_demo"),
 		StoragePath: "./notification_demo_storage",
 		Environment: client.Sandbox,

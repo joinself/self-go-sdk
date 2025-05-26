@@ -59,7 +59,7 @@ func main() {
 func createDiscoveryClient() *client.Client {
 	fmt.Println("🔧 Setting up discovery client...")
 
-	discoveryClient, err := client.NewClient(client.Config{
+	discoveryClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("discovery_demo"),
 		StoragePath: "./discovery_demo_storage",
 		Environment: client.Sandbox,

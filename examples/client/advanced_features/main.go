@@ -106,7 +106,7 @@ func main() {
 func createClient() *client.Client {
 	fmt.Println("🔧 Setting up overview client...")
 
-	client, err := client.NewClient(client.Config{
+	client, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("advanced_overview"),
 		StoragePath: "./advanced_overview_storage",
 		Environment: client.Sandbox,

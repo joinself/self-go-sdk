@@ -32,8 +32,8 @@ type Client struct {
 	pairing       *Pairing
 }
 
-// NewClient creates a new Self client
-func NewClient(config Config) (*Client, error) {
+// New creates a new Self client
+func New(config Config) (*Client, error) {
 	if err := config.validate(); err != nil {
 		return nil, err
 	}

@@ -25,7 +25,7 @@ import (
 
 func main() {
     // Create a new Self client
-    selfClient, err := client.NewClient(client.Config{
+    selfClient, err := client.New(client.Config{
         StorageKey:  make([]byte, 32), // Use a secure key in production
         StoragePath: "./my_app_storage",
         Environment: client.Sandbox,   // or client.Production
@@ -514,7 +514,7 @@ if err != nil {
 
 ### Client
 
-- `NewClient(config Config) (*Client, error)` - Create a new client
+- `New(config Config) (*Client, error)` - Create a new client
 - `DID() string` - Get the client's DID
 - `Discovery() *Discovery` - Access discovery functionality
 - `Chat() *Chat` - Access chat functionality

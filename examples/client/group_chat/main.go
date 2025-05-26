@@ -92,7 +92,7 @@ func createClients() (*client.Client, *client.Client, *client.Client) {
 	fmt.Println("🔧 Setting up group chat clients...")
 
 	// Create admin client
-	admin, err := client.NewClient(client.Config{
+	admin, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("group_admin"),
 		StoragePath: "./group_admin_storage",
 		Environment: client.Sandbox,
@@ -103,7 +103,7 @@ func createClients() (*client.Client, *client.Client, *client.Client) {
 	}
 
 	// Create member1 client
-	member1, err := client.NewClient(client.Config{
+	member1, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("group_member1"),
 		StoragePath: "./group_member1_storage",
 		Environment: client.Sandbox,
@@ -114,7 +114,7 @@ func createClients() (*client.Client, *client.Client, *client.Client) {
 	}
 
 	// Create member2 client
-	member2, err := client.NewClient(client.Config{
+	member2, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("group_member2"),
 		StoragePath: "./group_member2_storage",
 		Environment: client.Sandbox,

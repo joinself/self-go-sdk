@@ -78,7 +78,7 @@ func main() {
 func createProductionClient() *client.Client {
 	fmt.Println("🔧 Setting up production client...")
 
-	productionClient, err := client.NewClient(client.Config{
+	productionClient, err := client.New(client.Config{
 		StorageKey:  utils.GenerateStorageKey("production_demo"),
 		StoragePath: "./production_demo_storage",
 		Environment: client.Sandbox,
