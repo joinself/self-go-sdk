@@ -24,12 +24,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/joinself/self-go-sdk/client"
+	"github.com/joinself/self-go-sdk/examples/utils"
 )
 
 const (
@@ -51,10 +49,10 @@ func main() {
 	// Create a new Self client with minimal configuration
 	// The client handles all cryptographic operations, storage, and networking
 	selfClient, err := client.NewClient(client.Config{
-		StorageKey:  generateStorageKey(), // Secure key for encrypting local storage
-		StoragePath: storageDir,           // Directory for storing account state
-		Environment: client.Sandbox,       // Use Sandbox for development/testing
-		LogLevel:    client.LogInfo,       // Show informational messages
+		StorageKey:  utils.GenerateStorageKey(""), // Secure key for encrypting local storage
+		StoragePath: storageDir,                   // Directory for storing account state
+		Environment: client.Sandbox,               // Use Sandbox for development/testing
+		LogLevel:    client.LogInfo,               // Show informational messages
 	})
 	if err != nil {
 		log.Fatal("❌ Failed to create Self client:", err)
@@ -70,7 +68,7 @@ func main() {
 	setupChatHandlers(selfClient)
 
 	// Set up graceful shutdown handling
-	ctx, cancel := setupGracefulShutdown()
+	ctx, cancel := utils.SetupGracefulShutdown()
 	defer cancel()
 
 	// 🔗 PEER DISCOVERY: Establish secure connection using QR code
@@ -205,30 +203,4 @@ func discoverPeer(selfClient *client.Client, ctx context.Context) (*client.Peer,
 	fmt.Println()
 
 	return peer, nil
-}
-
-// setupGracefulShutdown configures signal handling for clean application shutdown
-func setupGracefulShutdown() (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		fmt.Println("\n🛑 Shutdown signal received...")
-		cancel()
-	}()
-
-	return ctx, cancel
-}
-
-// generateStorageKey creates a storage key for encrypting local account data
-// In production, this should be a securely generated and stored key
-func generateStorageKey() []byte {
-	// For demo purposes, we use a simple key
-	// In production, use crypto/rand or load from secure storage
-	key := make([]byte, 32)
-	copy(key, []byte("demo-key-replace-in-production!!"))
-	return key
 }

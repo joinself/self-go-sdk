@@ -8,13 +8,14 @@ import (
 
 	"github.com/joinself/self-go-sdk/client"
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/examples/utils"
 	"github.com/joinself/self-go-sdk/message"
 )
 
 func main() {
 	// Create a new Self client
 	selfClient, err := client.NewClient(client.Config{
-		StorageKey:  make([]byte, 32), // In production, use a secure key
+		StorageKey:  utils.GenerateStorageKey(""), // In production, use a secure key
 		StoragePath: "./credentials_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
@@ -67,7 +68,7 @@ func main() {
 	// Set up credential response handlers
 	selfClient.Credentials().OnPresentationResponse(func(resp *client.CredentialResponse) {
 		fmt.Printf("\n📨 Received credential presentation response from: %s\n", resp.From())
-		fmt.Printf("   Status: %s\n", responseStatusToString(resp.Status()))
+		fmt.Printf("   Status: %s\n", utils.ResponseStatusToString(resp.Status()))
 		fmt.Printf("   Presentations: %d\n", len(resp.Presentations()))
 
 		// Process presentations
@@ -81,7 +82,7 @@ func main() {
 
 	selfClient.Credentials().OnVerificationResponse(func(resp *client.CredentialResponse) {
 		fmt.Printf("\n🔐 Received credential verification response from: %s\n", resp.From())
-		fmt.Printf("   Status: %s\n", responseStatusToString(resp.Status()))
+		fmt.Printf("   Status: %s\n", utils.ResponseStatusToString(resp.Status()))
 		fmt.Printf("   Credentials: %d\n", len(resp.Credentials()))
 
 		// Process credentials
@@ -167,7 +168,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("   ❌ Request failed or timed out: %v\n", err)
 		} else {
-			fmt.Printf("   ✅ Received response with status: %s\n", responseStatusToString(resp.Status()))
+			fmt.Printf("   ✅ Received response with status: %s\n", utils.ResponseStatusToString(resp.Status()))
 		}
 	}
 
@@ -192,7 +193,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("   ❌ Request failed or timed out: %v\n", err)
 		} else {
-			fmt.Printf("   ✅ Received response with status: %s\n", responseStatusToString(resp.Status()))
+			fmt.Printf("   ✅ Received response with status: %s\n", utils.ResponseStatusToString(resp.Status()))
 		}
 	}
 
@@ -220,30 +221,5 @@ func operatorToString(op message.ComparisonOperator) string {
 		return "<="
 	default:
 		return "unknown"
-	}
-}
-
-func responseStatusToString(status message.ResponseStatus) string {
-	switch status {
-	case message.ResponseStatusAccepted:
-		return "Accepted"
-	case message.ResponseStatusOk:
-		return "OK"
-	case message.ResponseStatusCreated:
-		return "Created"
-	case message.ResponseStatusBadRequest:
-		return "Bad Request"
-	case message.ResponseStatusUnauthorized:
-		return "Unauthorized"
-	case message.ResponseStatusForbidden:
-		return "Forbidden"
-	case message.ResponseStatusNotFound:
-		return "Not Found"
-	case message.ResponseStatusNotAcceptable:
-		return "Not Acceptable"
-	case message.ResponseStatusConflict:
-		return "Conflict"
-	default:
-		return "Unknown"
 	}
 }
