@@ -30,45 +30,33 @@ cd simple_chat && go run main.go
 ### 🌱 New to Self SDK? Start Here!
 
 **Path 1: Messaging Basics** (30-45 minutes)
-```
-1. simple_chat/          (🟢 4/10) → Learn secure messaging
-2. discovery_subscription/ (🟢 4/10) → Find and connect to peers
-3. group_chat/           (🟡 5/10) → Multi-party communication  
-```
+1. **[Simple Chat](simple_chat/)** (🟢 4/10) → Learn secure messaging
+2. **[Discovery Subscription](discovery_subscription/)** (🟢 4/10) → Find and connect to peers
+3. **[Group Chat](group_chat/)** (🟡 5/10) → Multi-party communication
 
 **Path 2: Credential Fundamentals** (30-45 minutes)
-```
-1. credential_issuance/   (🟢 Beginner) → Create digital credentials
-2. credentials_exchange/  (🟢 Beginner) → Share and verify credentials
-```
+1. **[Credential Issuance](credential_issuance/)** (🟢 Beginner) → Create digital credentials
+2. **[Credential Exchange](credentials_exchange/)** (🟢 Beginner) → Share and verify credentials
 
 ### 🚀 Ready for Advanced Features?
 
 **Path 3: Production Applications** (60-90 minutes)
-```
-1. advanced_features/notifications/     (🟡 4/10) → User engagement
-2. advanced_features/storage/          (🟠 5/10) → Data persistence
-3. advanced_features/pairing/          (🟠 5/10) → Multi-device sync
-4. advanced_features/production_patterns/ (🟠 6/10) → Real-world patterns
-5. advanced_features/integration/      (🔴 7/10) → Complete workflows
-```
+1. **[Notifications](advanced_features/notifications/)** (🟡 4/10) → User engagement
+2. **[Storage](advanced_features/storage/)** (🟠 5/10) → Data persistence
+3. **[Pairing](advanced_features/pairing/)** (🟠 5/10) → Multi-device sync
+4. **[Production Patterns](advanced_features/production_patterns/)** (🟠 6/10) → Real-world patterns
+5. **[Integration](advanced_features/integration/)** (🔴 7/10) → Complete workflows
 
 ### 🎯 Goal-Oriented Learning
 
 **I want to build a chat app:**
-```
-simple_chat/ → group_chat/ → advanced_features/storage/ → advanced_features/notifications/
-```
+1. **[Simple Chat](simple_chat/)** → **[Group Chat](group_chat/)** → **[Storage](advanced_features/storage/)** → **[Notifications](advanced_features/notifications/)**
 
 **I want to work with credentials:**
-```
-credential_issuance/ → credentials_exchange/ → advanced_features/storage/
-```
+1. **[Credential Issuance](credential_issuance/)** → **[Credential Exchange](credentials_exchange/)** → **[Storage](advanced_features/storage/)**
 
 **I want production-ready patterns:**
-```
-advanced_features/notifications/ → storage/ → production_patterns/ → integration/
-```
+1. **[Notifications](advanced_features/notifications/)** → **[Storage](advanced_features/storage/)** → **[Production Patterns](advanced_features/production_patterns/)** → **[Integration](advanced_features/integration/)**
 
 ## 📁 All Examples Overview
 
