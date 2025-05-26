@@ -220,10 +220,19 @@ Each example can be customized for your specific use case:
 
 After completing these examples:
 
-1. **Explore the credential issuance examples** in `../credential_issuance/`
-2. **Review the Self SDK documentation** for advanced features
-3. **Build your own credential exchange application**
-4. **Integrate with existing identity management systems**
+1. **🎓 Explore credential issuance** in `../credential_issuance/` - Learn how to create the credentials you're exchanging
+2. **📖 Review the Self SDK documentation** for advanced features
+3. **🏗️ Build your own credential exchange application**
+4. **🔗 Integrate with existing identity management systems**
+5. **🎯 Combine issuance and exchange** - Create end-to-end credential workflows
+
+### 🔄 Credential Lifecycle
+
+Understanding the complete credential lifecycle:
+- **Issuance** (`../credential_issuance/`) - Creating and signing credentials
+- **Exchange** (this tutorial) - Requesting and sharing credentials  
+- **Verification** - Validating credential authenticity and claims
+- **Revocation** - Managing credential lifecycle and updates
 
 ## 🤝 Contributing
 
