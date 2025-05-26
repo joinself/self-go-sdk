@@ -15,6 +15,7 @@ cd simple_chat && go run main.go
 
 | I want to... | Go here | Complexity |
 |--------------|---------|------------|
+| 🔗 **Connect clients** | [`connection/basic/`](connection/basic/) | 🟢 Beginner |
 | 💬 **Send messages** | [`simple_chat/`](simple_chat/) | 🟢 Beginner |
 | 🆔 **Create credentials** | [`credential_issuance/`](credential_issuance/) | 🟢 Beginner |
 | 🔄 **Share credentials** | [`credentials_exchange/`](credentials_exchange/) | 🟢 Beginner |
@@ -29,10 +30,11 @@ cd simple_chat && go run main.go
 
 ### 🌱 New to Self SDK? Start Here!
 
-**Path 1: Messaging Basics** (30-45 minutes)
-1. **[Simple Chat](simple_chat/)** (🟢 4/10) → Learn secure messaging
-2. **[Discovery Subscription](discovery_subscription/)** (🟢 4/10) → Find and connect to peers
-3. **[Group Chat](group_chat/)** (🟡 5/10) → Multi-party communication
+**Path 1: Messaging Basics** (45-60 minutes)
+1. **[Connection](connection/basic/)** (🟢 3/10) → Establish secure connections
+2. **[Simple Chat](simple_chat/)** (🟢 4/10) → Learn secure messaging
+3. **[Discovery Subscription](discovery_subscription/)** (🟢 4/10) → Find and connect to peers
+4. **[Group Chat](group_chat/)** (🟡 5/10) → Multi-party communication
 
 **Path 2: Credential Fundamentals** (30-45 minutes)
 1. **[Credential Issuance](credential_issuance/)** (🟢 Beginner) → Create digital credentials
@@ -50,7 +52,7 @@ cd simple_chat && go run main.go
 ### 🎯 Goal-Oriented Learning
 
 **I want to build a chat app:**
-1. **[Simple Chat](simple_chat/)** → **[Group Chat](group_chat/)** → **[Storage](advanced_features/storage/)** → **[Notifications](advanced_features/notifications/)**
+1. **[Connection](connection/basic/)** → **[Simple Chat](simple_chat/)** → **[Group Chat](group_chat/)** → **[Storage](advanced_features/storage/)** → **[Notifications](advanced_features/notifications/)**
 
 **I want to work with credentials:**
 1. **[Credential Issuance](credential_issuance/)** → **[Credential Exchange](credentials_exchange/)** → **[Storage](advanced_features/storage/)**
@@ -64,6 +66,7 @@ cd simple_chat && go run main.go
 
 | Example | What it teaches | Time | Key concepts |
 |---------|----------------|------|--------------|
+| **[Connection](connection/basic/)** | Establishing client connections | 15 min | Programmatic connections, QR discovery, troubleshooting |
 | **[Simple Chat](simple_chat/)** | Basic secure messaging | 15 min | P2P messaging, QR discovery, encryption |
 | **[Credential Issuance](credential_issuance/)** | Creating digital credentials | 20 min | Credential creation, signing, claims |
 | **[Credential Exchange](credentials_exchange/)** | Sharing credentials | 20 min | Credential requests, verification, sharing |
@@ -95,6 +98,7 @@ cd simple_chat && go run main.go
 <details>
 <summary><strong>💬 Messaging & Communication</strong></summary>
 
+- **[Connection](connection/basic/)** - Establishing secure client connections
 - **[Simple Chat](simple_chat/)** - 1-to-1 secure messaging
 - **[Group Chat](group_chat/)** - Multi-party group communication
 - **[Discovery Subscription](discovery_subscription/)** - Finding and connecting to peers
@@ -150,7 +154,7 @@ cd advanced_features/integration && go run main.go  # See full integration
 ## 🎯 Choose Your Adventure
 
 ### 👋 "I'm completely new to Self SDK"
-**Start here:** [`simple_chat/`](simple_chat/) → [`credential_issuance/`](credential_issuance/)
+**Start here:** [`connection/basic/`](connection/basic/) → [`simple_chat/`](simple_chat/) → [`credential_issuance/`](credential_issuance/)
 
 ### 💼 "I want to build a real application"
 **Start here:** [`advanced_features/notifications/`](advanced_features/notifications/) → [`advanced_features/storage/`](advanced_features/storage/) → [`advanced_features/integration/`](advanced_features/integration/)

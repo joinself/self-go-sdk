@@ -6,6 +6,7 @@ The `client` package provides a high-level, easy-to-use interface for the Self S
 
 - **Simplified Configuration**: Minimal setup with sensible defaults
 - **Automatic Connection Management**: Handles discovery, welcome, and key package events automatically
+- **Programmatic Connections**: Direct peer-to-peer connections without QR codes
 - **Event-Driven Architecture**: Simple callback registration for messages, discovery, and credentials
 - **Request-Response Tracking**: Automatic handling of request-response matching
 - **Subscription Support**: Listen for discovery responses from multiple QR codes
@@ -83,6 +84,87 @@ for i := 0; i < 3; i++ {
     qrCode, _ := qr.Unicode()
     fmt.Printf("QR Code #%d:\n%s\n", i+1, qrCode)
 }
+```
+
+### Programmatic Connections
+
+The Connection component allows you to establish direct peer-to-peer connections without requiring QR code scanning. This is particularly useful for demos, testing, and scenarios where both clients are controlled programmatically.
+
+#### Connect Two Clients Directly
+
+```go
+// Create two clients
+client1, err := client.New(client.Config{
+    StorageKey:  make([]byte, 32),
+    StoragePath: "./client1_storage",
+    Environment: client.Sandbox,
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+client2, err := client.New(client.Config{
+    StorageKey:  make([]byte, 32),
+    StoragePath: "./client2_storage", 
+    Environment: client.Sandbox,
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+// Establish connection programmatically
+err = client.ConnectTwoClients(client1, client2)
+if err != nil {
+    log.Printf("Connection failed: %v", err)
+} else {
+    fmt.Println("Clients connected successfully!")
+    // Now they can exchange messages and credentials
+}
+```
+
+#### Connect to a Specific Peer
+
+```go
+// Connect to a peer by their DID
+result, err := selfClient.Connection().ConnectToPeer(peerDID)
+if err != nil {
+    log.Printf("Connection attempt failed: %v", err)
+    return
+}
+
+if result.Connected {
+    fmt.Printf("Successfully connected to %s\n", result.PeerDID)
+} else {
+    fmt.Printf("Failed to connect to %s: %v\n", result.PeerDID, result.Error)
+}
+```
+
+#### Connection with Custom Timeout
+
+```go
+// Connect with a custom timeout
+result, err := selfClient.Connection().ConnectToPeerWithTimeout(peerDID, 60*time.Second)
+if err != nil {
+    log.Printf("Connection error: %v", err)
+    return
+}
+
+fmt.Printf("Connection result: %+v\n", result)
+```
+
+#### Check Connection Status
+
+```go
+// Check if connected to a specific peer
+if selfClient.Connection().IsConnectedTo(peerDID) {
+    fmt.Println("Already connected to peer")
+} else {
+    fmt.Println("Not connected to peer")
+}
+
+// List all connected peers
+peers := selfClient.Connection().ListConnectedPeers()
+fmt.Printf("Connected to %d peers: %v\n", len(peers), peers)
 ```
 
 ### Chat Messaging

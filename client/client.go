@@ -30,6 +30,7 @@ type Client struct {
 	notifications *Notifications
 	storage       *Storage
 	pairing       *Pairing
+	connection    *Connection
 }
 
 // New creates a new Self client
@@ -74,6 +75,7 @@ func New(config Config) (*Client, error) {
 	client.notifications = newNotifications(client)
 	client.storage = newStorage(client)
 	client.pairing = newPairing(client)
+	client.connection = newConnection(client)
 
 	return client, nil
 }
@@ -124,6 +126,11 @@ func (c *Client) Pairing() *Pairing {
 	return c.pairing
 }
 
+// Connection returns the connection component
+func (c *Client) Connection() *Connection {
+	return c.connection
+}
+
 // Close closes the client and releases resources
 func (c *Client) Close() error {
 	c.mu.Lock()
@@ -157,6 +164,9 @@ func (c *Client) Close() error {
 	if c.pairing != nil {
 		c.pairing.close()
 	}
+	if c.connection != nil {
+		c.connection.close()
+	}
 
 	// Note: The account doesn't have a close method in the current SDK
 	// This might need to be added to the underlying SDK
@@ -189,6 +199,9 @@ func (c *Client) onConnect(account *account.Account) {
 	if c.pairing != nil {
 		c.pairing.onConnect()
 	}
+	if c.connection != nil {
+		c.connection.onConnect()
+	}
 }
 
 func (c *Client) onDisconnect(account *account.Account, err error) {
@@ -213,6 +226,9 @@ func (c *Client) onDisconnect(account *account.Account, err error) {
 	}
 	if c.pairing != nil {
 		c.pairing.onDisconnect(err)
+	}
+	if c.connection != nil {
+		c.connection.onDisconnect(err)
 	}
 }
 
@@ -249,6 +265,9 @@ func (c *Client) onWelcome(account *account.Account, wlc *event.Welcome) {
 	if c.pairing != nil {
 		c.pairing.onWelcome(wlc.FromAddress(), groupAddress)
 	}
+	if c.connection != nil {
+		c.connection.onWelcome(wlc.FromAddress(), groupAddress)
+	}
 }
 
 func (c *Client) onKeyPackage(account *account.Account, kp *event.KeyPackage) {
@@ -280,6 +299,9 @@ func (c *Client) onKeyPackage(account *account.Account, kp *event.KeyPackage) {
 	}
 	if c.pairing != nil {
 		c.pairing.onKeyPackage(kp.FromAddress())
+	}
+	if c.connection != nil {
+		c.connection.onKeyPackage(kp.FromAddress())
 	}
 }
 
@@ -375,6 +397,9 @@ func (c *Client) handleIntroduction(msg *event.Message) {
 	}
 	if c.pairing != nil {
 		c.pairing.onIntroduction(msg.FromAddress(), len(tokens))
+	}
+	if c.connection != nil {
+		c.connection.onIntroduction(msg.FromAddress(), len(tokens))
 	}
 }
 

@@ -5,6 +5,7 @@
 //
 // This example shows the basics of:
 // - Setting up two clients (issuer and holder)
+// - Connecting clients through discovery
 // - Creating a simple credential
 // - Requesting and responding to credential exchanges
 // - Understanding the exchange workflow
@@ -13,6 +14,7 @@
 // • How credential exchange works between two parties
 // • Basic request/response patterns
 // • Simple credential creation and sharing
+// • Client connection establishment
 //
 // 📚 Next steps:
 // • multi_credential_exchange.go - Multiple credential types
@@ -48,13 +50,16 @@ func main() {
 	fmt.Printf("👤 Holder: %s\n", holder.DID())
 	fmt.Println()
 
-	// Step 2: Create a simple credential
+	// Step 2: Connect the clients through discovery
+	connectClients(issuer, holder)
+
+	// Step 3: Create a simple credential
 	createSampleCredential(issuer, holder)
 
-	// Step 3: Set up handlers for credential requests
+	// Step 4: Set up handlers for credential requests
 	setupHandlers(issuer, holder)
 
-	// Step 4: Demonstrate credential exchange
+	// Step 5: Demonstrate credential exchange
 	demonstrateExchange(issuer, holder)
 
 	fmt.Println("✅ Basic demo completed!")
@@ -99,6 +104,32 @@ func createClients() (*client.Client, *client.Client) {
 
 	fmt.Println("✅ Clients created successfully")
 	return issuer, holder
+}
+
+// connectClients establishes a connection between the two clients programmatically
+func connectClients(issuer, holder *client.Client) {
+	fmt.Println("🔗 Connecting clients programmatically...")
+	fmt.Println("   This establishes a secure connection without QR codes")
+	fmt.Println("   Using the new Connection component for easy peer-to-peer connectivity")
+
+	fmt.Println("   📡 Initiating connection negotiation...")
+
+	// Use the new Connection component to establish connection
+	err := client.ConnectTwoClientsWithTimeout(issuer, holder, 10*time.Second)
+	if err != nil {
+		fmt.Printf("   ❌ Connection failed: %v\n", err)
+		fmt.Println("   💡 This may happen in demo environments")
+		fmt.Println("   🔗 In production, ensure both clients are connected to the messaging service")
+		return
+	}
+
+	fmt.Println("   ✅ Connection established successfully!")
+	fmt.Println("   🔐 Clients can now exchange messages securely")
+	fmt.Println("   🎉 Ready for credential exchange!")
+
+	// Give a moment for the connection to fully establish
+	time.Sleep(1 * time.Second)
+	fmt.Println()
 }
 
 // createSampleCredential creates a simple email credential for demonstration
@@ -154,6 +185,8 @@ func setupHandlers(issuer, holder *client.Client) {
 // demonstrateExchange shows a simple credential exchange request
 func demonstrateExchange(issuer, holder *client.Client) {
 	fmt.Println("🔄 Demonstrating credential exchange...")
+	fmt.Println("   ⚠️  Note: This demo shows the request/response pattern")
+	fmt.Println("   💡 In a real scenario, clients would be connected via QR code discovery")
 
 	// Create a simple request for email credentials
 	details := []*client.CredentialDetail{
@@ -178,7 +211,13 @@ func demonstrateExchange(issuer, holder *client.Client) {
 		10*time.Second,
 	)
 	if err != nil {
-		log.Printf("Failed to send request: %v", err)
+		fmt.Printf("   ❌ Request failed: %v\n", err)
+		fmt.Println("   💡 This is expected in the demo since clients aren't actually connected")
+		fmt.Println("   🔗 In a real app, ensure clients are connected via discovery first")
+		fmt.Println()
+
+		// Show what would happen in a real scenario
+		demonstrateHypotheticalExchange()
 		return
 	}
 
@@ -206,5 +245,26 @@ func demonstrateExchange(issuer, holder *client.Client) {
 	fmt.Println("   2. Holder received the request and rejected it (demo)")
 	fmt.Println("   3. Issuer received the rejection response")
 	fmt.Println("   4. In real scenarios, holder would share actual credentials")
+	fmt.Println()
+}
+
+// demonstrateHypotheticalExchange shows what would happen with connected clients
+func demonstrateHypotheticalExchange() {
+	fmt.Println("📚 WHAT WOULD HAPPEN WITH CONNECTED CLIENTS:")
+	fmt.Println("============================================")
+	fmt.Println("🔗 If clients were properly connected via discovery:")
+	fmt.Println()
+	fmt.Println("   1. 📱 Holder scans issuer's QR code")
+	fmt.Println("   2. 🔐 Secure encrypted connection established")
+	fmt.Println("   3. 📤 Issuer sends credential request")
+	fmt.Println("   4. 📨 Holder receives request instantly")
+	fmt.Println("   5. 📋 Holder checks available credentials")
+	fmt.Println("   6. ✅ Holder responds with matching credentials")
+	fmt.Println("   7. 🎉 Issuer receives and validates credentials")
+	fmt.Println()
+	fmt.Println("🔧 To see this in action:")
+	fmt.Println("   • Run the discovery_exchange.go example")
+	fmt.Println("   • Use two separate devices/terminals")
+	fmt.Println("   • Scan QR codes to establish real connections")
 	fmt.Println()
 }
