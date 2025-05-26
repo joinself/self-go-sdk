@@ -49,13 +49,16 @@ func main() {
 	fmt.Printf("👤 Holder: %s\n", holder.DID())
 	fmt.Println()
 
-	// Step 2: Create multiple types of credentials
+	// Step 2: Connect the clients
+	connectClients(issuer, holder)
+
+	// Step 3: Create multiple types of credentials
 	createMultipleCredentials(issuer, holder)
 
-	// Step 3: Set up handlers for multi-credential requests
+	// Step 4: Set up handlers for multi-credential requests
 	setupMultiHandlers(issuer, holder)
 
-	// Step 4: Demonstrate multi-credential exchange
+	// Step 5: Demonstrate multi-credential exchange
 	demonstrateMultiExchange(issuer, holder)
 
 	fmt.Println("✅ Multi-credential demo completed!")
@@ -95,6 +98,32 @@ func createClients() (*client.Client, *client.Client) {
 
 	fmt.Println("✅ Clients created successfully")
 	return issuer, holder
+}
+
+// connectClients establishes a connection between the two clients programmatically
+func connectClients(issuer, holder *client.Client) {
+	fmt.Println("🔗 Connecting clients programmatically...")
+	fmt.Println("   This establishes a secure connection without QR codes")
+	fmt.Println("   Using the Connection component for peer-to-peer connectivity")
+
+	fmt.Println("   📡 Initiating connection negotiation...")
+
+	// Use the Connection component to establish connection
+	err := client.ConnectTwoClientsWithTimeout(issuer, holder, 10*time.Second)
+	if err != nil {
+		fmt.Printf("   ❌ Connection failed: %v\n", err)
+		fmt.Println("   💡 This may happen in demo environments")
+		fmt.Println("   🔗 In production, ensure both clients are connected to the messaging service")
+		return
+	}
+
+	fmt.Println("   ✅ Connection established successfully!")
+	fmt.Println("   🔐 Clients can now exchange messages securely")
+	fmt.Println("   🎉 Ready for multi-credential exchange!")
+
+	// Give a moment for the connection to fully establish
+	time.Sleep(1 * time.Second)
+	fmt.Println()
 }
 
 // createMultipleCredentials creates different types of credentials for demonstration
