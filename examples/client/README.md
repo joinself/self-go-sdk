@@ -18,7 +18,7 @@ cd simple_chat && go run main.go
 | 💬 **Send messages** | [`simple_chat/`](simple_chat/) | 🟢 Beginner |
 | 🆔 **Create credentials** | [`credential_issuance/`](credential_issuance/) | 🟢 Beginner |
 | 🔄 **Share credentials** | [`credentials_exchange/`](credentials_exchange/) | 🟢 Beginner |
-| 🔍 **Find peers** | [`discovery_subscription/`](discovery_subscription/) | 🟠 Advanced |
+| 🔍 **Find peers** | [`discovery_subscription/`](discovery_subscription/) | 🟢 Beginner |
 | 👥 **Build group chat** | [`group_chat/`](group_chat/) | 🟡 Intermediate |
 | 💾 **Store data securely** | [`advanced_features/storage/`](advanced_features/storage/) | 🟠 Advanced |
 | 🔔 **Send notifications** | [`advanced_features/notifications/`](advanced_features/notifications/) | 🟡 Intermediate |
@@ -32,8 +32,8 @@ cd simple_chat && go run main.go
 **Path 1: Messaging Basics** (30-45 minutes)
 ```
 1. simple_chat/          (🟢 4/10) → Learn secure messaging
-2. group_chat/           (🟡 5/10) → Multi-party communication  
-3. discovery_subscription/ (🟠 5/10) → Find and connect to peers
+2. discovery_subscription/ (🟢 4/10) → Find and connect to peers
+3. group_chat/           (🟡 5/10) → Multi-party communication  
 ```
 
 **Path 2: Credential Fundamentals** (30-45 minutes)
@@ -84,6 +84,7 @@ advanced_features/notifications/ → storage/ → production_patterns/ → integ
 
 | Example | What it teaches | Time | Key concepts |
 |---------|----------------|------|--------------|
+| **[Discovery Subscription](discovery_subscription/)** | Finding and connecting to peers | 20 min | Peer discovery, QR codes, event handling |
 | **[Group Chat](group_chat/)** | Multi-party messaging | 25 min | Group management, roles, invitations |
 | **[Notifications](advanced_features/notifications/)** | Push notifications | 15 min | User engagement, event handling, alerts |
 
@@ -93,7 +94,6 @@ advanced_features/notifications/ → storage/ → production_patterns/ → integ
 |---------|----------------|------|--------------|
 | **[Storage](advanced_features/storage/)** | Data persistence | 20 min | Encryption, namespacing, TTL, caching |
 | **[Pairing](advanced_features/pairing/)** | Multi-device sync | 20 min | Device verification, cross-device state |
-| **[Discovery Subscription](discovery_subscription/)** | Peer discovery | 20 min | Connection management, peer finding |
 | **[Production Patterns](advanced_features/production_patterns/)** | Real-world patterns | 25 min | Sessions, state management, optimization |
 
 ### 🔴 Expert Examples (Complex integrations)
