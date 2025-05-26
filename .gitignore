@@ -19,11 +19,12 @@ _support/sources
 vendor/
 _examples/.env
 
-
+# Database files
 self.db
 self.db-shm
 self.db-wal
 
+# Legacy specific examples (keeping for compatibility)
 examples/agreement/agreement
 examples/agreement/storage
 examples/chat/chat
@@ -33,62 +34,36 @@ examples/credentials/request/storage
 examples/discovery/discovery
 examples/discovery/storage
 
-# Client examples binaries and storage
-examples/client/simple_chat/simple_chat
-examples/client/simple_chat/simple_chat_storage
-examples/client/advanced_features/advanced_features
-examples/client/credential_issuance/credential_issuance
-examples/client/credential_issuance/basic/basic
-examples/client/credential_issuance/multi_claim/multi_claim
-examples/client/credential_issuance/evidence/evidence
-examples/client/credential_issuance/complex/complex
-examples/client/credential_issuance/advanced/advanced
-examples/client/credential_issuance/issuer_storage
-examples/client/credential_issuance/holder_storage
-examples/client/credential_issuance/simple_issuer_storage
-examples/client/credential_issuance/simple_holder_storage
-examples/client/credential_issuance/basic/basic_issuer_storage
-examples/client/credential_issuance/basic/basic_holder_storage
-examples/client/credential_issuance/multi_claim/multi_issuer_storage
-examples/client/credential_issuance/multi_claim/multi_holder_storage
-examples/client/credential_issuance/evidence/evidence_issuer_storage
-examples/client/credential_issuance/evidence/evidence_holder_storage
-examples/client/credential_issuance/complex/complex_issuer_storage
-examples/client/credential_issuance/complex/complex_holder_storage
-examples/client/credential_issuance/advanced/issuer_storage
-examples/client/credential_issuance/advanced/holder_storage
-examples/client/credentials_exchange/credentials_exchange
-examples/client/credentials_exchange/basic/basic
-examples/client/credentials_exchange/multi/multi
-examples/client/credentials_exchange/advanced/advanced
-examples/client/credentials_exchange/discovery/discovery
-examples/client/credentials_exchange/credentials_storage
-examples/client/credentials_exchange/simple_issuer_storage
-examples/client/credentials_exchange/simple_holder_storage
-examples/client/credentials_exchange/basic/basic_issuer_storage
-examples/client/credentials_exchange/basic/basic_holder_storage
-examples/client/credentials_exchange/multi/multi_issuer_storage
-examples/client/credentials_exchange/multi/multi_holder_storage
-examples/client/credentials_exchange/advanced/advanced_issuer_storage
-examples/client/credentials_exchange/advanced/advanced_holder_storage
-examples/client/credentials_exchange/discovery/discovery_issuer_storage
-examples/client/credentials_exchange/discovery/discovery_holder_storage
-examples/client/discovery_subscription/discovery_subscription
-examples/client/discovery_subscription/discovery_storage
-examples/client/group_chat/group_chat
-examples/client/group_chat/admin_storage
-examples/client/group_chat/member1_storage
-examples/client/group_chat/member2_storage
+# Examples - Comprehensive patterns for all storage and binaries
+# This will catch all storage directories and binary files in examples
+examples/**/storage/
+examples/**/*storage/
+examples/**/*_storage/
+examples/**/*storage
+examples/**/*_storage
 
-# Advanced features examples binaries and storage
-examples/client/advanced_features/storage/storage
-examples/client/advanced_features/storage/storage_storage
-examples/client/advanced_features/notifications/notifications
-examples/client/advanced_features/notifications/notifications_storage
-examples/client/advanced_features/pairing/pairing
-examples/client/advanced_features/pairing/pairing_storage
-examples/client/advanced_features/production_patterns/production_patterns
-examples/client/advanced_features/production_patterns/production_storage
-examples/client/advanced_features/integration/integration
-examples/client/advanced_features/integration/integration_storage
-examples/client/advanced_features/advanced_overview_storage
+# Binary files in examples (executable files that match directory names)
+examples/**/simple_chat/simple_chat
+examples/**/group_chat/group_chat
+examples/**/credential_issuance/credential_issuance
+examples/**/credentials_exchange/credentials_exchange
+examples/**/discovery_subscription/discovery_subscription
+examples/**/advanced_features/storage/storage
+examples/**/advanced_features/notifications/notifications
+examples/**/advanced_features/pairing/pairing
+examples/**/advanced_features/production_patterns/production_patterns
+examples/**/advanced_features/integration/integration
+examples/**/basic/basic
+examples/**/multi_claim/multi_claim
+examples/**/evidence/evidence
+examples/**/complex/complex
+examples/**/advanced/advanced
+examples/**/multi/multi
+examples/**/discovery/discovery
+
+# Catch any other binary files in examples (files with same name as their directory)
+examples/*/*/$(basename $(dirname $0))
+
+# macOS files
+.DS_Store
+*/.DS_Store

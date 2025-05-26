@@ -51,7 +51,7 @@ func main() {
 	peer := discoverPeer(chatClient)
 
 	// Step 4: Demonstrate chat messaging
-	demonstrateChat(chatClient, peer)
+	sendChatMessages(chatClient, peer)
 
 	fmt.Println("✅ Basic chat demo completed!")
 	fmt.Println()
@@ -197,8 +197,8 @@ func discoverPeer(chatClient *client.Client) *client.Peer {
 	return peer
 }
 
-// demonstrateChat shows basic chat functionality with the connected peer
-func demonstrateChat(chatClient *client.Client, peer *client.Peer) {
+// sendChatMessages shows basic chat functionality with the connected peer
+func sendChatMessages(chatClient *client.Client, peer *client.Peer) {
 	fmt.Println("💬 Demonstrating chat messaging...")
 
 	// Send initial greeting
