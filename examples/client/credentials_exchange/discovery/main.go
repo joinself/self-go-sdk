@@ -158,8 +158,18 @@ func setupDiscoveryHandlers(issuer, holder *client.Client) {
 			fmt.Printf("     Detail %d - Type: %v\n", i+1, detail.CredentialType)
 		}
 
-		fmt.Println("   ❌ Rejecting request (demo)")
-		fmt.Println("      In production: would share credentials with discovered peer")
+		// This handler shows what would happen if this client received the request
+		// In your case, the mobile app is handling the actual request
+		fmt.Println("   📱 Note: In this demo, the mobile app is handling the actual request")
+		fmt.Println("      This handler shows what would happen if this client received it")
+		fmt.Println()
+		fmt.Println("   🔍 What the mobile app should do:")
+		fmt.Println("      1. Check if it has email credentials")
+		fmt.Println("      2. Verify the requester's identity/permissions")
+		fmt.Println("      3. Respond with email credentials (if available)")
+		fmt.Println()
+		fmt.Println("   ❌ Rejecting request (this client is just for demo)")
+		fmt.Println("      The mobile app will handle the real request")
 		req.Reject()
 	})
 
@@ -174,6 +184,25 @@ func setupDiscoveryHandlers(issuer, holder *client.Client) {
 			fmt.Println("   🎉 Successfully received credentials from discovered peer!")
 			for i, presentation := range resp.Presentations() {
 				fmt.Printf("     Presentation %d: %v\n", i+1, presentation.PresentationType())
+
+				// Display the actual credential data
+				for j, credential := range presentation.Credentials() {
+					fmt.Printf("       Credential %d:\n", j+1)
+					fmt.Printf("         Type: %v\n", credential.CredentialType())
+					fmt.Printf("         Subject: %s\n", credential.CredentialSubject().String())
+					fmt.Printf("         Issuer: %s\n", credential.Issuer().String())
+
+					// Display claims/data
+					fmt.Println("         Claims:")
+					claims, err := credential.CredentialSubjectClaims()
+					if err != nil {
+						fmt.Printf("           Error reading claims: %v\n", err)
+					} else {
+						for key, value := range claims {
+							fmt.Printf("           %s: %v\n", key, value)
+						}
+					}
+				}
 			}
 		}
 	})
@@ -252,23 +281,9 @@ func demonstrateHypotheticalExchange(issuer, holder *client.Client) {
 	fmt.Println("======================================")
 	fmt.Println("🎭 Simulating what would happen with a real peer connection...")
 
-	// Simulate the exchange that would occur
-	details := []*client.CredentialDetail{
-		{
-			CredentialType: []string{"VerifiableCredential", "ProfessionalCredential"},
-			Parameters: []*client.CredentialParameter{
-				{
-					Operator: message.OperatorNotEquals,
-					Field:    "certificationName",
-					Value:    "",
-				},
-			},
-		},
-	}
-
-	fmt.Println("📤 Would request professional credentials from connected peer:")
-	fmt.Println("   💼 Professional certification credentials")
-	fmt.Println("   🎯 With non-empty certification name")
+	fmt.Println("📤 Would request email credentials from connected peer:")
+	fmt.Println("   📧 Email verification credentials")
+	fmt.Println("   🎯 With non-empty email address")
 	fmt.Println()
 
 	fmt.Println("🔄 Live exchange workflow would be:")
@@ -298,11 +313,11 @@ func demonstrateLiveExchange(issuer *client.Client, peer *client.Peer) {
 	// Create request for the connected peer
 	details := []*client.CredentialDetail{
 		{
-			CredentialType: []string{"VerifiableCredential", "ProfessionalCredential"},
+			CredentialType: []string{"VerifiableCredential", "EmailCredential"},
 			Parameters: []*client.CredentialParameter{
 				{
 					Operator: message.OperatorNotEquals,
-					Field:    "certificationName",
+					Field:    "emailAddress",
 					Value:    "",
 				},
 			},
@@ -310,6 +325,7 @@ func demonstrateLiveExchange(issuer *client.Client, peer *client.Peer) {
 	}
 
 	fmt.Printf("📤 Sending live credential request to peer: %s\n", peer.DID())
+	fmt.Println("   🔍 Requesting: Email credentials with non-empty email address")
 
 	// Send request to the live peer
 	req, err := issuer.Credentials().RequestPresentationWithTimeout(
@@ -338,6 +354,34 @@ func demonstrateLiveExchange(issuer *client.Client, peer *client.Peer) {
 		}
 	} else {
 		fmt.Printf("   ✅ Live response received: %s\n", utils.ResponseStatusToString(resp.Status()))
+
+		// Display received credential data
+		if len(resp.Presentations()) > 0 {
+			fmt.Println("   📋 Received credential presentations:")
+			for i, presentation := range resp.Presentations() {
+				fmt.Printf("     Presentation %d: %v\n", i+1, presentation.PresentationType())
+
+				// Display the actual credential data
+				for j, credential := range presentation.Credentials() {
+					fmt.Printf("       Credential %d:\n", j+1)
+					fmt.Printf("         Type: %v\n", credential.CredentialType())
+					fmt.Printf("         Subject: %s\n", credential.CredentialSubject().String())
+					fmt.Printf("         Issuer: %s\n", credential.Issuer().String())
+
+					// Display claims/data
+					fmt.Println("         Claims:")
+					claims, err := credential.CredentialSubjectClaims()
+					if err != nil {
+						fmt.Printf("           Error reading claims: %v\n", err)
+					} else {
+						for key, value := range claims {
+							fmt.Printf("           %s: %v\n", key, value)
+						}
+					}
+				}
+			}
+		}
+
 		fmt.Println("   🎉 Successful live credential exchange!")
 	}
 
