@@ -32,3 +32,19 @@ examples/credentials/request/request
 examples/credentials/request/storage
 examples/discovery/discovery
 examples/discovery/storage
+
+# Client examples binaries and storage
+examples/client/simple_chat/simple_chat
+examples/client/simple_chat/simple_chat_storage
+examples/client/advanced_features/advanced_features
+examples/client/credential_issuance/credential_issuance
+examples/client/credential_issuance/issuer_storage
+examples/client/credential_issuance/holder_storage
+examples/client/credentials_exchange/credentials_exchange
+examples/client/credentials_exchange/credentials_storage
+examples/client/discovery_subscription/discovery_subscription
+examples/client/discovery_subscription/discovery_storage
+examples/client/group_chat/group_chat
+examples/client/group_chat/admin_storage
+examples/client/group_chat/member1_storage
+examples/client/group_chat/member2_storage
