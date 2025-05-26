@@ -13,6 +13,29 @@ This directory contains comprehensive examples demonstrating various Self SDK cl
 | **[Discovery Subscription](discovery_subscription/)** | Peer discovery | 🟠 Advanced | Connection management |
 | **[Advanced Features](advanced_features/)** | Production patterns | 🔴 Expert | Advanced integrations |
 
+## 📚 Advanced Features Subfolders
+
+The **[Advanced Features](advanced_features/)** directory contains specialized examples for production-ready applications:
+
+| Example | Complexity | Description | Time |
+|---------|------------|-------------|------|
+| **[Storage](advanced_features/storage/)** | 🟠 **5/10** (Advanced) | Data persistence with namespacing & TTL | 15-20 min |
+| **[Notifications](advanced_features/notifications/)** | 🟡 **4/10** (Intermediate) | Push notification system | 10-15 min |
+| **[Pairing](advanced_features/pairing/)** | 🟠 **5/10** (Advanced) | Multi-device synchronization | 15-20 min |
+| **[Production Patterns](advanced_features/production_patterns/)** | 🟠 **6/10** (Advanced) | Real-world storage & session patterns | 20-25 min |
+| **[Integration](advanced_features/integration/)** | 🔴 **7/10** (Expert) | Multi-component workflows | 30-45 min |
+
+### 🎯 Advanced Features Learning Path
+
+Complete the advanced examples in this order for the best learning experience:
+
+```
+notifications/ → storage/ → pairing/ → production_patterns/ → integration/
+  (4/10)        (5/10)     (5/10)      (6/10)                (7/10)
+```
+
+Each example builds upon previous concepts and demonstrates increasingly sophisticated patterns.
+
 ## 🚀 Getting Started
 
 ### For Beginners
@@ -32,6 +55,9 @@ For production-ready patterns:
 
 5. **[Group Chat](group_chat/)** - Multi-party communication
 6. **[Advanced Features](advanced_features/)** - Complex integrations
+   - Start with **[Notifications](advanced_features/notifications/)** (4/10) for user engagement
+   - Progress through **[Storage](advanced_features/storage/)** (5/10) for data persistence
+   - Master **[Integration](advanced_features/integration/)** (7/10) for complete workflows
 
 ## 🎓 Learning Path
 
@@ -52,6 +78,16 @@ For messaging and discovery capabilities:
 simple_chat/ → group_chat/ → discovery_subscription/
   (1-to-1)      (Groups)        (Discovery)
 ```
+
+### Advanced Production Features
+For production-ready applications with advanced capabilities:
+
+```
+advanced_features/notifications/ → storage/ → pairing/ → production_patterns/ → integration/
+        (4/10)                    (5/10)     (5/10)      (6/10)                (7/10)
+```
+
+This progression teaches production patterns from basic notifications to complete multi-component integration.
 
 ## 🔧 Prerequisites
 

@@ -79,3 +79,16 @@ examples/client/group_chat/group_chat
 examples/client/group_chat/admin_storage
 examples/client/group_chat/member1_storage
 examples/client/group_chat/member2_storage
+
+# Advanced features examples binaries and storage
+examples/client/advanced_features/storage/storage
+examples/client/advanced_features/storage/storage_storage
+examples/client/advanced_features/notifications/notifications
+examples/client/advanced_features/notifications/notifications_storage
+examples/client/advanced_features/pairing/pairing
+examples/client/advanced_features/pairing/pairing_storage
+examples/client/advanced_features/production_patterns/production_patterns
+examples/client/advanced_features/production_patterns/production_storage
+examples/client/advanced_features/integration/integration
+examples/client/advanced_features/integration/integration_storage
+examples/client/advanced_features/advanced_overview_storage

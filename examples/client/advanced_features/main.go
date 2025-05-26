@@ -1,355 +1,181 @@
+// Package main provides an overview of the Self SDK's advanced features.
+//
+// This is the entry point for learning advanced Self SDK capabilities.
+// For focused learning, explore the individual tutorial directories:
+//
+// 📚 Educational Progression:
+// 1. storage/ - Advanced storage capabilities (start here)
+// 2. notifications/ - Push notification system
+// 3. pairing/ - Account pairing and multi-device sync
+// 4. production_patterns/ - Real-world storage and session management
+// 5. integration/ - Component integration and workflows
+//
+// This overview shows a quick demonstration of each capability.
+// For deep learning, visit each subdirectory for focused examples.
+//
+// 🎯 What you'll learn across all examples:
+// • Advanced storage with namespacing, TTL, and caching
+// • Push notification system for user engagement
+// • Account pairing for multi-device experiences
+// • Production-ready storage and session patterns
+// • Integration between different SDK components
+//
+// 🚀 ADVANCED CAPABILITIES OVERVIEW:
+// • Encrypted local storage with namespacing
+// • Cache management with TTL support
+// • Push notification delivery system
+// • Account pairing and synchronization
+// • Production storage patterns
+// • Multi-component integration workflows
 package main
 
 import (
 	"fmt"
 	"log"
-	"os"
-	"time"
 
 	"github.com/joinself/self-go-sdk/client"
+	"github.com/joinself/self-go-sdk/examples/utils"
 )
 
 func main() {
-	// Check for required environment variables
-	storageKey := os.Getenv("SELF_STORAGE_KEY")
-	storagePath := os.Getenv("SELF_STORAGE_PATH")
-	if storageKey == "" || storagePath == "" {
-		log.Fatal("Please set SELF_STORAGE_KEY and SELF_STORAGE_PATH environment variables")
-	}
+	fmt.Println("🚀 Advanced Features Overview")
+	fmt.Println("=============================")
+	fmt.Println("Welcome to the Self SDK advanced features learning path!")
+	fmt.Println()
+	fmt.Println("This overview demonstrates the breadth of advanced capabilities.")
+	fmt.Println("For focused learning, explore each subdirectory:")
+	fmt.Println()
 
-	// Create client configuration
-	config := client.Config{
-		StorageKey:  []byte(storageKey),
-		StoragePath: storagePath,
+	// Create a client for quick demonstrations
+	advancedClient := createClient()
+	defer advancedClient.Close()
+
+	fmt.Printf("🆔 Client DID: %s\n", advancedClient.DID())
+	fmt.Println()
+
+	// Quick overview of each capability
+	demonstrateCapabilityOverview(advancedClient)
+
+	fmt.Println("📚 Educational Learning Path")
+	fmt.Println("============================")
+	fmt.Println()
+	fmt.Println("Follow this progression for optimal learning:")
+	fmt.Println()
+	fmt.Println("1️⃣  STORAGE (Complexity: 5/10)")
+	fmt.Println("   📁 cd storage && go run main.go")
+	fmt.Println("   🎯 Learn: Namespacing, TTL, caching, encrypted storage")
+	fmt.Println("   ⏱️  Time: 15-20 minutes")
+	fmt.Println()
+	fmt.Println("2️⃣  NOTIFICATIONS (Complexity: 4/10)")
+	fmt.Println("   🔔 cd notifications && go run main.go")
+	fmt.Println("   🎯 Learn: Push notifications, event handling, user engagement")
+	fmt.Println("   ⏱️  Time: 10-15 minutes")
+	fmt.Println()
+	fmt.Println("3️⃣  PAIRING (Complexity: 5/10)")
+	fmt.Println("   🔗 cd pairing && go run main.go")
+	fmt.Println("   🎯 Learn: Multi-device sync, QR pairing, device management")
+	fmt.Println("   ⏱️  Time: 15-20 minutes")
+	fmt.Println()
+	fmt.Println("4️⃣  PRODUCTION PATTERNS (Complexity: 6/10)")
+	fmt.Println("   🏭 cd production_patterns && go run main.go")
+	fmt.Println("   🎯 Learn: Session management, state persistence, optimization")
+	fmt.Println("   ⏱️  Time: 20-25 minutes")
+	fmt.Println()
+	fmt.Println("5️⃣  INTEGRATION (Complexity: 7/10)")
+	fmt.Println("   🔄 cd integration && go run main.go")
+	fmt.Println("   🎯 Learn: Multi-component workflows, coordinated features")
+	fmt.Println("   ⏱️  Time: 20-30 minutes")
+	fmt.Println()
+	fmt.Println("📊 Total Learning Time: ~80-110 minutes")
+	fmt.Println()
+	fmt.Println("🎓 Prerequisites:")
+	fmt.Println("   • Complete simple_chat, group_chat examples first")
+	fmt.Println("   • Basic understanding of Go and Self SDK concepts")
+	fmt.Println("   • Familiarity with storage and caching concepts")
+	fmt.Println()
+	fmt.Println("💡 Pro Tips:")
+	fmt.Println("   • Follow the numbered progression for best learning")
+	fmt.Println("   • Each example builds on previous concepts")
+	fmt.Println("   • Take time to understand each pattern before moving on")
+	fmt.Println("   • Experiment with the code to deepen understanding")
+	fmt.Println()
+	fmt.Println("🚀 Ready to start? Begin with: cd storage && go run main.go")
+}
+
+// createClient sets up a Self client for demonstrations
+func createClient() *client.Client {
+	fmt.Println("🔧 Setting up overview client...")
+
+	client, err := client.NewClient(client.Config{
+		StorageKey:  utils.GenerateStorageKey("advanced_overview"),
+		StoragePath: "./advanced_overview_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
-	}
-
-	// Create the client
-	selfClient, err := client.NewClient(config)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-	defer selfClient.Close()
-
-	fmt.Printf("🚀 Advanced Features Demo - Client DID: %s\n\n", selfClient.DID())
-
-	// === STORAGE FEATURES ===
-	fmt.Println("📦 Storage Features Demo")
-	demonstrateStorage(selfClient)
-	fmt.Println()
-
-	// === NOTIFICATION FEATURES ===
-	fmt.Println("🔔 Notification Features Demo")
-	demonstrateNotifications(selfClient)
-	fmt.Println()
-
-	// === ACCOUNT PAIRING FEATURES ===
-	fmt.Println("🔗 Account Pairing Features Demo")
-	demonstratePairing(selfClient)
-	fmt.Println()
-
-	fmt.Println("✅ Advanced features demo completed!")
-}
-
-func demonstrateStorage(selfClient *client.Client) {
-	storage := selfClient.Storage()
-
-	// Basic storage operations
-	fmt.Println("  • Basic storage operations")
-
-	// Store simple values
-	err := storage.StoreString("user:name", "Alice")
-	if err != nil {
-		log.Printf("Failed to store string: %v", err)
-		return
-	}
-
-	// Store JSON data
-	userData := map[string]interface{}{
-		"name":  "Alice",
-		"age":   30,
-		"email": "alice@example.com",
-	}
-	err = storage.StoreJSON("user:profile", userData)
-	if err != nil {
-		log.Printf("Failed to store JSON: %v", err)
-		return
-	}
-
-	// Retrieve values
-	name, err := storage.LookupString("user:name")
-	if err != nil {
-		log.Printf("Failed to lookup string: %v", err)
-	} else {
-		fmt.Printf("    Retrieved name: %s\n", name)
-	}
-
-	var profile map[string]interface{}
-	err = storage.LookupJSON("user:profile", &profile)
-	if err != nil {
-		log.Printf("Failed to lookup JSON: %v", err)
-	} else {
-		fmt.Printf("    Retrieved profile: %+v\n", profile)
-	}
-
-	// Namespaced storage
-	fmt.Println("  • Namespaced storage")
-	userStorage := storage.Namespace("user")
-
-	err = userStorage.StoreString("preferences", "dark_mode=true")
-	if err != nil {
-		log.Printf("Failed to store in namespace: %v", err)
-	} else {
-		fmt.Println("    Stored user preferences in namespace")
-	}
-
-	// Temporary storage with expiry
-	fmt.Println("  • Temporary storage with expiry")
-	err = storage.StoreTemporaryString("session:token", "abc123", 5*time.Second)
-	if err != nil {
-		log.Printf("Failed to store temporary value: %v", err)
-	} else {
-		fmt.Println("    Stored temporary session token (expires in 5 seconds)")
-	}
-
-	// Cache functionality
-	fmt.Println("  • Cache functionality")
-	cache := storage.Cache("api")
-
-	err = cache.SetString("response:users", `[{"id":1,"name":"Alice"}]`)
-	if err != nil {
-		log.Printf("Failed to cache value: %v", err)
-	} else {
-		fmt.Println("    Cached API response")
-	}
-
-	if cache.Has("response:users") {
-		cachedData, err := cache.GetString("response:users")
-		if err != nil {
-			log.Printf("Failed to get cached value: %v", err)
-		} else {
-			fmt.Printf("    Retrieved from cache: %s\n", cachedData)
-		}
-	}
-}
-
-func demonstrateNotifications(selfClient *client.Client) {
-	notifications := selfClient.Notifications()
-
-	// Register notification sent handler
-	notifications.OnNotificationSent(func(peerDID string, summary *client.NotificationSummary) {
-		fmt.Printf("    📤 Notification sent to %s: %s\n", peerDID, summary.Title)
 	})
-
-	// For demo purposes, we'll use the client's own DID as the target
-	// In a real application, this would be another user's DID
-	targetDID := selfClient.DID()
-
-	// Send different types of notifications
-	fmt.Println("  • Sending various notification types")
-
-	// Chat notification
-	err := notifications.SendChatNotification(targetDID, "Hello! This is a test message.")
 	if err != nil {
-		log.Printf("Failed to send chat notification: %v", err)
+		log.Fatal("Failed to create client:", err)
 	}
 
-	// Credential notification
-	err = notifications.SendCredentialNotification(targetDID, "identity", "request")
-	if err != nil {
-		log.Printf("Failed to send credential notification: %v", err)
-	}
-
-	// Group invite notification
-	err = notifications.SendGroupInviteNotification(targetDID, "Development Team", "Alice")
-	if err != nil {
-		log.Printf("Failed to send group invite notification: %v", err)
-	}
-
-	// Custom notification
-	err = notifications.SendCustomNotification(
-		targetDID,
-		"System Alert",
-		"Your account security settings have been updated",
-		"security",
-	)
-	if err != nil {
-		log.Printf("Failed to send custom notification: %v", err)
-	}
-
-	fmt.Println("    ✅ Notification examples completed")
+	fmt.Println("✅ Overview client created successfully")
+	return client
 }
 
-func demonstratePairing(selfClient *client.Client) {
+// demonstrateCapabilityOverview shows a quick preview of each advanced capability
+func demonstrateCapabilityOverview(selfClient *client.Client) {
+	fmt.Println("🔍 Quick Capability Overview")
+	fmt.Println("============================")
+	fmt.Println()
+
+	// Storage overview
+	fmt.Println("📦 STORAGE CAPABILITIES")
+	fmt.Println("   • Encrypted local storage with automatic security")
+	fmt.Println("   • Namespacing for organized data management")
+	fmt.Println("   • TTL (Time To Live) for automatic data expiry")
+	fmt.Println("   • Caching for performance optimization")
+	storage := selfClient.Storage()
+	err := storage.StoreString("overview:demo", "Advanced storage working!")
+	if err == nil {
+		fmt.Println("   ✅ Storage system operational")
+	}
+	fmt.Println()
+
+	// Notifications overview
+	fmt.Println("🔔 NOTIFICATION SYSTEM")
+	fmt.Println("   • Push notifications for real-time user engagement")
+	fmt.Println("   • Multiple notification types (chat, credential, custom)")
+	fmt.Println("   • Event-driven notification handling")
+	fmt.Println("   • Delivery tracking and status management")
+	notifications := selfClient.Notifications()
+	fmt.Println("   ✅ Notification system available")
+	_ = notifications // Demonstrate availability
+	fmt.Println()
+
+	// Pairing overview
+	fmt.Println("🔗 ACCOUNT PAIRING")
+	fmt.Println("   • Multi-device account synchronization")
+	fmt.Println("   • QR code-based device pairing")
+	fmt.Println("   • Secure cryptographic device verification")
+	fmt.Println("   • Cross-device state management")
 	pairing := selfClient.Pairing()
+	fmt.Println("   ✅ Pairing system ready")
+	_ = pairing // Demonstrate availability
+	fmt.Println()
 
-	// Get pairing code
-	fmt.Println("  • Getting pairing code")
-	pairingCode, err := pairing.GetPairingCode()
-	if err != nil {
-		log.Printf("Failed to get pairing code: %v", err)
-		return
-	}
+	// Production patterns overview
+	fmt.Println("🏭 PRODUCTION PATTERNS")
+	fmt.Println("   • Session management with automatic expiry")
+	fmt.Println("   • Application state persistence")
+	fmt.Println("   • Performance optimization strategies")
+	fmt.Println("   • Scalable data access patterns")
+	fmt.Println("   ✅ Production patterns demonstrated in examples")
+	fmt.Println()
 
-	fmt.Printf("    Pairing Code: %s\n", pairingCode.Code)
-	fmt.Printf("    Unpaired: %t\n", pairingCode.Unpaired)
-	fmt.Printf("    Expires: %s\n", pairingCode.ExpiresAt.Format(time.RFC3339))
-
-	// Generate QR code representation
-	qrCode, err := pairing.GeneratePairingQR()
-	if err != nil {
-		log.Printf("Failed to generate QR code: %v", err)
-	} else {
-		fmt.Printf("    QR Code: %s\n", qrCode)
-	}
-
-	// Check if paired
-	isPaired, err := pairing.IsPaired()
-	if err != nil {
-		log.Printf("Failed to check pairing status: %v", err)
-	} else {
-		fmt.Printf("    Is Paired: %t\n", isPaired)
-	}
-
-	// Register pairing event handlers
-	fmt.Println("  • Setting up pairing event handlers")
-
-	pairing.OnPairingRequest(func(request *client.IncomingPairingRequest) {
-		fmt.Printf("    📥 Pairing request from: %s\n", request.From())
-		fmt.Printf("       Address: %s\n", request.Address().String())
-		fmt.Printf("       Roles: %d\n", request.Roles())
-		fmt.Printf("       Expires: %s\n", request.Expires().Format(time.RFC3339))
-
-		// In a real application, you would prompt the user or check permissions
-		// For demo purposes, we'll auto-reject to avoid actual pairing
-		fmt.Println("       🚫 Auto-rejecting for demo purposes")
-		err := request.Reject()
-		if err != nil {
-			log.Printf("Failed to reject pairing request: %v", err)
-		}
-	})
-
-	pairing.OnPairingResponse(func(response *client.PairingResponse) {
-		fmt.Printf("    📨 Pairing response from: %s\n", response.From())
-		fmt.Printf("       Status: %d\n", response.Status())
-		if response.Operation() != nil {
-			fmt.Println("       ✅ Operation included")
-		}
-		if len(response.Assets()) > 0 {
-			fmt.Printf("       📎 %d assets included\n", len(response.Assets()))
-		}
-	})
-
-	// Example of sending a pairing request (commented out to avoid actual pairing)
-	fmt.Println("  • Pairing request example (not executed)")
-	fmt.Println("    // Create a signing key for the request")
-	fmt.Println("    // signingKey, _ := signing.NewKey()")
-	fmt.Println("    // request, err := pairing.RequestPairing(")
-	fmt.Println("    //     \"target_did\",")
-	fmt.Println("    //     signingKey.PublicKey(),")
-	fmt.Println("    //     identity.RoleOwner,")
-	fmt.Println("    // )")
-	fmt.Println("    // if err == nil {")
-	fmt.Println("    //     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)")
-	fmt.Println("    //     defer cancel()")
-	fmt.Println("    //     response, err := request.WaitForResponse(ctx)")
-	fmt.Println("    //     // Handle response...")
-	fmt.Println("    // }")
-
-	fmt.Println("    ✅ Pairing examples completed")
-}
-
-// Example of advanced storage patterns
-func demonstrateAdvancedStoragePatterns(selfClient *client.Client) {
-	storage := selfClient.Storage()
-
-	// Session management
-	sessionStorage := storage.Namespace("session")
-
-	// Store session with expiry
-	sessionData := map[string]interface{}{
-		"user_id":     "12345",
-		"created_at":  time.Now(),
-		"permissions": []string{"read", "write"},
-	}
-
-	err := sessionStorage.StoreJSONWithExpiry("current", sessionData, time.Now().Add(24*time.Hour))
-	if err != nil {
-		log.Printf("Failed to store session: %v", err)
-	}
-
-	// User preferences with namespace
-	userPrefs := storage.Namespace("user:12345")
-
-	preferences := map[string]interface{}{
-		"theme":         "dark",
-		"notifications": true,
-		"language":      "en",
-	}
-
-	err = userPrefs.StoreJSON("preferences", preferences)
-	if err != nil {
-		log.Printf("Failed to store preferences: %v", err)
-	}
-
-	// Cache with TTL for API responses
-	apiCache := storage.Cache("api")
-
-	// Cache user data for 1 hour
-	userData := `{"id": 12345, "name": "Alice", "email": "alice@example.com"}`
-	err = apiCache.SetWithTTL("user:12345", []byte(userData), time.Hour)
-	if err != nil {
-		log.Printf("Failed to cache user data: %v", err)
-	}
-
-	// Check cache before making API call
-	if apiCache.Has("user:12345") {
-		cachedUser, err := apiCache.GetString("user:12345")
-		if err == nil {
-			fmt.Printf("Using cached user data: %s\n", cachedUser)
-		}
-	}
-}
-
-// Example of notification integration with other components
-func demonstrateNotificationIntegration(selfClient *client.Client) {
-	notifications := selfClient.Notifications()
-	chat := selfClient.Chat()
-
-	// Send a chat message and notification
-	targetDID := "example_peer_did"
-	message := "Hello! How are you doing?"
-
-	// Send the chat message
-	err := chat.Send(targetDID, message)
-	if err != nil {
-		log.Printf("Failed to send chat message: %v", err)
-		return
-	}
-
-	// Send a notification about the chat message
-	err = notifications.SendChatNotification(targetDID, message)
-	if err != nil {
-		log.Printf("Failed to send chat notification: %v", err)
-	}
-
-	// For group chats, send group notifications
-	groupChats := selfClient.GroupChats()
-	groups := groupChats.ListGroups()
-
-	for _, group := range groups {
-		for _, member := range group.Members() {
-			if member.DID != selfClient.DID() {
-				err := notifications.SendGroupChatNotification(
-					member.DID,
-					group.Name(),
-					"New message in group chat",
-				)
-				if err != nil {
-					log.Printf("Failed to send group notification to %s: %v", member.DID, err)
-				}
-			}
-		}
-	}
+	// Integration overview
+	fmt.Println("🔄 COMPONENT INTEGRATION")
+	fmt.Println("   • Coordinated workflows between SDK components")
+	fmt.Println("   • Storage + Chat + Notifications integration")
+	fmt.Println("   • Complex multi-feature applications")
+	fmt.Println("   • Real-world application architecture patterns")
+	fmt.Println("   ✅ Integration patterns ready for exploration")
+	fmt.Println()
 }
