@@ -1,13 +1,7 @@
 // Package main demonstrates simple credential exchange using the Self SDK.
 //
-// This is a simplified version of the credential exchange tutorial.
-// For the complete educational progression, see the individual tutorial files:
-//
-// 📚 Educational Progression:
-// 1. basic/main.go - Foundation concepts (start here)
-// 2. multi/main.go - Multiple credential types
-// 3. advanced/main.go - Complex parameters and verification
-// 4. discovery/main.go - QR code discovery integration
+// This is the BASIC level of credential exchange examples.
+// Start here if you're new to credential exchange concepts.
 //
 // This example shows the basics of:
 // - Setting up two clients (issuer and holder)
@@ -19,6 +13,11 @@
 // • How credential exchange works between two parties
 // • Basic request/response patterns
 // • Simple credential creation and sharing
+//
+// 📚 Next steps:
+// • multi_credential_exchange.go - Multiple credential types
+// • advanced_exchange.go - Complex parameters and verification
+// • discovery_exchange.go - QR code discovery integration
 package main
 
 import (
@@ -34,9 +33,10 @@ import (
 )
 
 func main() {
-	fmt.Println("🔄 Simple Credential Exchange Demo")
+	fmt.Println("🔄 Basic Credential Exchange Demo")
 	fmt.Println("==================================")
 	fmt.Println("This demo shows basic credential exchange between two parties.")
+	fmt.Println("📚 This is the BASIC level - start here if you're new to credential exchange.")
 	fmt.Println()
 
 	// Step 1: Create two clients - one issuer, one holder
@@ -60,10 +60,9 @@ func main() {
 	fmt.Println("✅ Basic demo completed!")
 	fmt.Println()
 	fmt.Println("📚 Ready for the next level?")
-	fmt.Println("   • cd basic && go run main.go - Foundation concepts (start here)")
-	fmt.Println("   • cd multi && go run main.go - Multiple credential types")
-	fmt.Println("   • cd advanced && go run main.go - Complex parameters and verification")
-	fmt.Println("   • cd discovery && go run main.go - QR code discovery integration")
+	fmt.Println("   • Run multi_credential_exchange.go to learn about multiple credential types")
+	fmt.Println("   • Run advanced_exchange.go for complex parameters and verification")
+	fmt.Println("   • Run discovery_exchange.go for QR code discovery integration")
 	fmt.Println()
 	fmt.Println("The clients will keep running to show ongoing exchange capabilities.")
 	fmt.Println("Press Ctrl+C to exit.")
@@ -78,8 +77,8 @@ func createClients() (*client.Client, *client.Client) {
 
 	// Create issuer client
 	issuer, err := client.NewClient(client.Config{
-		StorageKey:  utils.GenerateStorageKey("simple_issuer"),
-		StoragePath: "./simple_issuer_storage",
+		StorageKey:  utils.GenerateStorageKey("basic_issuer"),
+		StoragePath: "./basic_issuer_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
 	})
@@ -89,8 +88,8 @@ func createClients() (*client.Client, *client.Client) {
 
 	// Create holder client
 	holder, err := client.NewClient(client.Config{
-		StorageKey:  utils.GenerateStorageKey("simple_holder"),
-		StoragePath: "./simple_holder_storage",
+		StorageKey:  utils.GenerateStorageKey("basic_holder"),
+		StoragePath: "./basic_holder_storage",
 		Environment: client.Sandbox,
 		LogLevel:    client.LogInfo,
 	})
