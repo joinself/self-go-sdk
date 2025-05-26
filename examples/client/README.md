@@ -17,6 +17,8 @@ cd simple_chat && go run main.go
 |--------------|---------|------------|
 | 💬 **Send messages** | [`simple_chat/`](simple_chat/) | 🟢 Beginner |
 | 🆔 **Create credentials** | [`credential_issuance/`](credential_issuance/) | 🟢 Beginner |
+| 🔄 **Share credentials** | [`credentials_exchange/`](credentials_exchange/) | 🟢 Beginner |
+| 🔍 **Find peers** | [`discovery_subscription/`](discovery_subscription/) | 🟠 Advanced |
 | 👥 **Build group chat** | [`group_chat/`](group_chat/) | 🟡 Intermediate |
 | 💾 **Store data securely** | [`advanced_features/storage/`](advanced_features/storage/) | 🟠 Advanced |
 | 🔔 **Send notifications** | [`advanced_features/notifications/`](advanced_features/notifications/) | 🟡 Intermediate |
