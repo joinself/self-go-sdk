@@ -244,66 +244,57 @@ func main() {
 
 		response := <-presentationCompleter
 
-		// validate the presentations and the
-		for _, p := range response.Presentations() {
-			err = p.Validate()
+		// a trust registry is a store of issuers and which credentials they can
+		// issue. it is used to validate credentials, ensuring they were issued by
+		// a trusted issuer.
+		registry := credential.SandboxTrustedIssuerRegistry()
+		responder := credential.AddressKey(responderAddress)
+
+		/*
+			// we can also define new issuers and the credential types we trust them to issue, i.e.
+			// allow them to share a profile credential containing their display name, etc
+			registry.AddIssuer(responder)
+
+			err = registry.GrantAuthority(responder, "Profile", time.Now(), nil)
 			if err != nil {
-				log.Warn("failed to validate presentation", "error", err)
+				log.Fatal("failed to grant authority for a credential type", "error", err)
+			}
+		*/
+
+		// validate all of the presentations and credentials. the returned credentials will be valid
+		// for the provided holder address. the presentations and credentials will be validated, ensuring:
+		// 1. they are well formatted
+		// 2. their signatures are valid
+		// 3. they have been issued by an authority for the specific credential type
+		// 4. the issuer and holders keys are valid and have not been revoked
+		// 5. the credentials have not been revoked (in an future release)
+		// 6, any requirements have been met for specific credential types, i.e.
+		//    (accompanying liveness credentials are provided)
+		credentials, err := selfAccount.CredentialGraphValidFor(
+			responder,
+			registry,
+			response.Presentations(),
+		)
+
+		if err != nil {
+			log.Fatal("failed to validate credential presentations", "error", err)
+		}
+
+		// iterate over the credentials that are valid for our holder
+		for _, c := range credentials {
+			claims, err := c.CredentialSubjectClaims()
+			if err != nil {
+				log.Warn("failed to parse credential claims", "error", err)
 				continue
 			}
 
-			// check the presentation references the address we are communicating with
-			if !p.Holder().Address().Matches(responderAddress) {
-				log.Warn("recevied a presentation response for a different holder address")
-				continue
-			}
-
-			for _, c := range p.Credentials() {
-				err = c.Validate()
-				if err != nil {
-					log.Warn("failed to validate credential", "error", err)
-					continue
-				}
-
-				// check that the credential is not yet valid for use
-				if c.ValidFrom().After(time.Now()) {
-					log.Warn("credential is intended to be used in the future")
-					continue
-				}
-
-				// TODO check issuer identity, this is not working as keys are not setup
-				// correctly on the verify service...
-				/*
-					if c.Issuer().Method() == credential.MethodAure {
-
-						// check the issuer was valid at the time of issuance
-						document, err := selfAccount.IdentityResolve(c.Issuer().Address())
-						if err != nil {
-							log.Warn("failed to resolve credential issuer", "error", err)
-							continue
-						}
-
-						if !document.HasRolesAt(c.Issuer().SigningKey(), identity.RoleAssertion, c.Created()) {
-							log.Warn("credential signing key was not valid at the time of issuance")
-							continue
-						}
-					}
-				*/
-
-				claims, err := c.CredentialSubjectClaims()
-				if err != nil {
-					log.Warn("failed to parse credential claims", "error", err)
-					continue
-				}
-
-				for k, v := range claims {
-					log.Info(
-						"credential value",
-						"credentialType", c.CredentialType(),
-						"field", k,
-						"value", v,
-					)
-				}
+			for k, v := range claims {
+				log.Info(
+					"credential value",
+					"credentialType", c.CredentialType(),
+					"field", k,
+					"value", v,
+				)
 			}
 		}
 	}
