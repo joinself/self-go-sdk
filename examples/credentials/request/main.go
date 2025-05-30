@@ -255,7 +255,7 @@ func main() {
 			// allow them to share a profile credential containing their display name, etc
 			registry.AddIssuer(responder)
 
-			err = registry.GrantAuthority(responder, "Profile", time.Now(), nil)
+			err = registry.GrantAuthority(responder, "ProfileCredential", time.Now(), nil)
 			if err != nil {
 				log.Fatal("failed to grant authority for a credential type", "error", err)
 			}
