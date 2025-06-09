@@ -30,6 +30,8 @@ examples/chat/chat
 examples/chat/storage
 examples/connection/connection
 examples/connection/storage
+examples/credentials/issue/issue
+examples/credentials/issue/storage
 examples/credentials/request/request
 examples/credentials/request/storage
 examples/discovery/discovery
