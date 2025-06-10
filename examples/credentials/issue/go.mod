@@ -1,4 +1,4 @@
-module github.com/joinself/self-go-sdk/examples/credentials/request
+module github.com/joinself/self-go-sdk/examples/credentials/issue
 
 go 1.22.1
 
