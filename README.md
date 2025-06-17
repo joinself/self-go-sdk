@@ -6,22 +6,13 @@
 
 The official Self SDK for Go.
 
-## Installation
+## Usage
 
-### Dependencies
-
-- [Go](https://go.dev) 1.22 or later
-- [Self SDK](https://github.com/joinself/self-c-sdk)
-
-### Install
-
-```bash
-go get github.com/joinself/self-go-sdk
-```
+See our documentation at [docs.joinself.com](https://docs.joinself.com)
 
 ## Support
 
-Looking for help? Reach out to us at [support@joinself.com](mailto:support@joinself.com)
+If you have any questions, reach out to us at [support@joinself.com](mailto:support@joinself.com)
 
 ## Contributing
 
