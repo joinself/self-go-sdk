@@ -23,6 +23,8 @@ func main() {
 					handleIntroduction(selfAccount, msg)
 				case message.ContentTypeChat:
 					handleChat(msg)
+				default:
+					log.Printf("received unhandled event")
 				}
 			},
 		},

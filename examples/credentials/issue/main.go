@@ -28,6 +28,8 @@ func main() {
 					handleDiscoveryResponse(msg)
 				case message.ContentTypeIntroduction:
 					handleIntroduction(selfAccount, msg)
+				default:
+					log.Printf("received unhandled event")
 				}
 			},
 		},

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"runtime"
 	"sync"
 	"time"
 
@@ -24,11 +25,13 @@ func main() {
 			OnMessage: func(selfAccount *account.Account, msg *event.Message) {
 				switch event.ContentTypeOf(msg) {
 				case message.ContentTypeDiscoveryResponse:
-					handleDiscoveryResponse(msg)
+					handleDiscoveryResponse(selfAccount, msg)
 				case message.ContentTypeIntroduction:
 					handleIntroduction(selfAccount, msg)
 				case message.ContentTypeChat:
 					handleChat(msg)
+				default:
+					log.Printf("received unhandled event")
 				}
 			},
 		},
@@ -39,66 +42,42 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	for {
-		keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), time.Now().Add(time.Minute*5))
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(time.Now().Add(time.Minute * 5)).Finish()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		completer := make(chan *event.Message, 1)
-
-		requests.Store(hex.EncodeToString(content.ID()), completer)
-
-		qrCode, err := event.NewAnonymousMessage(content).SetFlags(event.MessageFlagTargetSandbox).EncodeToQR(event.QREncodingUnicode)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		fmt.Println(string(qrCode))
-
-		response := <-completer
-
-		content, err = message.NewChat().Message("Hello!").Finish()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		err = selfAccount.MessageSend(response.FromAddress(), content)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		summary, err := content.Summary()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		err = selfAccount.NotificationSend(response.FromAddress(), summary)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), time.Now().Add(time.Minute*5))
+	if err != nil {
+		log.Fatal(err.Error())
 	}
+
+	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(time.Now().Add(time.Minute * 5)).Finish()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	requests.Store(hex.EncodeToString(content.ID()), struct{}{})
+
+	qrCode, err := event.NewAnonymousMessage(content).SetFlags(event.MessageFlagTargetSandbox).EncodeToQR(event.QREncodingUnicode)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	fmt.Println(string(qrCode))
+
+	runtime.Goexit()
 }
 
-func handleDiscoveryResponse(msg *event.Message) {
+func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	discoveryResponse, err := message.DecodeDiscoveryResponse(msg.Content())
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
 
-	completer, ok := requests.LoadAndDelete(hex.EncodeToString(discoveryResponse.ResponseTo()))
+	_, ok := requests.LoadAndDelete(hex.EncodeToString(discoveryResponse.ResponseTo()))
 	if !ok {
 		log.Println("received response to an unknown discovery request")
 		return
 	}
 
-	completer.(chan *event.Message) <- msg
+	sendMessage(selfAccount, msg)
 }
 
 func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
@@ -128,4 +107,26 @@ func handleChat(msg *event.Message) {
 	}
 
 	log.Println("received message:", chat.Message())
+}
+
+func sendMessage(selfAccount *account.Account, msg *event.Message) {
+	content, err := message.NewChat().Message("Hello!").Finish()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = selfAccount.MessageSend(msg.FromAddress(), content)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	summary, err := content.Summary()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
