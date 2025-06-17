@@ -9,6 +9,8 @@ package account
 */
 import "C"
 import (
+	"fmt"
+
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/platform"
 )
@@ -69,6 +71,58 @@ func (c *Config) defaults() {
 	if c.Environment == nil {
 		c.Environment = TargetSandbox
 	}
+}
+
+var DefaultWelcomeAccept = func(account *Account, welcome *event.Welcome) {
+	groupAddress, err := account.ConnectionAccept(
+		welcome.ToAddress(),
+		welcome.Welcome(),
+	)
+
+	if err != nil {
+		logger()(LogWarn, fmt.Sprintf("failed to accept welcome to encrypted group. error: %s", err))
+		return
+	}
+
+	logger()(LogInfo, fmt.Sprintf(
+		"accepted welcome to encrypted group. group: %s as: %s from: %s",
+		groupAddress.String(),
+		welcome.ToAddress().String(),
+		welcome.FromAddress().String(),
+	))
+}
+
+var DefaultWelcomeIgnore = func(account *Account, welcome *event.Welcome) {
+	logger()(LogInfo, fmt.Sprintf(
+		"ignoring welcome to encrypted group. from: %s",
+		welcome.FromAddress().String()),
+	)
+}
+
+var DefaultKeyPackageAccept = func(account *Account, keyPackage *event.KeyPackage) {
+	groupAddress, err := account.ConnectionEstablish(
+		keyPackage.ToAddress(),
+		keyPackage.KeyPackage(),
+	)
+
+	if err != nil {
+		logger()(LogWarn, fmt.Sprintf("failed to create encrypted group from key package. error: %s", err))
+		return
+	}
+
+	logger()(LogInfo, fmt.Sprintf(
+		"created encrypted group from key package. group: %s as: %s from: %s",
+		groupAddress.String(),
+		keyPackage.ToAddress().String(),
+		keyPackage.FromAddress().String(),
+	))
+}
+
+var DefaultKeyPackageIgnore = func(account *Account, keyPackage *event.KeyPackage) {
+	logger()(LogInfo, fmt.Sprintf(
+		"ignoring welcome to encrypted group. from: %s",
+		keyPackage.FromAddress().String(),
+	))
 }
 
 // NOTE mobile specific api, don't export
