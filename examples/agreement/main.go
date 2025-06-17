@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/go-pdf/fpdf"
@@ -17,8 +16,6 @@ import (
 	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
 )
-
-var requests sync.Map
 
 func main() {
 	cfg := &account.Config{
@@ -46,19 +43,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	expiry := time.Now().Add(time.Minute * 5)
+	expires := time.Now().Add(time.Minute * 5)
 
-	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expiry)
+	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expires)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expiry).Finish()
+	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expires).Finish()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	requests.Store(hex.EncodeToString(content.ID()), struct{}{})
 
 	qrCode, err := event.NewAnonymousMessage(content).SetFlags(event.MessageFlagTargetSandbox).EncodeToQR(event.QREncodingUnicode)
 	if err != nil {
@@ -71,15 +66,9 @@ func main() {
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	discoveryResponse, err := message.DecodeDiscoveryResponse(msg.Content())
+	_, err := message.DecodeDiscoveryResponse(msg.Content())
 	if err != nil {
 		log.Fatal(err.Error())
-	}
-
-	_, ok := requests.LoadAndDelete(hex.EncodeToString(discoveryResponse.ResponseTo()))
-	if !ok {
-		log.Println("received response to an unknown discovery request")
-		return
 	}
 
 	requestCredentialVerification(selfAccount, msg.FromAddress())

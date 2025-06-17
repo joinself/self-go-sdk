@@ -1,19 +1,15 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/message"
 )
-
-var requests sync.Map
 
 func main() {
 	cfg := &account.Config{
@@ -42,17 +38,17 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), time.Now().Add(time.Minute*5))
+	expires := time.Now().Add(time.Minute * 5)
+
+	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expires)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(time.Now().Add(time.Minute * 5)).Finish()
+	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expires).Finish()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	requests.Store(hex.EncodeToString(content.ID()), struct{}{})
 
 	qrCode, err := event.NewAnonymousMessage(content).SetFlags(event.MessageFlagTargetSandbox).EncodeToQR(event.QREncodingUnicode)
 	if err != nil {
@@ -65,15 +61,9 @@ func main() {
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	discoveryResponse, err := message.DecodeDiscoveryResponse(msg.Content())
+	_, err := message.DecodeDiscoveryResponse(msg.Content())
 	if err != nil {
 		log.Println(err.Error())
-		return
-	}
-
-	_, ok := requests.LoadAndDelete(hex.EncodeToString(discoveryResponse.ResponseTo()))
-	if !ok {
-		log.Println("received response to an unknown discovery request")
 		return
 	}
 

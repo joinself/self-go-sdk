@@ -22,7 +22,7 @@ func main() {
 				case message.ContentTypeIntroduction:
 					handleIntroduction(selfAccount, msg)
 				case message.ContentTypeChat:
-					handleChat(msg)
+					handleChat(selfAccount, msg)
 				default:
 					log.Printf("received unhandled event")
 				}
@@ -63,11 +63,35 @@ func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
 	log.Printf("received introduction. documentAddress: %s", introduction.DocumentAddress())
 }
 
-func handleChat(msg *event.Message) {
+func handleChat(selfAccount *account.Account, msg *event.Message) {
 	chat, err := message.DecodeChat(msg.Content())
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Printf("received message: %s", chat.Message())
+
+	sendMessage(selfAccount, msg)
+}
+
+func sendMessage(selfAccount *account.Account, msg *event.Message) {
+	content, err := message.NewChat().Message("Hello!").Finish()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = selfAccount.MessageSend(msg.FromAddress(), content)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	summary, err := content.Summary()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
