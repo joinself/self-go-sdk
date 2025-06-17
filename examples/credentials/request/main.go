@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"runtime"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/event"
@@ -108,12 +109,11 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 	for _, c := range credentials {
 		claims, err := c.CredentialSubjectClaims()
 		if err != nil {
-			log.Warn("failed to parse credential claims", "error", err)
-			continue
+			log.Fatalf("failed to parse credential claims, error: %s", err)
 		}
 
 		for k, v := range claims {
-			log.Info(
+			log.Println(
 				"credential value",
 				"credentialType", c.CredentialType(),
 				"field", k,
@@ -121,6 +121,8 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 			)
 		}
 	}
+
+	os.Exit(0)
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {

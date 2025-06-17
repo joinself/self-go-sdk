@@ -1,9 +1,9 @@
 package main
 
 import (
+	"log"
 	"runtime"
 
-	"github.com/charmbracelet/log"
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/message"

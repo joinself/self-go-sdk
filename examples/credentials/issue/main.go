@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"runtime"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/event"
@@ -140,4 +141,6 @@ func sendIssuedCredential(selfAccount *account.Account, msg *event.Message) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	os.Exit(0)
 }
