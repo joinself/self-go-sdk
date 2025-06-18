@@ -27,3 +27,8 @@ jobs:
 
           cd account
           gotest -v
+
+          examples=(agreement chat)
+          for e in ${examples[@]}; do
+            cd ${CI_WORKDIR}/examples/${e} && go build -buildvcs=false .
+          done
