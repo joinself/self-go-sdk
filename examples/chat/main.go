@@ -27,7 +27,7 @@ func main() {
 				case message.ContentTypeChat:
 					handleChat(msg)
 				default:
-					log.Printf("received unhandled event")
+					log.Println("received unhandled event")
 				}
 			},
 		},
@@ -35,24 +35,27 @@ func main() {
 
 	selfAccount, err := account.New(cfg)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
 	expires := time.Now().Add(time.Minute * 5)
 
+	// generate a one-time key for encrypted communication between app and user
 	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expires)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
+	// create a new discovery request containing the one-time key
 	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expires).Finish()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
+	// format the discovery request as a QR code
 	qrCode, err := event.NewAnonymousMessage(content).SetFlags(event.MessageFlagTargetSandbox).EncodeToQR(event.QREncodingUnicode)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
 	fmt.Println(string(qrCode))
@@ -63,22 +66,24 @@ func main() {
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	content, err := message.NewChat().Message("Hello!").Finish()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
 	err = selfAccount.MessageSend(msg.FromAddress(), content)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
+	// generate message summary for push notification
 	summary, err := content.Summary()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
+	// send push notification for message
 	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 }
 
@@ -88,11 +93,13 @@ func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
 		log.Fatal(err)
 	}
 
+	// fetch push notification tokens
 	tokens, err := introduction.Tokens()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// store push notification tokens
 	for _, token := range tokens {
 		err = selfAccount.TokenStore(msg.FromAddress(), msg.ToAddress(), msg.ToAddress(), token)
 		if err != nil {
@@ -104,7 +111,7 @@ func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
 func handleChat(msg *event.Message) {
 	chat, err := message.DecodeChat(msg.Content())
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(err)
 		return
 	}
 
