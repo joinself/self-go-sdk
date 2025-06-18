@@ -42,8 +42,6 @@ const (
 
 func (t ContentType) String() string {
 	switch t {
-	case ContentTypeUnknown:
-		return "Unknown"
 	case ContentTypeCustom:
 		return "Custom"
 	case ContentTypeChat:
@@ -74,6 +72,8 @@ func (t ContentType) String() string {
 		return "CredentialPresentationRequest"
 	case ContentTypeCredentialPresentationResponse:
 		return "CredentialPresentationResponse"
+	default:
+		return "Unknown"
 	}
 }
 
