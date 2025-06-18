@@ -24,8 +24,6 @@ func main() {
 				switch event.ContentTypeOf(msg) {
 				case message.ContentTypeDiscoveryResponse:
 					handleDiscoveryResponse(selfAccount, msg)
-				case message.ContentTypeIntroduction:
-					handleIntroduction(selfAccount, msg)
 				default:
 					log.Printf("received unhandled event")
 				}
@@ -61,34 +59,6 @@ func main() {
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	_, err := message.DecodeDiscoveryResponse(msg.Content())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sendIssuedCredential(selfAccount, msg)
-}
-
-func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
-	introduction, err := message.DecodeIntroduction(msg.Content())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tokens, err := introduction.Tokens()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, token := range tokens {
-		err = selfAccount.TokenStore(msg.FromAddress(), msg.ToAddress(), msg.ToAddress(), token)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func sendIssuedCredential(selfAccount *account.Account, msg *event.Message) {
 	// specify the type of credential. It's possible for a credential to have
 	// more than one type as credentials can express different claims, i.e
 	// a credential that holds both contact details and a passport.
@@ -142,5 +112,6 @@ func sendIssuedCredential(selfAccount *account.Account, msg *event.Message) {
 		log.Fatal(err)
 	}
 
+	time.Sleep(time.Second)
 	os.Exit(0)
 }

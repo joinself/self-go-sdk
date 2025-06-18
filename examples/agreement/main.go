@@ -66,12 +66,23 @@ func main() {
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	_, err := message.DecodeDiscoveryResponse(msg.Content())
+	agreement, agreementTerms := createAgreementTerms(selfAccount, msg.FromAddress())
+
+	content, err := message.NewCredentialVerificationRequest().
+		Type([]string{"VerifiableCredential", "AgreementCredential"}).
+		Evidence("terms", agreementTerms).
+		Proof(agreement).
+		Expires(time.Now().Add(time.Hour * 24)).
+		Finish()
+
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 
-	requestCredentialVerification(selfAccount, msg.FromAddress())
+	err = selfAccount.MessageSend(msg.FromAddress(), content)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func handleCredentialVerificationResponse(selfAccount *account.Account, msg *event.Message) {
@@ -131,27 +142,6 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 		} else {
 			log.Fatal("Agreement is not valid or not signed by both parties")
 		}
-	}
-}
-
-func requestCredentialVerification(selfAccount *account.Account, responder *signing.PublicKey) {
-	agreement, agreementTerms := createAgreementTerms(selfAccount, responder)
-
-	// create a new request and store a reference to it
-	content, err := message.NewCredentialVerificationRequest().
-		Type([]string{"VerifiableCredential", "AgreementCredential"}).
-		Evidence("terms", agreementTerms).
-		Proof(agreement).
-		Expires(time.Now().Add(time.Hour * 24)).
-		Finish()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = selfAccount.MessageSend(responder, content)
-	if err != nil {
-		log.Fatal(err)
 	}
 }
 

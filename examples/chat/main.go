@@ -61,13 +61,25 @@ func main() {
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	_, err := message.DecodeDiscoveryResponse(msg.Content())
+	content, err := message.NewChat().Message("Hello!").Finish()
 	if err != nil {
-		log.Println(err.Error())
-		return
+		log.Fatal(err.Error())
 	}
 
-	sendMessage(selfAccount, msg)
+	err = selfAccount.MessageSend(msg.FromAddress(), content)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	summary, err := content.Summary()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
@@ -97,26 +109,4 @@ func handleChat(msg *event.Message) {
 	}
 
 	log.Println("received message:", chat.Message())
-}
-
-func sendMessage(selfAccount *account.Account, msg *event.Message) {
-	content, err := message.NewChat().Message("Hello!").Finish()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = selfAccount.MessageSend(msg.FromAddress(), content)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	summary, err := content.Summary()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
 }

@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	// TargetSandbox targets the sandbox environment
 	TargetSandbox = &Target{
 		Rpc:     defaultRpcSandbox,
 		Object:  defaultObjectSandbox,
@@ -23,6 +24,7 @@ var (
 	}
 )
 
+// Target specifies which endpoints the SDK should target
 type Target struct {
 	Rpc     string
 	Object  string
@@ -73,6 +75,7 @@ func (c *Config) defaults() {
 	}
 }
 
+// DefaultWelcomeAccept automatically accepts any welcome event to join a new group
 var DefaultWelcomeAccept = func(account *Account, welcome *event.Welcome) {
 	groupAddress, err := account.ConnectionAccept(
 		welcome.ToAddress(),
@@ -92,6 +95,7 @@ var DefaultWelcomeAccept = func(account *Account, welcome *event.Welcome) {
 	))
 }
 
+// DefaultWelcomeIgnore automatically ignores any welcome event to join a new group
 var DefaultWelcomeIgnore = func(account *Account, welcome *event.Welcome) {
 	logger()(LogInfo, fmt.Sprintf(
 		"ignoring welcome to encrypted group. from: %s",
@@ -99,6 +103,7 @@ var DefaultWelcomeIgnore = func(account *Account, welcome *event.Welcome) {
 	)
 }
 
+// DefaultKeyPackageAccept automatically accepts any key package and creates a new group with the sender
 var DefaultKeyPackageAccept = func(account *Account, keyPackage *event.KeyPackage) {
 	groupAddress, err := account.ConnectionEstablish(
 		keyPackage.ToAddress(),
@@ -118,6 +123,7 @@ var DefaultKeyPackageAccept = func(account *Account, keyPackage *event.KeyPackag
 	))
 }
 
+// DefaultKeyPackageIgnore automatically ignores any key package and will not create a group
 var DefaultKeyPackageIgnore = func(account *Account, keyPackage *event.KeyPackage) {
 	logger()(LogInfo, fmt.Sprintf(
 		"ignoring welcome to encrypted group. from: %s",

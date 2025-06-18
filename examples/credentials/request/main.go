@@ -24,8 +24,6 @@ func main() {
 				switch event.ContentTypeOf(msg) {
 				case message.ContentTypeDiscoveryResponse:
 					handleDiscoveryResponse(selfAccount, msg)
-				case message.ContentTypeIntroduction:
-					handleIntroduction(selfAccount, msg)
 				case message.ContentTypeCredentialPresentationResponse:
 					handleCredentialVerificationResponse(selfAccount, msg)
 				default:
@@ -126,34 +124,6 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	_, err := message.DecodeDiscoveryResponse(msg.Content())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sendCredentialPresentationRequest(selfAccount, msg)
-}
-
-func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
-	introduction, err := message.DecodeIntroduction(msg.Content())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tokens, err := introduction.Tokens()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, token := range tokens {
-		err = selfAccount.TokenStore(msg.FromAddress(), msg.ToAddress(), msg.ToAddress(), token)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func sendCredentialPresentationRequest(selfAccount *account.Account, msg *event.Message) {
 	content, err := message.NewCredentialPresentationRequest().
 		Type([]string{"VerifiablePresentation", "CustomPresentation"}).
 		Details(
