@@ -22,12 +22,8 @@ func main() {
 				switch event.ContentTypeOf(msg) {
 				case message.ContentTypeDiscoveryResponse:
 					handleDiscoveryResponse(selfAccount, msg)
-				case message.ContentTypeIntroduction:
-					handleIntroduction(selfAccount, msg)
 				case message.ContentTypeChat:
 					handleChat(msg)
-				default:
-					log.Println("received unhandled event")
 				}
 			},
 		},
@@ -72,39 +68,6 @@ func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	err = selfAccount.MessageSend(msg.FromAddress(), content)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	// generate message summary for push notification
-	summary, err := content.Summary()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// send push notification for message
-	err = selfAccount.NotificationSend(msg.FromAddress(), summary)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
-	introduction, err := message.DecodeIntroduction(msg.Content())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// fetch push notification tokens
-	tokens, err := introduction.Tokens()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// store push notification tokens
-	for _, token := range tokens {
-		err = selfAccount.TokenStore(msg.FromAddress(), msg.ToAddress(), msg.ToAddress(), token)
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
 }
 
