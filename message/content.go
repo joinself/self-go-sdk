@@ -40,6 +40,43 @@ const (
 	ContentTypeCredentialPresentationResponse ContentType = C.CONTENT_CREDENTIAL_PRESENTATION_RESPONSE
 )
 
+func (t ContentType) String() string {
+	switch t {
+	case ContentTypeUnknown:
+		return "Unknown"
+	case ContentTypeCustom:
+		return "Custom"
+	case ContentTypeChat:
+		return "Chat"
+	case ContentTypeReceipt:
+		return "Receipt"
+	case ContentTypeCredential:
+		return "Credential"
+	case ContentTypeIntroduction:
+		return "Introduction"
+	case ContentTypeDiscoveryRequest:
+		return "DiscoveryRequest"
+	case ContentTypeDiscoveryResponse:
+		return "DiscoveryResponse"
+	case ContentTypeSigningRequest:
+		return "SigningRequest"
+	case ContentTypeSigningResponse:
+		return "SigningResponse"
+	case ContentTypeAccountPairingRequest:
+		return "AccountPairingRequest"
+	case ContentTypeAccountPairingResponse:
+		return "AccountPairingResponse"
+	case ContentTypeCredentialVerificationRequest:
+		return "CredentialVerificationRequest"
+	case ContentTypeCredentialVerificationResponse:
+		return "CredentialVerificationResponse"
+	case ContentTypeCredentialPresentationRequest:
+		return "CredentialPresentationRequest"
+	case ContentTypeCredentialPresentationResponse:
+		return "CredentialPresentationResponse"
+	}
+}
+
 func newContent(ptr *C.self_message_content) *Content {
 	c := &Content{
 		ptr: ptr,
