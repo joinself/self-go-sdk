@@ -124,28 +124,12 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
+	livenessFilter := credential.NewFilter().Equals("sourceImageHash", "")
+
 	content, err := message.NewCredentialPresentationRequest().
 		Type([]string{"VerifiablePresentation", "CustomPresentation"}).
-		Details(
-			credential.CredentialTypeLiveness,
-			[]*message.CredentialPresentationDetailParameter{
-				message.NewCredentialPresentationDetailParameter(
-					message.OperatorNotEquals,
-					"sourceImageHash",
-					"",
-				),
-			},
-		).
-		Details(
-			credential.CredentialTypeEmail,
-			[]*message.CredentialPresentationDetailParameter{
-				message.NewCredentialPresentationDetailParameter(
-					message.OperatorNotEquals,
-					"emailAddress",
-					"",
-				),
-			},
-		).
+		Details(credential.CredentialTypeLiveness, livenessFilter).
+		Details(credential.CredentialTypeEmail, nil).
 		Finish()
 
 	if err != nil {
