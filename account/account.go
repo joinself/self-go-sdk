@@ -10,6 +10,7 @@ package account
 import "C"
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -1039,6 +1040,27 @@ func (a *Account) InboxList() ([]*signing.PublicKey, error) {
 	)
 
 	return inboxes, nil
+}
+
+// InboxDefault returns the default inbox of the SDK created during setup
+func (a *Account) InboxDefault() *signing.PublicKey {
+	// TODO replace this with an implementation in the shared SDK
+	for {
+		inboxes, err := a.InboxList()
+		if err != nil {
+			logger()(LogWarn, fmt.Sprintf("unable to load default inbox address. error: %s", err.Error()))
+			time.Sleep(time.Second)
+			continue
+		}
+
+		if len(inboxes) < 1 {
+			logger()(LogWarn, "unable to load default inbox address. error: no inboxes have been created")
+			time.Sleep(time.Second)
+			continue
+		}
+
+		return inboxes[0]
+	}
 }
 
 // GroupWith returns the address of the encrypted group that has been

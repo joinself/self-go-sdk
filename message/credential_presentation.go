@@ -209,9 +209,9 @@ func (b *CredentialPresentationRequestBuilder) Type(presentationType []string) *
 }
 
 // Details specifies the details of the credentials being requested for presentation
-func (b *CredentialPresentationRequestBuilder) Details(credentialType []string, parameters []*CredentialPresentationDetailParameter) *CredentialPresentationRequestBuilder {
+func (b *CredentialPresentationRequestBuilder) Details(credentialType []string, filter *credential.Filter) *CredentialPresentationRequestBuilder {
 	credentialTypeCollection := toCredentialTypeCollection(credentialType)
-	parameterCollection := toCredentialPresentationDetailParameterCollection(parameters)
+	parameterCollection := toCredentialPresentationDetailParameterCollection(nil) //parameters)
 
 	C.self_message_content_credential_presentation_request_builder_details(
 		b.ptr,
