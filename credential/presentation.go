@@ -15,12 +15,12 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-var (
-	PresentationTypePassport             = []string{"VerifiablePresentation", "PassportPresentation"}
-	PresentationTypeLiveness             = []string{"VerifiablePresentation", "LivenessPresentation"}
-	PresentationTypeProfile              = []string{"VerifiablePresentation", "ProfilePresentation"}
-	PresentationTypeContactDetails       = []string{"VerifiablePresentation", "ContactDetailsPresentation"}
-	PresentationTypeApplicationPublisher = []string{"VerifiablePresentation", "ApplicationPublisherPresentation"}
+const (
+	PresentationTypePassport             = "PassportPresentation"
+	PresentationTypeLiveness             = "LivenessPresentation"
+	PresentationTypeProfile              = "ProfilePresentation"
+	PresentationTypeContactDetails       = "ContactDetailsPresentation"
+	PresentationTypeApplicationPublisher = "ApplicationPublisherPresentation"
 )
 
 type Presentation struct {
