@@ -199,7 +199,7 @@ func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
 }
 
 // Type sets the type of presentation being requested
-func (b *CredentialPresentationRequestBuilder) Type(presentationType []string) *CredentialPresentationRequestBuilder {
+func (b *CredentialPresentationRequestBuilder) Type(presentationType ...string) *CredentialPresentationRequestBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_message_content_credential_presentation_request_builder_presentation_type(

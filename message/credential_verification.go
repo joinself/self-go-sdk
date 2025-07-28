@@ -197,7 +197,7 @@ func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
 }
 
 // Type sets the type of credential being requested
-func (b *CredentialVerificationRequestBuilder) Type(credentialType []string) *CredentialVerificationRequestBuilder {
+func (b *CredentialVerificationRequestBuilder) Type(credentialType ...string) *CredentialVerificationRequestBuilder {
 	collection := toCredentialTypeCollection(credentialType)
 
 	C.self_message_content_credential_verification_request_builder_credential_type(
