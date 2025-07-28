@@ -34,5 +34,6 @@ examples/credentials/issue/issue
 examples/credentials/issue/storage
 examples/credentials/request/request
 examples/credentials/request/storage
+examples/credential-request/storage
 examples/discovery/discovery
 examples/discovery/storage
