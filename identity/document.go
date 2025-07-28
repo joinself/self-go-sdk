@@ -34,6 +34,9 @@ func newSigningPublicKey(*C.self_signing_public_key) *signing.PublicKey
 //go:linkname newExchangePublicKey github.com/joinself/self-go-sdk/keypair/exchange.newExchangePublicKey
 func newExchangePublicKey(*C.self_exchange_public_key) *exchange.PublicKey
 
+//go:linkname toSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.toSigningPublicKeyCollection
+func toSigningPublicKeyCollection(c []*signing.PublicKey) *C.self_collection_signing_public_key
+
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
 
@@ -159,6 +162,33 @@ func (d *Document) SigningKeysWithRolesAt(roles Role, at time.Time) []*signing.P
 	)
 
 	return keys
+}
+
+// ThresholdMet checks if the provided signers have the required weight for a role's threshold
+func (d *Document) ThresholdMet(role Role, signers []*signing.PublicKey) bool {
+	collection := toSigningPublicKeyCollection(signers)
+
+	defer C.self_collection_signing_public_key_destroy(collection)
+
+	return bool(C.self_identity_document_threshold_met(
+		d.ptr,
+		C.self_identity_key_role(role),
+		collection,
+	))
+}
+
+// ThresholdMet checks if the provided signers have the required weight for a role's threshold at a given time
+func (d *Document) ThresholdMetAt(role Role, at time.Time, signers []*signing.PublicKey) bool {
+	collection := toSigningPublicKeyCollection(signers)
+
+	defer C.self_collection_signing_public_key_destroy(collection)
+
+	return bool(C.self_identity_document_threshold_met_at(
+		d.ptr,
+		C.self_identity_key_role(role),
+		C.int64_t(at.Unix()),
+		collection,
+	))
 }
 
 // DescriptionsAt returns all key descriptions at a given time

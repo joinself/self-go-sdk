@@ -19,16 +19,16 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-var (
-	CredentialTypeEmail              = []string{"VerifiableCredential", "EmailCredential"}
-	CredentialTypePhone              = []string{"VerifiableCredential", "PhoneCredential"}
-	CredentialTypePassport           = []string{"VerifiableCredential", "PassportCredential"}
-	CredentialTypeLiveness           = []string{"VerifiableCredential", "LivenessCredential"}
-	CredentialTypeProfileName        = []string{"VerifiableCredential", "ProfileNameCredential"}
-	CredentialTypeProfileImage       = []string{"VerifiableCredential", "ProfileImageCredential"}
-	CredentialTypeOrganisation       = []string{"VerifiableCredential", "OrganisationCredential"}
-	CredentialTypeApplication        = []string{"VerifiableCredential", "ApplicationCredential"}
-	CredentialTypeApplicationInstall = []string{"VerifiableCredential", "ApplicationInstallCredential"}
+const (
+	CredentialTypeEmail              = "EmailCredential"
+	CredentialTypePhone              = "PhoneCredential"
+	CredentialTypePassport           = "PassportCredential"
+	CredentialTypeLiveness           = "LivenessCredential"
+	CredentialTypeProfileName        = "ProfileNameCredential"
+	CredentialTypeProfileImage       = "ProfileImageCredential"
+	CredentialTypeOrganisation       = "OrganisationCredential"
+	CredentialTypeApplication        = "ApplicationCredential"
+	CredentialTypeApplicationInstall = "ApplicationInstallCredential"
 )
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
@@ -103,7 +103,7 @@ func NewCredential() *CredentialBuilder {
 }
 
 // CredentialType sets the type of credential
-func (b *CredentialBuilder) CredentialType(credentialType []string) *CredentialBuilder {
+func (b *CredentialBuilder) CredentialType(credentialType ...string) *CredentialBuilder {
 	collection := toCredentialTypeCollection(credentialType)
 
 	C.self_credential_builder_credential_type(

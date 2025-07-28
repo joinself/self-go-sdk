@@ -62,6 +62,7 @@ type Callbacks struct {
 	OnKeyPackage      func(account *Account, keyPackage *event.KeyPackage)
 	OnProposal        func(account *Account, proposal *event.Proposal)
 	OnWelcome         func(account *Account, welcome *event.Welcome)
+	OnDropped         func(account *Account, dropped *event.Dropped)
 	onIntegrity       func(account *Account, requestHash []byte) *platform.Attestation
 }
 

@@ -24,9 +24,11 @@ import (
 )
 
 func init() {
-	account.SetLogFunc(func(level account.LogLevel, message string) {
-		// disable logging
-	})
+	/*
+		account.SetLogFunc(func(level account.LogLevel, message string) {
+			// disable logging
+		})
+	*/
 }
 
 func testAccount(t testing.TB) (*account.Account, chan *event.Message, chan *event.Welcome) {
@@ -47,8 +49,12 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 		SkipSetup:   true,
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: account.TargetSandbox,
-		LogLevel:    account.LogError,
+		Environment: &account.Target{
+			Rpc:     "https://rpc.preview.joinself.com",
+			Object:  "https://object.preview.joinself.com",
+			Message: "wss://message.preview.joinself.com",
+		}, //account.TargetSandbox,
+		LogLevel: account.LogDebug, //account.LogError,
 		Callbacks: account.Callbacks{
 			OnConnect: func(account *account.Account) {
 				signal <- true

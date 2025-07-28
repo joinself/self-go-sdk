@@ -10,24 +10,22 @@ package crypto
 import "C"
 import (
 	"runtime"
-
-	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
 // NOTE this is here specifically to standardize the api surface for account
 // as a result of moving KeyPackage to this package
 type Welcome struct {
-	ptr *C.self_welcome
+	ptr *C.self_crypto_welcome
 }
 
-func newWelcome(ptr *C.self_welcome, owned bool) *Welcome {
+func newCryptoWelcome(ptr *C.self_crypto_welcome, owned bool) *Welcome {
 	e := &Welcome{
 		ptr: ptr,
 	}
 
 	if owned {
 		runtime.SetFinalizer(e, func(e *Welcome) {
-			C.self_welcome_destroy(
+			C.self_crypto_welcome_destroy(
 				e.ptr,
 			)
 		})
@@ -36,20 +34,6 @@ func newWelcome(ptr *C.self_welcome, owned bool) *Welcome {
 	return e
 }
 
-func welcomePtr(w *Welcome) *C.self_welcome {
+func cryptoWelcomePtr(w *Welcome) *C.self_crypto_welcome {
 	return w.ptr
-}
-
-// ToAddress returns the address the event was addressed to
-func (w *Welcome) ToAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_welcome_to_address(
-		w.ptr,
-	))
-}
-
-// FromAddress returns the address the event was sent by
-func (w *Welcome) FromAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_welcome_from_address(
-		w.ptr,
-	))
 }

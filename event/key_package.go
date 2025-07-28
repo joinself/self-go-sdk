@@ -16,8 +16,8 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 )
 
-//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newCryptoKeyPackage(ptr *C.self_key_package, owned bool) *crypto.KeyPackage
+//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newCryptoKeyPackage
+func newCryptoKeyPackage(ptr *C.self_crypto_key_package, owned bool) *crypto.KeyPackage
 
 type KeyPackage struct {
 	ptr *C.self_key_package
@@ -71,5 +71,5 @@ func (c *KeyPackage) Timestamp() time.Time {
 
 // KeyPackage returns the events key package
 func (c *KeyPackage) KeyPackage() *crypto.KeyPackage {
-	return newCryptoKeyPackage(C.self_key_package_clone(c.ptr), false)
+	return newCryptoKeyPackage(C.self_key_package_crypto_key_package(c.ptr), false)
 }

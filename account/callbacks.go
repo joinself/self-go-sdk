@@ -14,6 +14,7 @@ typedef const self_key_package cself_key_package_t;
 typedef const self_proposal cself_proposal_t;
 typedef const self_reference cself_reference_t;
 typedef const self_welcome cself_welcome_t;
+typedef const self_dropped_event cself_dropped_event_t;
 typedef const self_integrity_request cself_integrity_request_t;
 typedef const uint8_t cuint8_t;
 
@@ -26,6 +27,7 @@ extern void goOnCommit(void*, cself_commit_t*);
 extern void goOnKeyPackage(void*, cself_key_package_t*);
 extern void goOnProposal(void*, cself_proposal_t*);
 extern void goOnWelcome(void*, cself_welcome_t*);
+extern void goOnDropped(void*, cself_dropped_event_t*);
 extern void goOnLog(self_log_entry*);
 extern void goOnResponse(void*, self_status);
 extern struct self_platform_attestation* goOnIntegrity(void*, cself_integrity_request_t*);
@@ -66,6 +68,10 @@ static void c_on_welcome(void *user_data, self_welcome *welcome) {
 	goOnWelcome(user_data, welcome);
 }
 
+static void c_on_dropped(void *user_data, self_dropped_event *dropped) {
+	goOnDropped(user_data, dropped);
+}
+
 static void c_on_log(self_log_entry *entry) {
 	goOnLog(entry);
 }
@@ -86,7 +92,7 @@ static self_account_callbacks *account_callbacks(bool integrity) {
 	callbacks->on_key_package = c_on_key_package;
 	callbacks->on_proposal = c_on_proposal;
 	callbacks->on_welcome = c_on_welcome;
-	callbacks->on_log = c_on_log;
+	callbacks->on_dropped = c_on_dropped;
 
 	if (integrity) {
 	    callbacks->on_integrity = malloc(sizeof(*c_on_integrity));
@@ -96,6 +102,29 @@ static self_account_callbacks *account_callbacks(bool integrity) {
 	}
 
 	return callbacks;
+}
+
+static self_account_config *account_config(
+	char *rpc_url,
+	char *object_url,
+	char *message_url,
+	char *storage_path,
+	uint8_t *storage_key_buf,
+	size_t storage_key_len,
+	uint32_t log_level
+) {
+	self_account_config *config = malloc(sizeof(self_account_config));
+
+	config->rpc_endpoint = rpc_url;
+	config->object_endpoint = object_url;
+	config->messaging_endpoint = message_url;
+	config->storage_path = storage_path;
+	config->encryption_key_buf = storage_key_buf;
+	config->encryption_key_len = storage_key_len;
+	config->log_level = log_level;
+	config->log_callback = c_on_log;
+
+	return config;
 }
 
 static void c_on_response(void *user_data, self_status response) {
@@ -163,8 +192,23 @@ func newReference(e *C.self_reference) *event.Reference
 //go:linkname newWelcome github.com/joinself/self-go-sdk/event.newWelcome
 func newWelcome(e *C.self_welcome) *event.Welcome
 
+//go:linkname newDropped github.com/joinself/self-go-sdk/event.newDropped
+func newDropped(e *C.self_dropped_event) *event.Dropped
+
 func accountCallbacks(integrity bool) *C.self_account_callbacks {
 	return C.account_callbacks(C.bool(integrity))
+}
+
+func accountConfig(
+	rpcURL *C.char,
+	objectURL *C.char,
+	messageURL *C.char,
+	storagePath *C.char,
+	storageKeyBuf *C.uint8_t,
+	storageKeyLen C.size_t,
+	logLevel C.uint32_t,
+) *C.self_account_config {
+	return C.account_config(rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
 }
 
 //export goOnConnect
@@ -318,6 +362,20 @@ func goOnWelcome(user_data unsafe.Pointer, welcome *C.cself_welcome_t) {
 		account.callbacks.OnWelcome(
 			account,
 			newWelcome(welcome),
+		)
+
+		return
+	}
+}
+
+//export goOnDropped
+func goOnDropped(user_data unsafe.Pointer, dropped *C.cself_dropped_event_t) {
+	account := (*Account)(user_data)
+
+	if account.callbacks.OnDropped != nil {
+		account.callbacks.OnDropped(
+			account,
+			newDropped(dropped),
 		)
 
 		return

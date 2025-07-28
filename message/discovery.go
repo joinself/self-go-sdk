@@ -17,11 +17,11 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-//go:linkname keyPackagePtr github.com/joinself/self-go-sdk/crypto.keyPackagePtr
-func keyPackagePtr(k *crypto.KeyPackage) *C.self_key_package
+//go:linkname cryptoKeyPackagePtr github.com/joinself/self-go-sdk/crypto.cryptoKeyPackagePtr
+func cryptoKeyPackagePtr(k *crypto.KeyPackage) *C.self_crypto_key_package
 
-//go:linkname newKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newKeyPackage(ptr *C.self_key_package) *crypto.KeyPackage
+//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newCryptoKeyPackage
+func newCryptoKeyPackage(ptr *C.self_crypto_key_package) *crypto.KeyPackage
 
 type DiscoveryRequest struct {
 	ptr *C.self_message_content_discovery_request
@@ -115,7 +115,7 @@ func DecodeDiscoveryRequest(content *Content) (*DiscoveryRequest, error) {
 
 // KeyPackage returns the embedded key package conntained in the discovery request
 func (c *DiscoveryRequest) KeyPackage() *crypto.KeyPackage {
-	return newKeyPackage(C.self_message_content_discovery_request_key_package(
+	return newCryptoKeyPackage(C.self_message_content_discovery_request_key_package(
 		c.ptr,
 	))
 }
@@ -138,7 +138,7 @@ func NewDiscoveryRequest() *DiscoveryRequestBuilder {
 func (b *DiscoveryRequestBuilder) KeyPackage(keyPackage *crypto.KeyPackage) *DiscoveryRequestBuilder {
 	C.self_message_content_discovery_request_builder_key_package(
 		b.ptr,
-		keyPackagePtr(keyPackage),
+		cryptoKeyPackagePtr(keyPackage),
 	)
 	return b
 }

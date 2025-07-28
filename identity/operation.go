@@ -300,6 +300,29 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 	return b
 }
 
+// Threshold sets a threshold that must be met by keys that are performing an operation related to a specific role
+func (b *OperationBuilder) Threshold(role Role, threshold uint8) *OperationBuilder {
+	C.self_identity_operation_builder_threshold(
+		b.ptr,
+		C.self_identity_key_role(role),
+		C.uint8_t(threshold),
+	)
+
+	return b
+}
+
+// Weight sets a weight for a key and a given role
+func (b *OperationBuilder) Weight(key *signing.PublicKey, role Role, weight uint8) *OperationBuilder {
+	C.self_identity_operation_builder_weight(
+		b.ptr,
+		signingPublicKeyPtr(key),
+		C.self_identity_key_role(role),
+		C.uint8_t(weight),
+	)
+
+	return b
+}
+
 // Recover recovers an identity, revoking all existing keys
 func (b *OperationBuilder) Recover(effectiveFrom time.Time) *OperationBuilder {
 	C.self_identity_operation_builder_recover(
