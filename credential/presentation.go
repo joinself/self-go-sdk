@@ -83,7 +83,7 @@ func NewPresentation() *PresentationBuilder {
 }
 
 // PresentationType sets the type of presentation
-func (b *PresentationBuilder) PresentationType(presentationType []string) *PresentationBuilder {
+func (b *PresentationBuilder) PresentationType(presentationType ...string) *PresentationBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_presentation_builder_presentation_type(
