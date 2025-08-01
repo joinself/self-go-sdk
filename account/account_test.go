@@ -49,12 +49,8 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 		SkipSetup:   true,
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: &account.Target{
-			Rpc:     "https://rpc.preview.joinself.com",
-			Object:  "https://object.preview.joinself.com",
-			Message: "wss://message.preview.joinself.com",
-		}, //account.TargetSandbox,
-		LogLevel: account.LogDebug, //account.LogError,
+		Environment: account.TargetSandbox,
+		LogLevel: account.LogError,
 		Callbacks: account.Callbacks{
 			OnConnect: func(account *account.Account) {
 				signal <- true
@@ -397,7 +393,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	passportVerifiableCredential, err := alice.CredentialIssue(passportCredential)
 	require.Nil(t, err)
-	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType())
+	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType()[1])
 
 	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("firstName")
 	require.True(t, ok)
@@ -734,7 +730,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	presentations := signingResponse.Presentations()
 	require.Len(t, presentations, 1)
 	assert.Nil(t, presentations[0].Validate())
-	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType())
+	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType()[1])
 	assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
 	credentials := presentations[0].Credentials()

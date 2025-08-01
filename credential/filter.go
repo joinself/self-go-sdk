@@ -35,8 +35,11 @@ func credentialFilterPtr(f *Filter) *C.self_credential_filter {
 	return f.ptr
 }
 
+// NewFilter creates a new filter that can be used to restrict a set of credentials
 func NewFilter() *Filter {
-	return &Filter{}
+	return newCredentialFilter(
+		C.self_credential_filter_init(),
+	)
 }
 
 // Equals checks if a credential field is equal to a given value.
