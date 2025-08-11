@@ -19,6 +19,11 @@ var (
 		Object:  defaultObjectSandbox,
 		Message: defaultMessageSandbox,
 	}
+	TargetProduction = &Target{
+		Rpc:     defaultRpcProduction,
+		Object:  defaultObjectProduction,
+		Message: defaultMessageProduction,
+	}
 )
 
 type Target struct {
