@@ -232,11 +232,13 @@ func (b *CredentialPresentationRequestBuilder) Details(filter *credential.Filter
 }
 
 // Proof attaches proof to the credential presentation request
-func (b *CredentialPresentationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialPresentationRequestBuilder {
-	C.self_message_content_credential_presentation_request_builder_proof(
-		b.ptr,
-		verifiablePresentationPtr(proof),
-	)
+func (b *CredentialPresentationRequestBuilder) Proof(proof ...*credential.VerifiablePresentation) *CredentialPresentationRequestBuilder {
+	for i := range proof {
+		C.self_message_content_credential_presentation_request_builder_proof(
+			b.ptr,
+			verifiablePresentationPtr(proof[i]),
+		)
+	}
 	return b
 }
 
@@ -355,11 +357,13 @@ func (b *CredentialPresentationResponseBuilder) Status(status ResponseStatus) *C
 }
 
 // VerifiablePresentation attaches a verified presentation of credentails to the response
-func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentation *credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
-	C.self_message_content_credential_presentation_response_builder_verifiable_presentation(
-		b.ptr,
-		verifiablePresentationPtr(presentation),
-	)
+func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentations ...*credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
+	for i := range presentations {
+		C.self_message_content_credential_presentation_response_builder_verifiable_presentation(
+			b.ptr,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
 	return b
 }
 

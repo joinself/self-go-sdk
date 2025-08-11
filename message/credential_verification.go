@@ -213,11 +213,13 @@ func (b *CredentialVerificationRequestBuilder) Type(credentialType ...string) *C
 }
 
 // Proof attaches proof to the credential verification request
-func (b *CredentialVerificationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialVerificationRequestBuilder {
-	C.self_message_content_credential_verification_request_builder_proof(
-		b.ptr,
-		verifiablePresentationPtr(proof),
-	)
+func (b *CredentialVerificationRequestBuilder) Proof(proof ...*credential.VerifiablePresentation) *CredentialVerificationRequestBuilder {
+	for i := range proof {
+		C.self_message_content_credential_verification_request_builder_proof(
+			b.ptr,
+			verifiablePresentationPtr(proof[i]),
+		)
+	}
 	return b
 }
 

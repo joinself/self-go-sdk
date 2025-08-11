@@ -129,29 +129,35 @@ func NewCredential() *CredentialBuilder {
 }
 
 // VerifiablePresentation attaches a verified presentation of credentails to the message
-func (b *CredentialBuilder) VerifiablePresentation(presentation *credential.VerifiablePresentation) *CredentialBuilder {
-	C.self_message_content_credential_builder_verifiable_presentation(
-		b.ptr,
-		verifiablePresentationPtr(presentation),
-	)
+func (b *CredentialBuilder) VerifiablePresentation(presentations ...*credential.VerifiablePresentation) *CredentialBuilder {
+	for i := range presentations {
+		C.self_message_content_credential_builder_verifiable_presentation(
+			b.ptr,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
 	return b
 }
 
 // VerifiableCredential attaches a verified credential to the message
-func (b *CredentialBuilder) VerifiableCredential(credential *credential.VerifiableCredential) *CredentialBuilder {
-	C.self_message_content_credential_builder_verifiable_credential(
-		b.ptr,
-		verifiableCredentialPtr(credential),
-	)
+func (b *CredentialBuilder) VerifiableCredential(credentials ...*credential.VerifiableCredential) *CredentialBuilder {
+	for i := range credentials {
+		C.self_message_content_credential_builder_verifiable_credential(
+			b.ptr,
+			verifiableCredentialPtr(credentials[i]),
+		)
+	}
 	return b
 }
 
 // Asset attaches an asset used to support a verifiable credential to the message
-func (b *CredentialBuilder) Asset(asset *object.Object) *CredentialBuilder {
-	C.self_message_content_credential_builder_asset(
-		b.ptr,
-		objectPtr(asset),
-	)
+func (b *CredentialBuilder) Asset(assets ...*object.Object) *CredentialBuilder {
+	for i := range assets {
+		C.self_message_content_credential_builder_asset(
+			b.ptr,
+			objectPtr(assets[i]),
+		)
+	}
 	return b
 }
 

@@ -276,11 +276,13 @@ func (b *SigningRequestBuilder) Expires(expires time.Time) *SigningRequestBuilde
 }
 
 // Payload sets the Signing payload of the request
-func (b *SigningRequestBuilder) Payload(payload *SigningPayload) *SigningRequestBuilder {
-	C.self_message_content_signing_request_builder_payload(
-		b.ptr,
-		payload.ptr,
-	)
+func (b *SigningRequestBuilder) Payload(payloads ...*SigningPayload) *SigningRequestBuilder {
+	for i := range payloads {
+		C.self_message_content_signing_request_builder_payload(
+			b.ptr,
+			payloads[i].ptr,
+		)
+	}
 	return b
 }
 
@@ -441,21 +443,25 @@ func (b *SigningResponseBuilder) Payload(payload *SigningPayload, signers []*sig
 }
 
 // Presentation adds a presentation that can be used by the key that has been added to the document
-func (b *SigningResponseBuilder) Presentation(presentation *credential.VerifiablePresentation) *SigningResponseBuilder {
-	C.self_message_content_signing_response_builder_presentation(
-		b.ptr,
-		verifiablePresentationPtr(presentation),
-	)
+func (b *SigningResponseBuilder) Presentation(presentations ...*credential.VerifiablePresentation) *SigningResponseBuilder {
+	for i := range presentations {
+		C.self_message_content_signing_response_builder_presentation(
+			b.ptr,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
 
 	return b
 }
 
 // Asset adds an asset that can be used in support of an attached presentation
-func (b *SigningResponseBuilder) Asset(asset *object.Object) *SigningResponseBuilder {
-	C.self_message_content_signing_response_builder_asset(
-		b.ptr,
-		objectPtr(asset),
-	)
+func (b *SigningResponseBuilder) Asset(assets ...*object.Object) *SigningResponseBuilder {
+	for i := range assets {
+		C.self_message_content_signing_response_builder_asset(
+			b.ptr,
+			objectPtr(assets[i]),
+		)
+	}
 
 	return b
 }

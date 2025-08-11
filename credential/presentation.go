@@ -108,11 +108,13 @@ func (b *PresentationBuilder) Holder(holderAddress *Address) *PresentationBuilde
 }
 
 // CredentialAdd adds a verifiable credential to the presentation
-func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *PresentationBuilder {
-	C.self_presentation_builder_credential_add(
-		b.ptr,
-		credential.ptr,
-	)
+func (b *PresentationBuilder) CredentialAdd(credentials ...*VerifiableCredential) *PresentationBuilder {
+	for i := range credentials {
+		C.self_presentation_builder_credential_add(
+			b.ptr,
+			credentials[i].ptr,
+		)
+	}
 
 	return b
 }
