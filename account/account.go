@@ -425,6 +425,33 @@ func (a *Account) KeychainSigningAssociatedTo(address *signing.PublicKey) ([]*si
 	return keys, nil
 }
 
+// KeychainSign signs an arbitrary payload with a given key
+func (a *Account) KeychainSign(address *signing.PublicKey, payload []byte) ([]byte, error) {
+	signatureBuf := C.CBytes(make([]byte, 64))
+	payloadBuf := C.CBytes(payload)
+	payloadLen := len(payload)
+
+	defer func() {
+		C.free(signatureBuf)
+		C.free(payloadBuf)
+	}()
+
+	result := C.self_account_keychain_sign(
+		a.account,
+		signingPublicKeyPtr(address),
+		(*C.uint8_t)(payloadBuf),
+		(C.size_t)(payloadLen),
+		(*C.uint8_t)(signatureBuf),
+		(C.size_t)(payloadLen),
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return C.GoBytes(signatureBuf, 64), nil
+}
+
 // IdentityList lists identities associated with or owned by the account
 func (a *Account) IdentityList() ([]*signing.PublicKey, error) {
 	var collection *C.self_collection_signing_public_key

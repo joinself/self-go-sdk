@@ -317,6 +317,27 @@ func (c *VerifiableCredential) CredentialSubjectClaims() (map[string]interface{}
 	return claims, json.Unmarshal(claimValue, &claims)
 }
 
+// CredentialHash returns a hash of the complete verifiable credential
+func (c *VerifiableCredential) CredentialHash() ([]byte, error) {
+	hash := C.CBytes(make([]byte, 32))
+	defer C.free(hash)
+
+	result := C.self_verifiable_credential_credential_hash(
+		c.ptr,
+		(*C.uint8_t)(hash),
+		32,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return C.GoBytes(
+		unsafe.Pointer(hash),
+		32,
+	), nil
+}
+
 // Issuer returns the address of the credential's issuer
 func (c *VerifiableCredential) Issuer() *Address {
 	return newAddress(C.self_verifiable_credential_issuer(
