@@ -20,34 +20,45 @@ import (
 )
 
 const (
-	CredentialTypeEmail                      = "EmailCredential"
-	CredentialTypePhone                      = "PhoneCredential"
-	CredentialTypePassport                   = "PassportCredential"
-	CredentialTypeLiveness                   = "LivenessCredential"
-	CredentialTypeProfileName                = "ProfileNameCredential"
-	CredentialTypeProfileImage               = "ProfileImageCredential"
-	CredentialTypeOrganisation               = "OrganisationCredential"
-	CredentialTypeApplication                = "ApplicationCredential"
-	CredentialTypeApplicationInstall         = "ApplicationInstallCredential"
-	CredentialFieldEmailAddress              = "emailAddress"
-	CredentialFieldPhoneNumber               = "phoneNumber"
-	CredentialFieldLivenessSourceImageHash   = "sourceImageHash"
-	CredentialFieldLivenessTargetImageHash   = "targetImageHash"
-	CredentialFieldPassportDocumentNumber    = "documentNumber"
-	CredentialFieldPassportGivenNames        = "givenNames"
-	CredentialFieldPassportSurname           = "surname"
-	CredentialFieldPassportSex               = "sex"
-	CredentialFieldPassportNationality       = "nationality"
-	CredentialFieldPassportDateOfBirth       = "dateOfBirth"
-	CredentialFieldPassportDateOfExpiration  = "dateOfExpiration"
-	CredentialFieldPassportCountryOfIssuance = "countryOfIssuance"
-	CredentialFieldPassportDocumentMrz       = "mrz"
-	CredentialFieldPassportImageType         = "imageType"
-	CredentialFieldPassportimageHash         = "imageHash"
-	CredentialFieldOrganisationName          = "organisationName"
-	CredentialFieldApplicationName           = "applicationName"
-	CredentialFieldApplicationSubsidiaryOf   = "subsidiaryOf"
+	TypeEmail                             = "EmailCredential"
+	TypePhone                             = "PhoneCredential"
+	TypePassport                          = "PassportCredential"
+	TypeLiveness                          = "LivenessCredential"
+	TypeProfileName                       = "ProfileNameCredential"
+	TypeProfileImage                      = "ProfileImageCredential"
+	TypeOrganisation                      = "OrganisationCredential"
+	TypeApplication                       = "ApplicationCredential"
+	TypeApplicationInstall                = "ApplicationInstallCredential"
+	FieldType                             = "/type"
+	FieldIssuer                           = "/issuer"
+	FieldValidFrom                        = "/validFrom"
+	FieldValidUntil                       = "/validUntil"
+	FieldSubject                          = "/credentialSubject/id"
+	FieldSubjectClaims                    = "/credentialSubject"
+	FieldSubjectEmailAddress              = "/credentialSubject/emailAddress"
+	FieldSubjectPhoneNumber               = "/credentialSubject/phoneNumber"
+	FieldSubjectLivenessSourceImageHash   = "/credentialSubject/sourceImageHash"
+	FieldSubjectLivenessTargetImageHash   = "/credentialSubject/targetImageHash"
+	FieldSubjectPassportDocumentNumber    = "/credentialSubject/documentNumber"
+	FieldSubjectPassportGivenNames        = "/credentialSubject/givenNames"
+	FieldSubjectPassportSurname           = "/credentialSubject/surname"
+	FieldSubjectPassportSex               = "/credentialSubject/sex"
+	FieldSubjectPassportNationality       = "/credentialSubject/nationality"
+	FieldSubjectPassportDateOfBirth       = "/credentialSubject/dateOfBirth"
+	FieldSubjectPassportDateOfExpiration  = "/credentialSubject/dateOfExpiration"
+	FieldSubjectPassportCountryOfIssuance = "/credentialSubject/countryOfIssuance"
+	FieldSubjectPassportDocumentMrz       = "/credentialSubject/mrz"
+	FieldSubjectPassportImageType         = "/credentialSubject/imageType"
+	FieldSubjectPassportimageHash         = "/credentialSubject/imageHash"
+	FieldSubjectOrganisationName          = "/credentialSubject/organisationName"
+	FieldSubjectApplicationName           = "/credentialSubject/applicationName"
+	FieldSubjectApplicationSubsidiaryOf   = "/credentialSubject/subsidiaryOf"
 )
+
+// DateTime returns a verifiable credential date time
+func DateTime(instant time.Time) string {
+	return instant.UTC().Format("2006-01-02T15:04:05Z07:00")
+}
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
@@ -199,6 +210,15 @@ func (b *CredentialBuilder) Issuer(issuerAddress *Address) *CredentialBuilder {
 // ValidFrom sets the point of validity for the credential
 func (b *CredentialBuilder) ValidFrom(timestamp time.Time) *CredentialBuilder {
 	C.self_credential_builder_valid_from(
+		b.ptr,
+		C.int64_t(timestamp.Unix()),
+	)
+	return b
+}
+
+// ValidUntil sets the end of the validity period for the credential
+func (b *CredentialBuilder) ValidUntil(timestamp time.Time) *CredentialBuilder {
+	C.self_credential_builder_valid_until(
 		b.ptr,
 		C.int64_t(timestamp.Unix()),
 	)
@@ -457,6 +477,19 @@ func fromCredentialTypeCollection(collection *C.self_collection_credential_type)
 	}
 
 	return credentialType
+}
+
+func toVerifiableCredentialCollection(credentials []*VerifiableCredential) *C.self_collection_verifiable_credential {
+	collection := C.self_collection_verifiable_credential_init()
+
+	for i := 0; i < len(credentials); i++ {
+		C.self_collection_verifiable_credential_append(
+			collection,
+			verifiableCredentialPtr(credentials[i]),
+		)
+	}
+
+	return collection
 }
 
 func fromVerifiableCredentialCollection(collection *C.self_collection_verifiable_credential) []*VerifiableCredential {

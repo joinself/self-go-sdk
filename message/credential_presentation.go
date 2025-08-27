@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/credential/predicate"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -41,11 +42,11 @@ func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verif
 //go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
 
-//go:linkname newCredentialFilter github.com/joinself/self-go-sdk/credential.newCredentialFilter
-func newCredentialFilter(f *C.self_credential_filter) *credential.Filter
+//go:linkname newCredentialPredicateTree github.com/joinself/self-go-sdk/credential/predicate.newCredentialPredicateTree
+func newCredentialPredicateTree(f *C.self_credential_predicate_tree) *predicate.Tree
 
-//go:linkname credentialFilterPtr github.com/joinself/self-go-sdk/credential.credentialFilterPtr
-func credentialFilterPtr(ptr *credential.Filter) *C.self_credential_filter
+//go:linkname credentialPredicateTreePtr github.com/joinself/self-go-sdk/credential/predicate.credentialPredicateTreePtr
+func credentialPredicateTreePtr(ptr *predicate.Tree) *C.self_credential_predicate_tree
 
 type CredentialPresentationRequest struct {
 	ptr *C.self_message_content_credential_presentation_request
@@ -137,8 +138,8 @@ func DecodeCredentialPresentationRequest(content *Content) (*CredentialPresentat
 	return newCredentialPresentationRequest(credentialPresentationRequestContent), nil
 }
 
-// Type returns the type of credential that presentation is being requested for
-func (c *CredentialPresentationRequest) Type() []string {
+// PresentationType returns the type of credential that presentation is being requested for
+func (c *CredentialPresentationRequest) PresentationType() []string {
 	collection := C.self_message_content_credential_presentation_request_presentation_type(
 		c.ptr,
 	)
@@ -152,19 +153,13 @@ func (c *CredentialPresentationRequest) Type() []string {
 	return presentationType
 }
 
-// Details returns details of the requested credential presentations
-func (c *CredentialPresentationRequest) Details() []*CredentialPresentationDetail {
-	collection := C.self_message_content_credential_presentation_request_details(
-		c.ptr,
+// Predicates returns a predicate tree that defines the requirements that returned credentials must match
+func (c *CredentialPresentationRequest) Predicates() *predicate.Tree {
+	return newCredentialPredicateTree(
+		C.self_message_content_credential_presentation_request_predicates(
+			c.ptr,
+		),
 	)
-
-	details := fromPresentationDetailCollection(collection)
-
-	C.self_collection_credential_presentation_detail_destroy(
-		collection,
-	)
-
-	return details
 }
 
 // Proof returns associated verifiable credential proof to support the presentation request
@@ -198,8 +193,8 @@ func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
 	)
 }
 
-// Type sets the type of presentation being requested
-func (b *CredentialPresentationRequestBuilder) Type(presentationType ...string) *CredentialPresentationRequestBuilder {
+// PresentationType sets the type of presentation being requested
+func (b *CredentialPresentationRequestBuilder) PresentationType(presentationType ...string) *CredentialPresentationRequestBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_message_content_credential_presentation_request_builder_presentation_type(
@@ -214,18 +209,11 @@ func (b *CredentialPresentationRequestBuilder) Type(presentationType ...string) 
 	return b
 }
 
-// Details specifies the details of the credentials being requested for presentation
-func (b *CredentialPresentationRequestBuilder) Details(filter *credential.Filter, credentialType ...string) *CredentialPresentationRequestBuilder {
-	credentialTypeCollection := toCredentialTypeCollection(credentialType)
-
-	C.self_message_content_credential_presentation_request_builder_details(
+// Predicates specifies the predicates that returned credentials must match
+func (b *CredentialPresentationRequestBuilder) Predicates(tree *predicate.Tree) *CredentialPresentationRequestBuilder {
+	C.self_message_content_credential_presentation_request_builder_predicates(
 		b.ptr,
-		credentialTypeCollection,
-		credentialFilterPtr(filter),
-	)
-
-	C.self_collection_credential_type_destroy(
-		credentialTypeCollection,
+		credentialPredicateTreePtr(tree),
 	)
 
 	return b
@@ -381,61 +369,4 @@ func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
 	}
 
 	return newContent(finishedContent), nil
-}
-
-type CredentialPresentationDetail struct {
-	ptr *C.self_credential_presentation_detail
-}
-
-func newCredentialPresentationDetail(ptr *C.self_credential_presentation_detail) *CredentialPresentationDetail {
-	c := &CredentialPresentationDetail{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *CredentialPresentationDetail) {
-		C.self_credential_presentation_detail_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
-
-func (p *CredentialPresentationDetail) CredentialType() []string {
-	credentialTypeCollection := C.self_credential_presentation_detail_credential_type(
-		p.ptr,
-	)
-
-	credentialType := fromCredentialTypeCollection(credentialTypeCollection)
-
-	C.self_collection_credential_type_destroy(
-		credentialTypeCollection,
-	)
-
-	return credentialType
-}
-
-func (p *CredentialPresentationDetail) Filter() *credential.Filter {
-	return newCredentialFilter(C.self_credential_presentation_detail_credential_filter(
-		p.ptr,
-	))
-}
-
-func fromPresentationDetailCollection(collection *C.self_collection_credential_presentation_detail) []*CredentialPresentationDetail {
-	collectionLen := int(C.self_collection_credential_presentation_detail_len(
-		collection,
-	))
-
-	details := make([]*CredentialPresentationDetail, collectionLen)
-
-	for i := 0; i < collectionLen; i++ {
-		ptr := C.self_collection_credential_presentation_detail_at(
-			collection,
-			C.size_t(i),
-		)
-
-		details[i] = newCredentialPresentationDetail(ptr)
-	}
-
-	return details
 }
