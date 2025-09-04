@@ -69,7 +69,7 @@ func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	agreement, agreementTerms := createAgreementTerms(selfAccount, msg.FromAddress())
 
 	content, err := message.NewCredentialVerificationRequest().
-		Type([]string{"VerifiableCredential", "AgreementCredential"}).
+		Type("AgreementCredential").
 		Evidence("terms", agreementTerms).
 		Proof(agreement).
 		Expires(time.Now().Add(time.Hour * 24)).
@@ -188,7 +188,7 @@ func createAgreementTerms(selfAccount *account.Account, responder *signing.Publi
 	// create a credential to serve as our agreement the subject of our credential will be ourselves,
 	// signifying our agreement to the terms. our counterparty will issue a credential in the same manner.
 	unsignedAgreementCredential, err := credential.NewCredential().
-		CredentialType([]string{"VerifiableCredential", "AgreementCredential"}).
+		CredentialType("AgreementCredential").
 		CredentialSubject(credential.AddressKey(selfAccount.InboxDefault())).
 		CredentialSubjectClaims(claims).
 		CredentialSubjectClaim("terms", hex.EncodeToString(agreementTerms.Id())).
@@ -207,7 +207,7 @@ func createAgreementTerms(selfAccount *account.Account, responder *signing.Publi
 	}
 
 	unsignedAgreementPresentation, err := credential.NewPresentation().
-		PresentationType([]string{"VerifiablePresentation", "AgreementPresentation"}).
+		PresentationType("AgreementPresentation").
 		Holder(credential.AddressKey(selfAccount.InboxDefault())).
 		CredentialAdd(signedAgreementCredential).
 		Finish()

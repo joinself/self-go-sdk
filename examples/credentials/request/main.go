@@ -5,13 +5,21 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/credential/predicate"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/message"
 )
+
+var users = make(map[string]*user)
+
+type user struct {
+	imageHash string
+}
 
 func main() {
 	cfg := &account.Config{
@@ -118,18 +126,48 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 				"value", v,
 			)
 		}
+
+		if slices.Contains(c.CredentialType(), credential.CredentialTypeLiveness) {
+			// store a reference to the users image hash for future liveness checks
+			sourceImageHash := claims[credential.FieldSubjectLivenessSourceImageHash]
+
+			_, ok := users[msg.FromAddress().String()]
+			if !ok {
+				users[msg.FromAddress().String()] = &user{
+					imageHash: sourceImageHash.(string),
+				}
+			}
+		}
 	}
 
 	os.Exit(0)
 }
 
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
-	livenessFilter := credential.NewFilter().Equals("sourceImageHash", "")
+	livenessPredicates := predicate.Contains(
+		credential.FieldType,
+		credential.PresentationTypeLiveness,
+	).And(
+		predicate.NotEmpty(credential.FieldSubjectClaims),
+	).And(
+		predicate.GreaterThan(credential.FieldValidFrom, credential.DateTime(time.Now())),
+	)
+
+	user, ok := users[msg.FromAddress().String()]
+	if ok {
+		// we have seen this user before, so ask them to perform a liveness check that
+		// matches the image from their first liveness check
+		livenessPredicates = livenessPredicates.And(
+			predicate.Equals(
+				credential.FieldSubjectLivenessTargetImageHash,
+				user.imageHash,
+			),
+		)
+	}
 
 	content, err := message.NewCredentialPresentationRequest().
-		Type([]string{"VerifiablePresentation", "CustomPresentation"}).
-		Details(credential.CredentialTypeLiveness, livenessFilter).
-		Details(credential.CredentialTypeEmail, nil).
+		PresentationType(credential.PresentationTypeLiveness).
+		Predicates(predicate.NewTree(livenessPredicates)).
 		Finish()
 
 	if err != nil {

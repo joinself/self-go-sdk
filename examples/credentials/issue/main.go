@@ -62,7 +62,7 @@ func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	// specify the type of credential. It's possible for a credential to have
 	// more than one type as credentials can express different claims, i.e
 	// a credential that holds both contact details and a passport.
-	credentialType := []string{"VerifiableCredential", "CustomerCredential"}
+	credentialType := "CustomerCredential"
 
 	// the subject address the credential will be issued for. as we don't
 	// have an document address for our responder (that would be shared in

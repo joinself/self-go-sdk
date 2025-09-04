@@ -382,7 +382,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	// generate a credential for bobby, issued by alice
 	passportCredential, err := credential.NewCredential().
-		CredentialType(credential.TypePassport).
+		CredentialType(credential.CredentialTypePassport).
 		CredentialSubject(credential.AddressAure(bobbyIdentifiers[0])).
 		CredentialSubjectClaim("firstName", "bobby").
 		Issuer(credential.AddressAure(aliceIdentifiers[0])).
@@ -394,7 +394,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	passportVerifiableCredential, err := alice.CredentialIssue(passportCredential)
 	require.Nil(t, err)
-	assert.Equal(t, credential.TypePassport, passportVerifiableCredential.CredentialType()[0])
+	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType()[0])
 
 	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("firstName")
 	require.True(t, ok)
@@ -411,7 +411,7 @@ func TestAccountCredentials(t *testing.T) {
 	require.Nil(t, err)
 
 	// retrieve the credential from bobbys account
-	verifiableCredentials, err := bobby.CredentialLookupByCredentialType(credential.TypePassport)
+	verifiableCredentials, err := bobby.CredentialLookupByCredentialType(credential.CredentialTypePassport)
 	require.Nil(t, err)
 	require.Len(t, verifiableCredentials, 1)
 
@@ -648,7 +648,7 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	// request a liveness check using the hash of the operation (mocked here as a self signed credential)
 	unverifiedCredential, err := credential.NewCredential().
-		CredentialType(credential.TypeLiveness).
+		CredentialType(credential.CredentialTypeLiveness).
 		CredentialSubject(credential.AddressAure(
 			bobbyIdentifier,
 		)).
