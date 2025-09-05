@@ -20,17 +20,17 @@ func newSigningPublicKey(ptr *C.self_signing_public_key) *signing.PublicKey
 // NOTE this serves to provide a means of breaking an import cycle between message and event packages
 // the underlying C type is the same as the `event.KeyPackage` type
 type KeyPackage struct {
-	ptr *C.self_key_package
+	ptr *C.self_crypto_key_package
 }
 
-func newKeyPackage(ptr *C.self_key_package, owned bool) *KeyPackage {
+func newCryptoKeyPackage(ptr *C.self_crypto_key_package, owned bool) *KeyPackage {
 	e := &KeyPackage{
 		ptr: ptr,
 	}
 
 	if owned {
 		runtime.SetFinalizer(e, func(e *KeyPackage) {
-			C.self_key_package_destroy(
+			C.self_crypto_key_package_destroy(
 				e.ptr,
 			)
 		})
@@ -39,20 +39,26 @@ func newKeyPackage(ptr *C.self_key_package, owned bool) *KeyPackage {
 	return e
 }
 
-func keyPackagePtr(k *KeyPackage) *C.self_key_package {
+func cryptoKeyPackagePtr(k *KeyPackage) *C.self_crypto_key_package {
 	return k.ptr
-}
-
-// ToAddress returns the address the event was addressed to
-func (c *KeyPackage) ToAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_key_package_to_address(
-		c.ptr,
-	))
 }
 
 // FromAddress returns the address the event was sent by
 func (c *KeyPackage) FromAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_key_package_from_address(
+	return newSigningPublicKey(C.self_crypto_key_package_from_address(
 		c.ptr,
 	))
+}
+
+func toCryptoKeyPackageCollection(packages []*KeyPackage) *C.self_collection_crypto_key_package {
+	collection := C.self_collection_crypto_key_package_init()
+
+	for i := 0; i < len(packages); i++ {
+		C.self_collection_crypto_key_package_append(
+			collection,
+			packages[i].ptr,
+		)
+	}
+
+	return collection
 }

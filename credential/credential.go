@@ -19,17 +19,46 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-var (
-	CredentialTypeEmail              = []string{"VerifiableCredential", "EmailCredential"}
-	CredentialTypePhone              = []string{"VerifiableCredential", "PhoneCredential"}
-	CredentialTypePassport           = []string{"VerifiableCredential", "PassportCredential"}
-	CredentialTypeLiveness           = []string{"VerifiableCredential", "LivenessCredential"}
-	CredentialTypeProfileName        = []string{"VerifiableCredential", "ProfileNameCredential"}
-	CredentialTypeProfileImage       = []string{"VerifiableCredential", "ProfileImageCredential"}
-	CredentialTypeOrganisation       = []string{"VerifiableCredential", "OrganisationCredential"}
-	CredentialTypeApplication        = []string{"VerifiableCredential", "ApplicationCredential"}
-	CredentialTypeApplicationInstall = []string{"VerifiableCredential", "ApplicationInstallCredential"}
+const (
+	CredentialTypeEmail                   = "EmailCredential"
+	CredentialTypePhone                   = "PhoneCredential"
+	CredentialTypePassport                = "PassportCredential"
+	CredentialTypeLiveness                = "LivenessCredential"
+	CredentialTypeProfileName             = "ProfileNameCredential"
+	CredentialTypeProfileImage            = "ProfileImageCredential"
+	CredentialTypeOrganisation            = "OrganisationCredential"
+	CredentialTypeApplication             = "ApplicationCredential"
+	CredentialTypeApplicationInstall      = "ApplicationInstallCredential"
+	FieldType                             = "/type"
+	FieldIssuer                           = "/issuer"
+	FieldValidFrom                        = "/validFrom"
+	FieldValidUntil                       = "/validUntil"
+	FieldSubject                          = "/credentialSubject/id"
+	FieldSubjectClaims                    = "/credentialSubject"
+	FieldSubjectEmailAddress              = "/credentialSubject/emailAddress"
+	FieldSubjectPhoneNumber               = "/credentialSubject/phoneNumber"
+	FieldSubjectLivenessSourceImageHash   = "/credentialSubject/sourceImageHash"
+	FieldSubjectLivenessTargetImageHash   = "/credentialSubject/targetImageHash"
+	FieldSubjectPassportDocumentNumber    = "/credentialSubject/documentNumber"
+	FieldSubjectPassportGivenNames        = "/credentialSubject/givenNames"
+	FieldSubjectPassportSurname           = "/credentialSubject/surname"
+	FieldSubjectPassportSex               = "/credentialSubject/sex"
+	FieldSubjectPassportNationality       = "/credentialSubject/nationality"
+	FieldSubjectPassportDateOfBirth       = "/credentialSubject/dateOfBirth"
+	FieldSubjectPassportDateOfExpiration  = "/credentialSubject/dateOfExpiration"
+	FieldSubjectPassportCountryOfIssuance = "/credentialSubject/countryOfIssuance"
+	FieldSubjectPassportDocumentMrz       = "/credentialSubject/mrz"
+	FieldSubjectPassportImageType         = "/credentialSubject/imageType"
+	FieldSubjectPassportimageHash         = "/credentialSubject/imageHash"
+	FieldSubjectOrganisationName          = "/credentialSubject/organisationName"
+	FieldSubjectApplicationName           = "/credentialSubject/applicationName"
+	FieldSubjectApplicationSubsidiaryOf   = "/credentialSubject/subsidiaryOf"
 )
+
+// DateTime returns a verifiable credential date time
+func DateTime(instant time.Time) string {
+	return instant.UTC().Format("2006-01-02T15:04:05Z07:00")
+}
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
@@ -103,7 +132,7 @@ func NewCredential() *CredentialBuilder {
 }
 
 // CredentialType sets the type of credential
-func (b *CredentialBuilder) CredentialType(credentialType []string) *CredentialBuilder {
+func (b *CredentialBuilder) CredentialType(credentialType ...string) *CredentialBuilder {
 	collection := toCredentialTypeCollection(credentialType)
 
 	C.self_credential_builder_credential_type(
@@ -181,6 +210,15 @@ func (b *CredentialBuilder) Issuer(issuerAddress *Address) *CredentialBuilder {
 // ValidFrom sets the point of validity for the credential
 func (b *CredentialBuilder) ValidFrom(timestamp time.Time) *CredentialBuilder {
 	C.self_credential_builder_valid_from(
+		b.ptr,
+		C.int64_t(timestamp.Unix()),
+	)
+	return b
+}
+
+// ValidUntil sets the end of the validity period for the credential
+func (b *CredentialBuilder) ValidUntil(timestamp time.Time) *CredentialBuilder {
+	C.self_credential_builder_valid_until(
 		b.ptr,
 		C.int64_t(timestamp.Unix()),
 	)
@@ -297,6 +335,27 @@ func (c *VerifiableCredential) CredentialSubjectClaims() (map[string]interface{}
 	C.self_bytes_buffer_destroy(value)
 
 	return claims, json.Unmarshal(claimValue, &claims)
+}
+
+// CredentialHash returns a hash of the complete verifiable credential
+func (c *VerifiableCredential) CredentialHash() ([]byte, error) {
+	hash := C.CBytes(make([]byte, 32))
+	defer C.free(hash)
+
+	result := C.self_verifiable_credential_credential_hash(
+		c.ptr,
+		(*C.uint8_t)(hash),
+		32,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return C.GoBytes(
+		unsafe.Pointer(hash),
+		32,
+	), nil
 }
 
 // Issuer returns the address of the credential's issuer
@@ -418,6 +477,19 @@ func fromCredentialTypeCollection(collection *C.self_collection_credential_type)
 	}
 
 	return credentialType
+}
+
+func toVerifiableCredentialCollection(credentials []*VerifiableCredential) *C.self_collection_verifiable_credential {
+	collection := C.self_collection_verifiable_credential_init()
+
+	for i := 0; i < len(credentials); i++ {
+		C.self_collection_verifiable_credential_append(
+			collection,
+			verifiableCredentialPtr(credentials[i]),
+		)
+	}
+
+	return collection
 }
 
 func fromVerifiableCredentialCollection(collection *C.self_collection_verifiable_credential) []*VerifiableCredential {

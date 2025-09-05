@@ -197,7 +197,7 @@ func NewCredentialVerificationRequest() *CredentialVerificationRequestBuilder {
 }
 
 // Type sets the type of credential being requested
-func (b *CredentialVerificationRequestBuilder) Type(credentialType []string) *CredentialVerificationRequestBuilder {
+func (b *CredentialVerificationRequestBuilder) Type(credentialType ...string) *CredentialVerificationRequestBuilder {
 	collection := toCredentialTypeCollection(credentialType)
 
 	C.self_message_content_credential_verification_request_builder_credential_type(
@@ -213,11 +213,13 @@ func (b *CredentialVerificationRequestBuilder) Type(credentialType []string) *Cr
 }
 
 // Proof attaches proof to the credential verification request
-func (b *CredentialVerificationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialVerificationRequestBuilder {
-	C.self_message_content_credential_verification_request_builder_proof(
-		b.ptr,
-		verifiablePresentationPtr(proof),
-	)
+func (b *CredentialVerificationRequestBuilder) Proof(proof ...*credential.VerifiablePresentation) *CredentialVerificationRequestBuilder {
+	for i := range proof {
+		C.self_message_content_credential_verification_request_builder_proof(
+			b.ptr,
+			verifiablePresentationPtr(proof[i]),
+		)
+	}
 	return b
 }
 

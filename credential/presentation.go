@@ -15,12 +15,12 @@ import (
 	"github.com/joinself/self-go-sdk/status"
 )
 
-var (
-	PresentationTypePassport             = []string{"VerifiablePresentation", "PassportPresentation"}
-	PresentationTypeLiveness             = []string{"VerifiablePresentation", "LivenessPresentation"}
-	PresentationTypeProfile              = []string{"VerifiablePresentation", "ProfilePresentation"}
-	PresentationTypeContactDetails       = []string{"VerifiablePresentation", "ContactDetailsPresentation"}
-	PresentationTypeApplicationPublisher = []string{"VerifiablePresentation", "ApplicationPublisherPresentation"}
+const (
+	PresentationTypePassport             = "PassportPresentation"
+	PresentationTypeLiveness             = "LivenessPresentation"
+	PresentationTypeProfile              = "ProfilePresentation"
+	PresentationTypeContactDetails       = "ContactDetailsPresentation"
+	PresentationTypeApplicationPublisher = "ApplicationPublisherPresentation"
 )
 
 type Presentation struct {
@@ -83,7 +83,7 @@ func NewPresentation() *PresentationBuilder {
 }
 
 // PresentationType sets the type of presentation
-func (b *PresentationBuilder) PresentationType(presentationType []string) *PresentationBuilder {
+func (b *PresentationBuilder) PresentationType(presentationType ...string) *PresentationBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_presentation_builder_presentation_type(
@@ -108,11 +108,13 @@ func (b *PresentationBuilder) Holder(holderAddress *Address) *PresentationBuilde
 }
 
 // CredentialAdd adds a verifiable credential to the presentation
-func (b *PresentationBuilder) CredentialAdd(credential *VerifiableCredential) *PresentationBuilder {
-	C.self_presentation_builder_credential_add(
-		b.ptr,
-		credential.ptr,
-	)
+func (b *PresentationBuilder) CredentialAdd(credentials ...*VerifiableCredential) *PresentationBuilder {
+	for i := range credentials {
+		C.self_presentation_builder_credential_add(
+			b.ptr,
+			credentials[i].ptr,
+		)
+	}
 
 	return b
 }

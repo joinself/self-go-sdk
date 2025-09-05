@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/credential/predicate"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -40,6 +41,12 @@ func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verif
 
 //go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
+
+//go:linkname newCredentialPredicateTree github.com/joinself/self-go-sdk/credential/predicate.newCredentialPredicateTree
+func newCredentialPredicateTree(f *C.self_credential_predicate_tree) *predicate.Tree
+
+//go:linkname credentialPredicateTreePtr github.com/joinself/self-go-sdk/credential/predicate.credentialPredicateTreePtr
+func credentialPredicateTreePtr(ptr *predicate.Tree) *C.self_credential_predicate_tree
 
 type CredentialPresentationRequest struct {
 	ptr *C.self_message_content_credential_presentation_request
@@ -131,8 +138,8 @@ func DecodeCredentialPresentationRequest(content *Content) (*CredentialPresentat
 	return newCredentialPresentationRequest(credentialPresentationRequestContent), nil
 }
 
-// Type returns the type of credential that presentation is being requested for
-func (c *CredentialPresentationRequest) Type() []string {
+// PresentationType returns the type of credential that presentation is being requested for
+func (c *CredentialPresentationRequest) PresentationType() []string {
 	collection := C.self_message_content_credential_presentation_request_presentation_type(
 		c.ptr,
 	)
@@ -146,19 +153,13 @@ func (c *CredentialPresentationRequest) Type() []string {
 	return presentationType
 }
 
-// Details returns details of the requested credential presentations
-func (c *CredentialPresentationRequest) Details() []*CredentialPresentationDetail {
-	collection := C.self_message_content_credential_presentation_request_details(
-		c.ptr,
+// Predicates returns a predicate tree that defines the requirements that returned credentials must match
+func (c *CredentialPresentationRequest) Predicates() *predicate.Tree {
+	return newCredentialPredicateTree(
+		C.self_message_content_credential_presentation_request_predicates(
+			c.ptr,
+		),
 	)
-
-	details := fromPresentationDetailCollection(collection)
-
-	C.self_collection_credential_presentation_detail_destroy(
-		collection,
-	)
-
-	return details
 }
 
 // Proof returns associated verifiable credential proof to support the presentation request
@@ -192,8 +193,8 @@ func NewCredentialPresentationRequest() *CredentialPresentationRequestBuilder {
 	)
 }
 
-// Type sets the type of presentation being requested
-func (b *CredentialPresentationRequestBuilder) Type(presentationType []string) *CredentialPresentationRequestBuilder {
+// PresentationType sets the type of presentation being requested
+func (b *CredentialPresentationRequestBuilder) PresentationType(presentationType ...string) *CredentialPresentationRequestBuilder {
 	collection := toPresentationTypeCollection(presentationType)
 
 	C.self_message_content_credential_presentation_request_builder_presentation_type(
@@ -208,34 +209,24 @@ func (b *CredentialPresentationRequestBuilder) Type(presentationType []string) *
 	return b
 }
 
-// Details specifies the details of the credentials being requested for presentation
-func (b *CredentialPresentationRequestBuilder) Details(credentialType []string, parameters []*CredentialPresentationDetailParameter) *CredentialPresentationRequestBuilder {
-	credentialTypeCollection := toCredentialTypeCollection(credentialType)
-	parameterCollection := toCredentialPresentationDetailParameterCollection(parameters)
-
-	C.self_message_content_credential_presentation_request_builder_details(
+// Predicates specifies the predicates that returned credentials must match
+func (b *CredentialPresentationRequestBuilder) Predicates(tree *predicate.Tree) *CredentialPresentationRequestBuilder {
+	C.self_message_content_credential_presentation_request_builder_predicates(
 		b.ptr,
-		credentialTypeCollection,
-		parameterCollection,
-	)
-
-	C.self_collection_credential_type_destroy(
-		credentialTypeCollection,
-	)
-
-	C.self_collection_credential_presentation_detail_parameter_destroy(
-		parameterCollection,
+		credentialPredicateTreePtr(tree),
 	)
 
 	return b
 }
 
 // Proof attaches proof to the credential presentation request
-func (b *CredentialPresentationRequestBuilder) Proof(proof *credential.VerifiablePresentation) *CredentialPresentationRequestBuilder {
-	C.self_message_content_credential_presentation_request_builder_proof(
-		b.ptr,
-		verifiablePresentationPtr(proof),
-	)
+func (b *CredentialPresentationRequestBuilder) Proof(proof ...*credential.VerifiablePresentation) *CredentialPresentationRequestBuilder {
+	for i := range proof {
+		C.self_message_content_credential_presentation_request_builder_proof(
+			b.ptr,
+			verifiablePresentationPtr(proof[i]),
+		)
+	}
 	return b
 }
 
@@ -354,11 +345,13 @@ func (b *CredentialPresentationResponseBuilder) Status(status ResponseStatus) *C
 }
 
 // VerifiablePresentation attaches a verified presentation of credentails to the response
-func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentation *credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
-	C.self_message_content_credential_presentation_response_builder_verifiable_presentation(
-		b.ptr,
-		verifiablePresentationPtr(presentation),
-	)
+func (b *CredentialPresentationResponseBuilder) VerifiablePresentation(presentations ...*credential.VerifiablePresentation) *CredentialPresentationResponseBuilder {
+	for i := range presentations {
+		C.self_message_content_credential_presentation_response_builder_verifiable_presentation(
+			b.ptr,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
 	return b
 }
 
@@ -376,171 +369,4 @@ func (b *CredentialPresentationResponseBuilder) Finish() (*Content, error) {
 	}
 
 	return newContent(finishedContent), nil
-}
-
-type CredentialPresentationDetail struct {
-	ptr *C.self_credential_presentation_detail
-}
-
-func newCredentialPresentationDetail(ptr *C.self_credential_presentation_detail) *CredentialPresentationDetail {
-	c := &CredentialPresentationDetail{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *CredentialPresentationDetail) {
-		C.self_credential_presentation_detail_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
-
-func (p *CredentialPresentationDetail) CredentialType() []string {
-	credentialTypeCollection := C.self_credential_presentation_detail_credential_type(
-		p.ptr,
-	)
-
-	credentialType := fromCredentialTypeCollection(credentialTypeCollection)
-
-	C.self_collection_credential_type_destroy(
-		credentialTypeCollection,
-	)
-
-	return credentialType
-}
-
-func (p *CredentialPresentationDetail) Parameters() []*CredentialPresentationDetailParameter {
-	parameterCollection := C.self_credential_presentation_detail_parameters(
-		p.ptr,
-	)
-
-	parameters := fromPresentationDetailParameterCollection(parameterCollection)
-
-	C.self_collection_credential_presentation_detail_parameter_destroy(
-		parameterCollection,
-	)
-
-	return parameters
-}
-
-type CredentialPresentationDetailParameter struct {
-	ptr *C.self_credential_presentation_detail_parameter
-}
-
-func newCredentialPresentationDetailParameter(ptr *C.self_credential_presentation_detail_parameter) *CredentialPresentationDetailParameter {
-	c := &CredentialPresentationDetailParameter{
-		ptr: ptr,
-	}
-
-	runtime.SetFinalizer(c, func(c *CredentialPresentationDetailParameter) {
-		C.self_credential_presentation_detail_parameter_destroy(
-			c.ptr,
-		)
-	})
-
-	return c
-}
-
-func NewCredentialPresentationDetailParameter(operator ComparisonOperator, claimField, claimValue string) *CredentialPresentationDetailParameter {
-	claimFieldPtr := C.CString(claimField)
-	claimValuePtr := C.CString(claimValue)
-
-	parameter := newCredentialPresentationDetailParameter(
-		C.self_credential_presentation_detail_parameter_init(
-			uint32(operator),
-			claimFieldPtr,
-			claimValuePtr,
-		),
-	)
-
-	C.free(unsafe.Pointer(claimFieldPtr))
-	C.free(unsafe.Pointer(claimValuePtr))
-
-	return parameter
-}
-
-func (p *CredentialPresentationDetailParameter) Operator() ComparisonOperator {
-	return ComparisonOperator(C.self_credential_presentation_detail_parameter_comparison_operator(
-		p.ptr,
-	))
-}
-
-func (p *CredentialPresentationDetailParameter) ClaimField() string {
-	claimFieldPtr := C.self_credential_presentation_detail_parameter_claim_field(
-		p.ptr,
-	)
-
-	claimField := C.GoString(
-		C.self_string_buffer_ptr(claimFieldPtr),
-	)
-
-	C.self_string_buffer_destroy(claimFieldPtr)
-
-	return claimField
-}
-
-func (p *CredentialPresentationDetailParameter) ClaimValue() string {
-	claimValuePtr := C.self_credential_presentation_detail_parameter_claim_value(
-		p.ptr,
-	)
-
-	claimValue := C.GoString(
-		C.self_string_buffer_ptr(claimValuePtr),
-	)
-
-	C.self_string_buffer_destroy(claimValuePtr)
-
-	return claimValue
-}
-
-func toCredentialPresentationDetailParameterCollection(parameters []*CredentialPresentationDetailParameter) *C.self_collection_credential_presentation_detail_parameter {
-	collection := C.self_collection_credential_presentation_detail_parameter_init()
-
-	for i := 0; i < len(parameters); i++ {
-		C.self_collection_credential_presentation_detail_parameter_append(
-			collection,
-			parameters[i].ptr,
-		)
-	}
-
-	return collection
-}
-
-func fromPresentationDetailCollection(collection *C.self_collection_credential_presentation_detail) []*CredentialPresentationDetail {
-	collectionLen := int(C.self_collection_credential_presentation_detail_len(
-		collection,
-	))
-
-	details := make([]*CredentialPresentationDetail, collectionLen)
-
-	for i := 0; i < collectionLen; i++ {
-		ptr := C.self_collection_credential_presentation_detail_at(
-			collection,
-			C.size_t(i),
-		)
-
-		details[i] = newCredentialPresentationDetail(ptr)
-	}
-
-	return details
-}
-
-func fromPresentationDetailParameterCollection(collection *C.self_collection_credential_presentation_detail_parameter) []*CredentialPresentationDetailParameter {
-	collectionLen := int(C.self_collection_credential_presentation_detail_parameter_len(
-		collection,
-	))
-
-	parameters := make([]*CredentialPresentationDetailParameter, collectionLen)
-
-	for i := 0; i < collectionLen; i++ {
-		ptr := C.self_collection_credential_presentation_detail_parameter_at(
-			collection,
-			C.size_t(i),
-		)
-
-		parameters[i] = newCredentialPresentationDetailParameter(ptr)
-	}
-
-	return parameters
 }

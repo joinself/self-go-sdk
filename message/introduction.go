@@ -154,31 +154,37 @@ func (b *IntroductionBuilder) DocumentAddress(address *signing.PublicKey) *Intro
 }
 
 // Presentation adds a presentation to assist in sha
-func (b *IntroductionBuilder) Presentation(presentation *credential.VerifiablePresentation) *IntroductionBuilder {
-	C.self_message_content_introduction_builder_presentation(
-		b.ptr,
-		verifiablePresentationPtr(presentation),
-	)
+func (b *IntroductionBuilder) Presentation(presentations ...*credential.VerifiablePresentation) *IntroductionBuilder {
+	for i := range presentations {
+		C.self_message_content_introduction_builder_presentation(
+			b.ptr,
+			verifiablePresentationPtr(presentations[i]),
+		)
+	}
 
 	return b
 }
 
 // Asset attaches an object to the introduction to support verification of presentation credentials
-func (b *IntroductionBuilder) Asset(attachment *object.Object) *IntroductionBuilder {
-	C.self_message_content_introduction_builder_asset(
-		b.ptr,
-		objectPtr(attachment),
-	)
+func (b *IntroductionBuilder) Asset(attachments ...*object.Object) *IntroductionBuilder {
+	for i := range attachments {
+		C.self_message_content_introduction_builder_asset(
+			b.ptr,
+			objectPtr(attachments[i]),
+		)
+	}
 
 	return b
 }
 
 // Token attaches a token to the introduction that can be used by the recipient(s)
-func (b *IntroductionBuilder) Token(token *token.Token) *IntroductionBuilder {
-	C.self_message_content_introduction_builder_token(
-		b.ptr,
-		tokenPtr(token),
-	)
+func (b *IntroductionBuilder) Token(tokens ...*token.Token) *IntroductionBuilder {
+	for i := range tokens {
+		C.self_message_content_introduction_builder_token(
+			b.ptr,
+			tokenPtr(tokens[i]),
+		)
+	}
 
 	return b
 }

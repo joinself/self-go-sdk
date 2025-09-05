@@ -10,6 +10,7 @@ package account
 import "C"
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -116,17 +117,17 @@ func keyPackagePtr(k *event.KeyPackage) *C.self_key_package
 //go:linkname welcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
 func welcomePtr(w *event.Welcome) *C.self_welcome
 
-//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newKeyPackage
-func newCryptoKeyPackage(e *C.self_key_package, owned bool) *crypto.KeyPackage
+//go:linkname newCryptoKeyPackage github.com/joinself/self-go-sdk/crypto.newCryptoKeyPackage
+func newCryptoKeyPackage(e *C.self_crypto_key_package, owned bool) *crypto.KeyPackage
 
-//go:linkname cryptoKeyPackagePtr github.com/joinself/self-go-sdk/event.keyPackagePtr
-func cryptoKeyPackagePtr(w *crypto.KeyPackage) *C.self_key_package
+//go:linkname cryptoKeyPackagePtr github.com/joinself/self-go-sdk/crypto.cryptoKeyPackagePtr
+func cryptoKeyPackagePtr(w *crypto.KeyPackage) *C.self_crypto_key_package
 
-//go:linkname newCryptoWelcome github.com/joinself/self-go-sdk/crypto.newWelcome
+//go:linkname newCryptoWelcome github.com/joinself/self-go-sdk/crypto.newCryptoWelcome
 func newCryptoWelcome(e *C.self_welcome, owned bool) *crypto.Welcome
 
-//go:linkname cryptoWelcomePtr github.com/joinself/self-go-sdk/event.welcomePtr
-func cryptoWelcomePtr(w *crypto.Welcome) *C.self_welcome
+//go:linkname cryptoWelcomePtr github.com/joinself/self-go-sdk/crypto.cryptoWelcomePtr
+func cryptoWelcomePtr(w *crypto.Welcome) *C.self_crypto_welcome
 
 //go:linkname contentPtr github.com/joinself/self-go-sdk/message.contentPtr
 func contentPtr(c *message.Content) *C.self_message_content
@@ -149,11 +150,17 @@ func fromVerifiableCredentialCollection(ptr *C.self_collection_verifiable_creden
 //go:linkname fromVerifiablePresentationCollection github.com/joinself/self-go-sdk/credential.fromVerifiablePresentationCollection
 func fromVerifiablePresentationCollection(ptr *C.self_collection_verifiable_presentation) []*credential.VerifiablePresentation
 
+//go:linkname toSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.toSigningPublicKeyCollection
+func toSigningPublicKeyCollection(c []*signing.PublicKey) *C.self_collection_signing_public_key
+
 //go:linkname toCredentialTypeCollection github.com/joinself/self-go-sdk/credential.toCredentialTypeCollection
 func toCredentialTypeCollection(c []string) *C.self_collection_credential_type
 
 //go:linkname toPresentationTypeCollection github.com/joinself/self-go-sdk/credential.toPresentationTypeCollection
 func toPresentationTypeCollection(c []string) *C.self_collection_presentation_type
+
+//go:linkname toCryptoKeyPackageCollection github.com/joinself/self-go-sdk/crypto.toCryptoKeyPackageCollection
+func toCryptoKeyPackageCollection(p []*crypto.KeyPackage) *C.self_collection_crypto_key_package
 
 // Account a self account
 type Account struct {
@@ -202,13 +209,15 @@ func New(cfg *Config) (*Account, error) {
 
 	result := C.self_account_configure(
 		account.account,
-		rpcURLBuf,
-		objectURLBuf,
-		messagingURLBuf,
-		storagePathBuf,
-		storageKeyBuf,
-		storageKeyLen,
-		uint32(cfg.LogLevel),
+		accountConfig(
+			rpcURLBuf,
+			objectURLBuf,
+			messagingURLBuf,
+			storagePathBuf,
+			storageKeyBuf,
+			storageKeyLen,
+			C.uint32_t(cfg.LogLevel),
+		),
 		accountCallbacks(
 			cfg.Callbacks.onIntegrity != nil,
 		),
@@ -277,13 +286,15 @@ func (a *Account) Configure(cfg *Config) error {
 
 	result := C.self_account_configure(
 		a.account,
-		rpcURLBuf,
-		objectURLBuf,
-		messagingURLBuf,
-		storagePathBuf,
-		storageKeyBuf,
-		storageKeyLen,
-		uint32(cfg.LogLevel),
+		accountConfig(
+			rpcURLBuf,
+			objectURLBuf,
+			messagingURLBuf,
+			storagePathBuf,
+			storageKeyBuf,
+			storageKeyLen,
+			C.uint32_t(cfg.LogLevel),
+		),
 		accountCallbacks(
 			cfg.Callbacks.onIntegrity != nil,
 		),
@@ -339,27 +350,6 @@ func (a *Account) KeychainSigningCreate() (*signing.PublicKey, error) {
 		a.account,
 		&address,
 	)
-
-	if result > 0 {
-		return nil, status.New(result)
-	}
-
-	return newSigningPublicKey(address), nil
-}
-
-// KeychainSigningImport imports an existing ed25519 signing keypair
-func (a *Account) KeychainSigningImport(seed []byte) (*signing.PublicKey, error) {
-	var address *C.self_signing_public_key
-
-	seedBuf := C.CBytes(seed)
-
-	result := C.self_account_keychain_signing_import(
-		a.account,
-		(*C.uint8_t)(seedBuf),
-		&address,
-	)
-
-	C.free(seedBuf)
 
 	if result > 0 {
 		return nil, status.New(result)
@@ -433,6 +423,33 @@ func (a *Account) KeychainSigningAssociatedTo(address *signing.PublicKey) ([]*si
 	)
 
 	return keys, nil
+}
+
+// KeychainSign signs an arbitrary payload with a given key
+func (a *Account) KeychainSign(address *signing.PublicKey, payload []byte) ([]byte, error) {
+	signatureBuf := C.CBytes(make([]byte, 64))
+	payloadBuf := C.CBytes(payload)
+	payloadLen := len(payload)
+
+	defer func() {
+		C.free(signatureBuf)
+		C.free(payloadBuf)
+	}()
+
+	result := C.self_account_keychain_sign(
+		a.account,
+		signingPublicKeyPtr(address),
+		(*C.uint8_t)(payloadBuf),
+		(C.size_t)(payloadLen),
+		(*C.uint8_t)(signatureBuf),
+		(C.size_t)(payloadLen),
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return C.GoBytes(signatureBuf, 64), nil
 }
 
 // IdentityList lists identities associated with or owned by the account
@@ -643,7 +660,7 @@ func (a *Account) CredentialLookupByBearer(bearer *signing.PublicKey) ([]*creden
 }
 
 // CredentialLookupByCredentialType looks up credentials matching a specific credential type
-func (a *Account) CredentialLookupByCredentialType(credentialType []string) ([]*credential.VerifiableCredential, error) {
+func (a *Account) CredentialLookupByCredentialType(credentialType ...string) ([]*credential.VerifiableCredential, error) {
 	var collection *C.self_collection_verifiable_credential
 
 	credentialTypeCollection := toCredentialTypeCollection(credentialType)
@@ -922,7 +939,7 @@ func (a *Account) PresentationLookupByHolder(holder *signing.PublicKey) ([]*cred
 }
 
 // PresentationLookupByPresentationType looks up presentations matching a specific presentation type
-func (a *Account) PresentationLookupByPresentationType(presentationType []string) ([]*credential.VerifiablePresentation, error) {
+func (a *Account) PresentationLookupByPresentationType(presentationType ...string) ([]*credential.VerifiablePresentation, error) {
 	var collection *C.self_collection_verifiable_presentation
 
 	presentationTypeCollection := toPresentationTypeCollection(presentationType)
@@ -1041,6 +1058,27 @@ func (a *Account) InboxList() ([]*signing.PublicKey, error) {
 	return inboxes, nil
 }
 
+// InboxDefault returns the default inbox of the SDK created during setup
+func (a *Account) InboxDefault() *signing.PublicKey {
+	// TODO replace this with an implementation in the shared SDK
+	for {
+		inboxes, err := a.InboxList()
+		if err != nil {
+			logger()(LogWarn, fmt.Sprintf("unable to load default inbox address. error: %s", err.Error()))
+			time.Sleep(time.Second)
+			continue
+		}
+
+		if len(inboxes) < 1 {
+			logger()(LogWarn, "unable to load default inbox address. error: no inboxes have been created")
+			time.Sleep(time.Second)
+			continue
+		}
+
+		return inboxes[0]
+	}
+}
+
 // GroupWith returns the address of the encrypted group that has been
 // negotiated with another address.
 // If there is no existing group, this will returnn nil
@@ -1076,6 +1114,82 @@ func (a *Account) GroupMemberAs(groupAddress *signing.PublicKey) (*signing.Publi
 	}
 
 	return newSigningPublicKey(address), nil
+}
+
+// GroupMembers returns all members in a group
+func (a *Account) GroupMembers(groupAddress *signing.PublicKey) ([]*signing.PublicKey, error) {
+	var collection *C.self_collection_signing_public_key
+
+	result := C.self_account_group_members(
+		a.account,
+		signingPublicKeyPtr(groupAddress),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	members := fromSigningPublicKeyCollection(
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(
+		collection,
+	)
+
+	return members, nil
+}
+
+// groupAdd adds members to an existing group
+func (a *Account) groupAdd(groupAddress *signing.PublicKey, members []*crypto.KeyPackage) error {
+	collection := toCryptoKeyPackageCollection(members)
+	defer C.self_collection_crypto_key_package_destroy(collection)
+
+	result := C.self_account_group_add(
+		a.account,
+		signingPublicKeyPtr(groupAddress),
+		collection,
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+// groupRemove removes members to an existing group
+func (a *Account) groupRemove(groupAddress *signing.PublicKey, members []*signing.PublicKey) error {
+	collection := toSigningPublicKeyCollection(members)
+
+	result := C.self_account_group_remove(
+		a.account,
+		signingPublicKeyPtr(groupAddress),
+		collection,
+	)
+
+	C.self_collection_signing_public_key_destroy(collection)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+// groupRemove leaves a group
+func (a *Account) groupLeave(groupAddress *signing.PublicKey) error {
+	result := C.self_account_group_leave(
+		a.account,
+		signingPublicKeyPtr(groupAddress),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
 }
 
 // ValueKeys returns all keys for key value pairs stored on the account
@@ -1300,7 +1414,7 @@ func (a *Account) ConnectionNegotiate(asAddress *signing.PublicKey, withAddress 
 // ConnectionNegotiateOutOfBand negotiates a new encrypted group connection with an address. returns a
 // key pacakge for use in an out of band message, like an anonymous message encoded to a QR code
 func (a *Account) ConnectionNegotiateOutOfBand(asAddress *signing.PublicKey, expires time.Time) (*crypto.KeyPackage, error) {
-	var keyPackage *C.self_key_package
+	var keyPackage *C.self_crypto_key_package
 
 	result := C.self_account_connection_negotiate_out_of_band(
 		a.account,

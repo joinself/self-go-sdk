@@ -13,6 +13,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/credential"
+	"github.com/joinself/self-go-sdk/credential/predicate"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/identity"
 	"github.com/joinself/self-go-sdk/keypair"
@@ -24,9 +25,11 @@ import (
 )
 
 func init() {
-	account.SetLogFunc(func(level account.LogLevel, message string) {
-		// disable logging
-	})
+	/*
+		account.SetLogFunc(func(level account.LogLevel, message string) {
+			// disable logging
+		})
+	*/
 }
 
 func testAccount(t testing.TB) (*account.Account, chan *event.Message, chan *event.Welcome) {
@@ -391,7 +394,7 @@ func TestAccountCredentials(t *testing.T) {
 
 	passportVerifiableCredential, err := alice.CredentialIssue(passportCredential)
 	require.Nil(t, err)
-	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType())
+	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType()[0])
 
 	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("firstName")
 	require.True(t, ok)
@@ -728,7 +731,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	presentations := signingResponse.Presentations()
 	require.Len(t, presentations, 1)
 	assert.Nil(t, presentations[0].Validate())
-	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType())
+	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType()[0])
 	assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
 	credentials := presentations[0].Credentials()
@@ -748,6 +751,214 @@ func TestAccountMessageSigning(t *testing.T) {
 	// execute the completed operation
 	err = alice.IdentityExecute(signedOperation)
 	require.Nil(t, err)
+}
+
+func TestAccountCredentialPresentationRequest(t *testing.T) {
+	alice, aliceInbox, aliceWel := testAccount(t)
+	bobby, bobbyInbox, _ := testAccount(t)
+
+	aliceAddress, err := alice.InboxOpen()
+	require.Nil(t, err)
+
+	bobbyAddress, err := bobby.InboxOpen()
+	require.Nil(t, err)
+	err = alice.ConnectionNegotiate(
+		aliceAddress,
+		bobbyAddress,
+		time.Now().Add(time.Hour),
+	)
+
+	require.Nil(t, err)
+
+	now := time.Now()
+
+	// wait for negotiation to finish
+	<-aliceWel
+
+	// alice issues a self signed credential
+	aliceCredential, err := credential.NewCredential().
+		CredentialType("ContactCredential").
+		CredentialSubject(credential.AddressKey(aliceAddress)).
+		CredentialSubjectClaims(
+			map[string]interface{}{
+				"contact": map[string]interface{}{
+					"name":        "Alice",
+					"phoneNumber": "+1 555-12345",
+					"provider":    "Verison",
+				},
+			},
+		).
+		ValidFrom(now.Add(-time.Second)).
+		ValidUntil(now.Add(time.Second)).
+		Issuer(credential.AddressKey(aliceAddress)).
+		SignWith(aliceAddress, now.Add(-time.Second)).
+		Finish()
+
+	require.Nil(t, err)
+
+	aliceVerifiableCredential, err := alice.CredentialIssue(
+		aliceCredential,
+	)
+	require.Nil(t, err)
+
+	err = alice.CredentialStore(aliceVerifiableCredential)
+	require.Nil(t, err)
+
+	// request credential from alice
+	// explicity request a credential that:
+	// 1. is a ContactCredential
+	// 2. has a phoneNumber with the country code +1
+	// 3. has a provider that's either Verison, AT&T or Mint
+	contactPredicate := predicate.Contains(
+		credential.FieldType,
+		"ContactCredential",
+	).And(
+		// match all fields in the credential's claims, as credentials with unrequested fields
+		// will be omitted by the responder to avoid unintended disclosure of information that
+		// was not explicitly requested
+		predicate.NotEmpty(
+			credential.FieldSubjectClaims,
+		),
+	).And(
+		predicate.Contains(
+			"/credentialSubject/contact/phoneNumber",
+			"+1 ",
+		),
+	).And(
+		predicate.OneOf(
+			"/credentialSubject/contact/provider",
+			[]string{"Verison", "AT&T", "Mint"},
+		),
+	)
+
+	credentialPresentationRequest, err := message.NewCredentialPresentationRequest().
+		PresentationType("ContactPresentation").
+		Predicates(predicate.NewTree(contactPredicate)).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = bobby.MessageSend(aliceAddress, credentialPresentationRequest)
+	require.Nil(t, err)
+
+	messageFromBobby := <-aliceInbox
+
+	requestFromBobby, err := message.DecodeCredentialPresentationRequest(
+		messageFromBobby.Content(),
+	)
+	require.Nil(t, err)
+
+	// inspect the requirements of the request and gather all credentials
+	// that might match the criteria
+	var candidates []*credential.VerifiableCredential
+
+	predicates := requestFromBobby.
+		Predicates()
+
+	report := predicates.FindMissingPredicates(candidates)
+
+	for _, requirement := range report.Requirements() {
+		for _, option := range requirement.Options() {
+			current := len(candidates)
+
+			for _, predicator := range option {
+				if predicator.Field() == credential.FieldType {
+					// lookup credentials by their type.
+					// NOTE predicates might not include a credential type, so in
+					// some circumstances looking up all credentials may be better
+					credentials, err := alice.CredentialLookupByCredentialType(
+						predicator.Values()[0],
+					)
+					require.Nil(t, err)
+
+					if len(credentials) > 0 {
+						candidates = append(candidates, credentials...)
+						break
+					}
+				}
+			}
+
+			if len(candidates) > current {
+				// we've found credentials that might match the criteria
+				// so we can skip trying other options that might satisfy
+				// the predicates
+				break
+			}
+		}
+	}
+
+	// restrict our set of credentials based on the requesters predicates
+	// if we do not have a solution to the predicates with the credentials
+	// we have provided, then we will need to either find more or request
+	// verification of new credentials
+	credentials, solution := predicates.FindOptimalMatch(
+		candidates,
+	)
+
+	if !solution {
+		// we dont have a solution with the credentials available, so respond with NOT_FOUND
+		credentialPresentationResponse, err := message.NewCredentialPresentationResponse().
+			ResponseTo(messageFromBobby.ID()).
+			Status(message.ResponseStatusNotFound).
+			Finish()
+
+		require.Nil(t, err)
+
+		err = alice.MessageSend(bobbyAddress, credentialPresentationResponse)
+		require.Nil(t, err)
+	}
+
+	// create a presentation containing the matched credentials
+	alicePresentation, err := credential.NewPresentation().
+		PresentationType(requestFromBobby.PresentationType()...).
+		CredentialAdd(credentials...).
+		Holder(credential.AddressKey(aliceAddress)).
+		Finish()
+
+	require.Nil(t, err)
+
+	aliceVerifiablePresentation, err := alice.PresentationIssue(alicePresentation)
+	require.Nil(t, err)
+
+	credentialPresentationResponse, err := message.NewCredentialPresentationResponse().
+		ResponseTo(messageFromBobby.ID()).
+		Status(message.ResponseStatusOk).
+		VerifiablePresentation(aliceVerifiablePresentation).
+		Finish()
+
+	require.Nil(t, err)
+
+	err = alice.MessageSend(bobbyAddress, credentialPresentationResponse)
+	require.Nil(t, err)
+
+	messageFromAlice := <-bobbyInbox
+
+	responseFromAlice, err := message.DecodeCredentialPresentationResponse(
+		messageFromAlice.Content(),
+	)
+	require.Nil(t, err)
+	require.Equal(t, message.ResponseStatusOk, responseFromAlice.Status())
+
+	presentations := responseFromAlice.Presentations()
+	require.Len(t, presentations, 1)
+
+	err = presentations[0].Validate()
+	require.Nil(t, err)
+
+	credentials = presentations[0].Credentials()
+	require.Len(t, credentials, 1)
+
+	assert.Equal(t, credential.AddressKey(aliceAddress).String(), credentials[0].Issuer().String())
+	assert.Equal(t, credential.AddressKey(aliceAddress).String(), credentials[0].CredentialSubject().String())
+
+	claims, err := credentials[0].CredentialSubjectClaims()
+	require.Nil(t, err)
+
+	contact, ok := claims["contact"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "Alice", contact["name"])
+	assert.Equal(t, "+1 555-12345", contact["phoneNumber"])
+	assert.Equal(t, "Verison", contact["provider"])
 }
 
 func TestAccountSDKSetup(t *testing.T) {
