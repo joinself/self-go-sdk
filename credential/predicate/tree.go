@@ -94,3 +94,20 @@ func (p *Tree) FindMissingPredicates(credentials []*credential.VerifiableCredent
 		),
 	)
 }
+
+// Graphviz render the predicate tree to graphviz dot format
+func (p *Tree) Graphviz() string {
+	dotBuf := C.self_credential_predicate_graphviz(
+		p.ptr,
+	)
+
+	dot := C.GoString(
+		C.self_string_buffer_ptr(
+			dotBuf,
+		),
+	)
+
+	C.self_string_buffer_destroy(dotBuf)
+
+	return dot
+}
