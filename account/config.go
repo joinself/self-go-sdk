@@ -15,28 +15,33 @@ import (
 	"github.com/joinself/self-go-sdk/platform"
 )
 
+const (
+	EnvironmentProduction Environment = iota
+	EnvironmentSandbox
+	VariantProduction Variant = iota
+	VariantStaging
+	VariantPreview
+	VariantDevelopment
+)
+
 var (
 	// TargetSandbox targets the sandbox environment
 	TargetSandbox = &Target{
-		Rpc:     defaultRpcSandbox,
-		Object:  defaultObjectSandbox,
-		Message: defaultMessageSandbox,
+		Environment: EnvironmentSandbox,
+		Variant:     VariantProduction,
+		Rpc:         defaultRpcSandbox,
+		Object:      defaultObjectSandbox,
+		Message:     defaultMessageSandbox,
 	}
+	// TargetProduction targets the production environment
 	TargetProduction = &Target{
-		Rpc:     defaultRpcProduction,
-		Object:  defaultObjectProduction,
-		Message: defaultMessageProduction,
+		Environment: EnvironmentProduction,
+		Variant:     VariantProduction,
+		Rpc:         defaultRpcProduction,
+		Object:      defaultObjectProduction,
+		Message:     defaultMessageProduction,
 	}
-)
 
-// Target specifies which endpoints the SDK should target
-type Target struct {
-	Rpc     string
-	Object  string
-	Message string
-}
-
-var (
 	defaultRpcSandbox        = "https://rpc-sandbox.joinself.com/"
 	defaultObjectSandbox     = "https://object-sandbox.joinself.com/"
 	defaultMessageSandbox    = "wss://message-sandbox.joinself.com/"
@@ -44,6 +49,18 @@ var (
 	defaultObjectProduction  = "https://object.joinself.com/"
 	defaultMessageProduction = "wss://message.joinself.com/"
 )
+
+type Environment int
+type Variant int
+
+// Target specifies which endpoints the SDK should target
+type Target struct {
+	Variant     Variant
+	Environment Environment
+	Rpc         string
+	Object      string
+	Message     string
+}
 
 // Config stores config for an account
 type Config struct {
@@ -78,6 +95,39 @@ func (c *Config) defaults() {
 
 	if c.Environment == nil {
 		c.Environment = TargetSandbox
+	}
+}
+
+func (t Target) toTarget() C.self_account_target {
+	switch t.Environment {
+	case EnvironmentProduction:
+		switch t.Variant {
+		case VariantProduction:
+			return C.TARGET_PRODUCTION_PRODUCTION
+		case VariantStaging:
+			return C.TARGET_STAGING_PRODUCTION
+		case VariantPreview:
+			return C.TARGET_PREVIEW_PRODUCTION
+		case VariantDevelopment:
+			return C.TARGET_DEVELOPMENT_PRODUCTION
+		default:
+			panic("unknown target variant")
+		}
+	case EnvironmentSandbox:
+		switch t.Variant {
+		case VariantProduction:
+			return C.TARGET_PRODUCTION_SANDBOX
+		case VariantStaging:
+			return C.TARGET_STAGING_SANDBOX
+		case VariantPreview:
+			return C.TARGET_PREVIEW_SANDBOX
+		case VariantDevelopment:
+			return C.TARGET_DEVELOPMENT_SANDBOX
+		default:
+			panic("unknown target variant")
+		}
+	default:
+		panic("unknown target environment")
 	}
 }
 

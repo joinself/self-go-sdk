@@ -210,6 +210,7 @@ func New(cfg *Config) (*Account, error) {
 	result := C.self_account_configure(
 		account.account,
 		accountConfig(
+			account.config.Environment.toTarget(),
 			rpcURLBuf,
 			objectURLBuf,
 			messagingURLBuf,
@@ -287,6 +288,7 @@ func (a *Account) Configure(cfg *Config) error {
 	result := C.self_account_configure(
 		a.account,
 		accountConfig(
+			cfg.Environment.toTarget(),
 			rpcURLBuf,
 			objectURLBuf,
 			messagingURLBuf,

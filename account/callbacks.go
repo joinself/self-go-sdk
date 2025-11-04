@@ -105,6 +105,7 @@ static self_account_callbacks *account_callbacks(bool integrity) {
 }
 
 static self_account_config *account_config(
+	self_account_target target,
 	char *rpc_url,
 	char *object_url,
 	char *message_url,
@@ -115,6 +116,7 @@ static self_account_config *account_config(
 ) {
 	self_account_config *config = malloc(sizeof(self_account_config));
 
+	config->target = target;
 	config->rpc_endpoint = rpc_url;
 	config->object_endpoint = object_url;
 	config->messaging_endpoint = message_url;
@@ -200,6 +202,7 @@ func accountCallbacks(integrity bool) *C.self_account_callbacks {
 }
 
 func accountConfig(
+	target C.self_account_target,
 	rpcURL *C.char,
 	objectURL *C.char,
 	messageURL *C.char,
@@ -208,7 +211,7 @@ func accountConfig(
 	storageKeyLen C.size_t,
 	logLevel C.uint32_t,
 ) *C.self_account_config {
-	return C.account_config(rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
+	return C.account_config(target, rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
 }
 
 //export goOnConnect
