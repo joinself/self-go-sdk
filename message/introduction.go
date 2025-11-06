@@ -18,6 +18,12 @@ import (
 	"github.com/joinself/self-go-sdk/token"
 )
 
+//go:linkname newAddress github.com/joinself/self-go-sdk/credential.newAddress
+func newAddress(*C.self_credential_address) *credential.Address
+
+//go:linkname credentialAddressPtr github.com/joinself/self-go-sdk/credential.credentialAddressPtr
+func credentialAddressPtr(ptr *credential.Address) *C.self_credential_address
+
 //go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
 func newToken(ptr *C.self_token) *token.Token
 
@@ -82,8 +88,8 @@ func DecodeIntroduction(content *Content) (*Introduction, error) {
 }
 
 // DocumentAddress returns the document address of the sender
-func (c *Introduction) DocumentAddress() *signing.PublicKey {
-	return newSigningPublicKey(C.self_message_content_introduction_document_address(c.ptr))
+func (c *Introduction) DocumentAddress() *credential.Address {
+	return newAddress(C.self_message_content_introduction_document_address(c.ptr))
 }
 
 // Presentations returns any presentations the sender wishes to share to assert their identity
@@ -144,10 +150,10 @@ func NewIntroduction() *IntroductionBuilder {
 }
 
 // DocumentAddress sets the identity document address that you wish to be known as
-func (b *IntroductionBuilder) DocumentAddress(address *signing.PublicKey) *IntroductionBuilder {
+func (b *IntroductionBuilder) DocumentAddress(address *credential.Address) *IntroductionBuilder {
 	C.self_message_content_introduction_builder_document_address(
 		b.ptr,
-		signingPublicKeyPtr(address),
+		credentialAddressPtr(address),
 	)
 
 	return b

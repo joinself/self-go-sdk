@@ -8,7 +8,19 @@ package credential
 #include <stdlib.h>
 */
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"time"
+)
+
+var (
+	TermSingleUse *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_SINGLE_USE) * time.Second)
+	TermHour      *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_HOUR) * time.Second)
+	TermDay       *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_DAY) * time.Second)
+	TermWeek      *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_WEEK) * time.Second)
+	TermMonth     *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_MONTH) * time.Second)
+	TermYear      *Term = NewTerm(time.Duration(C.CREDENTIAL_TERM_YEAR) * time.Second)
+)
 
 type Term struct {
 	ptr *C.self_credential_term
@@ -28,6 +40,20 @@ func newTerm(ptr *C.self_credential_term) *Term {
 	return t
 }
 
+func NewTerm(duration time.Duration) *Term {
+	return newTerm(
+		C.self_credential_term_create(
+			C.uint64_t(duration.Seconds()),
+		),
+	)
+}
+
 func termPtr(t *Term) *C.self_credential_term {
 	return t.ptr
+}
+
+func (t *Term) Duration() time.Duration {
+	return time.Duration(C.self_credential_term_duration(
+		t.ptr,
+	)) * time.Second
 }

@@ -42,6 +42,9 @@ func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verif
 //go:linkname verifiablePresentationPtr github.com/joinself/self-go-sdk/credential.verifiablePresentationPtr
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
 
+//go:linkname newCredentialTerm github.com/joinself/self-go-sdk/credential.newCredentialTerm
+func newCredentialTerm(f *C.self_credential_term) *credential.Term
+
 //go:linkname newCredentialPredicateTree github.com/joinself/self-go-sdk/credential/predicate.newCredentialPredicateTree
 func newCredentialPredicateTree(f *C.self_credential_predicate_tree) *predicate.Tree
 
@@ -153,6 +156,43 @@ func (c *CredentialPresentationRequest) PresentationType() []string {
 	return presentationType
 }
 
+// Term returns the term under which the requested credentials will be accessible by the requester
+func (c *CredentialPresentationRequest) Term() *credential.Term {
+	return newCredentialTerm(
+		C.self_message_content_credential_presentation_request_term(
+			c.ptr,
+		),
+	)
+}
+
+// Holder returns the pairwise document address of the holder. returns nil if not specified
+func (c *CredentialPresentationRequest) Holder() (*credential.Address, error) {
+	var holder *C.self_credential_address
+
+	result := C.self_message_content_credential_presentation_request_holder(
+		c.ptr,
+		&holder,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newAddress(
+		holder,
+	), nil
+}
+
+// BiometricAnchor returns the pairwise biometric anchor of the holder. returns nil if not specified
+func (c *CredentialPresentationRequest) BiometricAnchor() []byte {
+	return C.GoBytes(
+		unsafe.Pointer(C.self_message_content_credential_presentation_request_biometric_anchor(
+			c.ptr,
+		)),
+		32,
+	)
+}
+
 // Predicates returns a predicate tree that defines the requirements that returned credentials must match
 func (c *CredentialPresentationRequest) Predicates() *predicate.Tree {
 	return newCredentialPredicateTree(
@@ -204,6 +244,29 @@ func (b *CredentialPresentationRequestBuilder) PresentationType(presentationType
 
 	C.self_collection_presentation_type_destroy(
 		collection,
+	)
+
+	return b
+}
+
+// Holder specifies the pairwise address of holder that the credentials should belong to
+func (b *CredentialPresentationRequestBuilder) Holder(holder *credential.Address) *CredentialPresentationRequestBuilder {
+	C.self_message_content_credential_presentation_request_builder_holder(
+		b.ptr,
+		credentialAddressPtr(holder),
+	)
+
+	return b
+}
+
+// BiometricAnchor specifies the pairwise biometric anchor of that the responder must perform a liveness and facial comparsion check against
+func (b *CredentialPresentationRequestBuilder) BiometricAnchor(biometricAnchor []byte) *CredentialPresentationRequestBuilder {
+	anchorBuf := C.CBytes(biometricAnchor)
+	defer C.free(anchorBuf)
+
+	C.self_message_content_credential_presentation_request_builder_biometric_anchor(
+		b.ptr,
+		(*C.uint8_t)(anchorBuf),
 	)
 
 	return b

@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	PresentationTypePassport             = "PassportPresentation"
-	PresentationTypeLiveness             = "LivenessPresentation"
-	PresentationTypeProfile              = "ProfilePresentation"
-	PresentationTypeContactDetails       = "ContactDetailsPresentation"
-	PresentationTypeApplicationPublisher = "ApplicationPublisherPresentation"
+	PresentationTypePassport                    = "PassportPresentation"
+	PresentationTypeFacialComparsion            = "FacialComparisonPresentation"
+	PresentationTypeLivenessAndFacialComparsion = "LivenessAndFacialComparisonPresentation"
+	PresentationTypeBiometricAnchor             = "BiometricAnchorPresentation"
+	PresentationTypeSharingAgreement            = "SharingAgreementPresentation"
+	PresentationTypeProfile                     = "ProfilePresentation"
+	PresentationTypeContactDetails              = "ContactDetailsPresentation"
+	PresentationTypeApplicationPublisher        = "ApplicationPublisherPresentation"
 )
 
 type Presentation struct {

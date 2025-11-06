@@ -25,6 +25,7 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/pairwise"
 	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
 	"github.com/joinself/self-go-sdk/token"
@@ -137,6 +138,15 @@ func contentSummaryPtr(c *message.ContentSummary) *C.self_message_content_summar
 
 //go:linkname platformAttestationPtr github.com/joinself/self-go-sdk/platform.platformAttestationPtr
 func platformAttestationPtr(a *platform.Attestation) *C.self_platform_attestation
+
+//go:linkname newPairwiseRelationship github.com/joinself/self-go-sdk/pairwise.newPairwiseRelationship
+func newPairwiseRelationship(ptr *C.self_pairwise_relationship) *pairwise.Relationship
+
+//go:linkname pairwiseIdentityPtr github.com/joinself/self-go-sdk/pairwise.pairwiseIdentityPtr
+func pairwiseIdentityPtr(r *pairwise.Identity) *C.self_pairwise_identity
+
+//go:linkname newPairwiseIdentity github.com/joinself/self-go-sdk/pairwise.newPairwiseIdentity
+func newPairwiseIdentity(ptr *C.self_pairwise_identity) *pairwise.Identity
 
 //go:linkname fromSigningPublicKeyCollection github.com/joinself/self-go-sdk/keypair/signing.fromSigningPublicKeyCollection
 func fromSigningPublicKeyCollection(ptr *C.self_collection_signing_public_key) []*signing.PublicKey
@@ -1467,6 +1477,83 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *crypto
 	}
 
 	return newSigningPublicKey(groupAddress), nil
+}
+
+// ConnectionPairwiseIntroduction validates an introduction and retunes a pairwise identity record
+func (a *Account) ConnectionPairwiseIntroduction(documentAddress *credential.Address, presentations []*credential.VerifiablePresentation) (*pairwise.Identity, error) {
+	var identity *C.self_pairwise_identity
+
+	result := C.self_account_connection_pairwise_introduction(
+		a.account,
+		credentialAddressPtr(documentAddress),
+		toVerifiablePresentationCollection(presentations),
+		&identity,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newPairwiseIdentity(identity), nil
+}
+
+// ConnectionPairwiseWith returns a pairwise connection record for a given address.
+// Returns nil if no pairwise relationship exists
+func (a *Account) ConnectionPairwiseWith(withAddress *credential.Address) (*pairwise.Relationship, error) {
+	var relationship *C.self_pairwise_relationship
+
+	result := C.self_account_connection_pairwise_with(
+		a.account,
+		credentialAddressPtr(withAddress),
+		&relationship,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	if relationship == nil {
+		return nil, nil
+	}
+
+	return newPairwiseRelationship(relationship), nil
+}
+
+// ConnectionPairwiseBySender returns the pairwise identity by a sender's address
+// Returns nil if no pairwise relationship exists
+func (a *Account) ConnectionPairwiseBySender(senderAddress *signing.PublicKey) (*pairwise.Identity, error) {
+	var identity *C.self_pairwise_identity
+
+	result := C.self_account_connection_pairwise_sender(
+		a.account,
+		signingPublicKeyPtr(senderAddress),
+		&identity,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	if identity == nil {
+		return nil, nil
+	}
+
+	return newPairwiseIdentity(identity), nil
+}
+
+// ConnectionPairwiseStore stores and tracks a pairwise relationship with a counterparty
+func (a *Account) ConnectionPairwiseStore(asAddress *credential.Address, withIdentity *pairwise.Identity) error {
+	result := C.self_account_connection_pairwise_store(
+		a.account,
+		credentialAddressPtr(asAddress),
+		pairwiseIdentityPtr(withIdentity),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
 }
 
 // MessageSend sends a message to an address that we have established an encrypted group with

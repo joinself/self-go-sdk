@@ -511,7 +511,7 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	// exchange introductions
 	contentForBobby, err := message.NewIntroduction().
-		DocumentAddress(aliceIdentifier).
+		DocumentAddress(credential.AddressAure(aliceIdentifier)).
 		Finish()
 
 	require.Nil(t, err)
@@ -528,10 +528,10 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	aliceIntroduction, err := message.DecodeIntroduction(messageFromAlice.Content())
 	require.Nil(t, err)
-	assert.True(t, aliceIntroduction.DocumentAddress().Matches(aliceIdentifier))
+	assert.Equal(t, aliceIntroduction.DocumentAddress().String(), credential.AddressAure(aliceIdentifier).String())
 
 	contentForAlice, err := message.NewIntroduction().
-		DocumentAddress(bobbyIdentifier).
+		DocumentAddress(credential.AddressAure(bobbyIdentifier)).
 		Finish()
 
 	require.Nil(t, err)
@@ -548,10 +548,10 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	bobbyIntroduction, err := message.DecodeIntroduction(messageFromBobby.Content())
 	require.Nil(t, err)
-	assert.True(t, bobbyIntroduction.DocumentAddress().Matches(bobbyIdentifier))
+	assert.Equal(t, bobbyIntroduction.DocumentAddress().String, credential.AddressAure(bobbyIdentifier).String())
 
 	// select which of bobbys keys we want to use
-	bobbyIdentityDocument, err := alice.IdentityResolve(bobbyIntroduction.DocumentAddress())
+	bobbyIdentityDocument, err := alice.IdentityResolve(bobbyIntroduction.DocumentAddress().Address())
 	require.Nil(t, err)
 
 	bobbyInvocationKeys := bobbyIdentityDocument.SigningKeysWithRoles(identity.RoleInvocation)
@@ -648,7 +648,7 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	// request a liveness check using the hash of the operation (mocked here as a self signed credential)
 	unverifiedCredential, err := credential.NewCredential().
-		CredentialType(credential.CredentialTypeLiveness).
+		CredentialType(credential.CredentialTypeLivenessAndFacialComparsion).
 		CredentialSubject(credential.AddressAure(
 			bobbyIdentifier,
 		)).
@@ -669,7 +669,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.Nil(t, err)
 
 	unverifiedPresentation, err := credential.NewPresentation().
-		PresentationType(credential.PresentationTypeLiveness).
+		PresentationType(credential.PresentationTypeLivenessAndFacialComparsion).
 		CredentialAdd(verifiedCredential).
 		Holder(credential.AddressAureWithKey(
 			sharedIdentifier,
@@ -731,7 +731,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	presentations := signingResponse.Presentations()
 	require.Len(t, presentations, 1)
 	assert.Nil(t, presentations[0].Validate())
-	assert.Equal(t, credential.PresentationTypeLiveness, presentations[0].PresentationType()[0])
+	assert.Equal(t, credential.PresentationTypeLivenessAndFacialComparsion, presentations[0].PresentationType()[0])
 	assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
 	credentials := presentations[0].Credentials()
