@@ -17,8 +17,8 @@ import (
 
 const (
 	PresentationTypePassport                    = "PassportPresentation"
-	PresentationTypeFacialComparsion            = "FacialComparisonPresentation"
-	PresentationTypeLivenessAndFacialComparsion = "LivenessAndFacialComparisonPresentation"
+	PresentationTypeFacialComparison            = "FacialComparisonPresentation"
+	PresentationTypeLivenessAndFacialComparison = "LivenessAndFacialComparisonPresentation"
 	PresentationTypeBiometricAnchor             = "BiometricAnchorPresentation"
 	PresentationTypeSharingAgreement            = "SharingAgreementPresentation"
 	PresentationTypeProfile                     = "ProfilePresentation"

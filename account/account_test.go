@@ -648,7 +648,7 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	// request a liveness check using the hash of the operation (mocked here as a self signed credential)
 	unverifiedCredential, err := credential.NewCredential().
-		CredentialType(credential.CredentialTypeLivenessAndFacialComparsion).
+		CredentialType(credential.CredentialTypeLivenessAndFacialComparison).
 		CredentialSubject(credential.AddressAure(
 			bobbyIdentifier,
 		)).
@@ -669,7 +669,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	require.Nil(t, err)
 
 	unverifiedPresentation, err := credential.NewPresentation().
-		PresentationType(credential.PresentationTypeLivenessAndFacialComparsion).
+		PresentationType(credential.PresentationTypeLivenessAndFacialComparison).
 		CredentialAdd(verifiedCredential).
 		Holder(credential.AddressAureWithKey(
 			sharedIdentifier,
@@ -731,7 +731,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	presentations := signingResponse.Presentations()
 	require.Len(t, presentations, 1)
 	assert.Nil(t, presentations[0].Validate())
-	assert.Equal(t, credential.PresentationTypeLivenessAndFacialComparsion, presentations[0].PresentationType()[0])
+	assert.Equal(t, credential.PresentationTypeLivenessAndFacialComparison, presentations[0].PresentationType()[0])
 	assert.True(t, presentations[0].Holder().Address().Matches(sharedIdentifier))
 
 	credentials := presentations[0].Credentials()

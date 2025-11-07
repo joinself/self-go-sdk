@@ -127,7 +127,7 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 			)
 		}
 
-		if slices.Contains(c.CredentialType(), credential.CredentialTypeLivenessAndFacialComparsion) {
+		if slices.Contains(c.CredentialType(), credential.CredentialTypeLivenessAndFacialComparison) {
 			// store a reference to the users image hash for future liveness checks
 			sourceImageHash := claims[credential.FieldSubjectLivenessSourceImageHash]
 
@@ -146,7 +146,7 @@ func handleCredentialVerificationResponse(selfAccount *account.Account, msg *eve
 func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	livenessPredicates := predicate.Contains(
 		credential.FieldType,
-		credential.PresentationTypeLivenessAndFacialComparsion,
+		credential.PresentationTypeLivenessAndFacialComparison,
 	).And(
 		predicate.NotEmpty(credential.FieldSubjectClaims),
 	).And(
@@ -166,7 +166,7 @@ func handleDiscoveryResponse(selfAccount *account.Account, msg *event.Message) {
 	}
 
 	content, err := message.NewCredentialPresentationRequest().
-		PresentationType(credential.PresentationTypeLivenessAndFacialComparsion).
+		PresentationType(credential.PresentationTypeLivenessAndFacialComparison).
 		Predicates(predicate.NewTree(livenessPredicates)).
 		Finish()
 

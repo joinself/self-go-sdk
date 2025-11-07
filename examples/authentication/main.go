@@ -117,7 +117,7 @@ func handleCredentialPresentationResponse(selfAccount *account.Account, msg *eve
 	var authenticated bool
 
 	for _, c := range userCredentials {
-		if slices.Contains(c.CredentialType(), credential.CredentialTypeLivenessAndFacialComparsion) {
+		if slices.Contains(c.CredentialType(), credential.CredentialTypeLivenessAndFacialComparison) {
 			continue
 		}
 
@@ -137,7 +137,7 @@ func requestUserAuthentication(id int) {
 	mu.Unlock()
 
 	content, err := message.NewCredentialPresentationRequest().
-		PresentationType(credential.PresentationTypeLivenessAndFacialComparsion).
+		PresentationType(credential.PresentationTypeLivenessAndFacialComparison).
 		Holder(user.Reference.DocumentAddress()).
 		BiometricAnchor(user.Reference.BiometricAnchor()).
 		Expires(time.Now().Add(time.Minute * 5)).
