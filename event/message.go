@@ -94,3 +94,20 @@ func (m *Message) Integrity() (*platform.Attestation, bool) {
 		integrity,
 	), true
 }
+
+// MerkleRoot returns a merkle root from an attached merkle proof, if provided
+func (m *Message) MerkleRoot() []byte {
+	buf := C.self_message_merkle_root(m.ptr)
+	if buf == nil {
+		return nil
+	}
+
+	merkleRoot := C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(buf)),
+		C.int(C.self_bytes_buffer_len(buf)),
+	)
+
+	C.self_bytes_buffer_destroy(buf)
+
+	return merkleRoot
+}
