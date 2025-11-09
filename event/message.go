@@ -15,10 +15,14 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/platform"
+	"github.com/joinself/self-go-sdk/token"
 )
 
 //go:linkname newPlatformAttestation github.com/joinself/self-go-sdk/platform.newPlatformAttestation
 func newPlatformAttestation(ptr *C.self_platform_attestation) *platform.Attestation
+
+//go:linkname newToken github.com/joinself/self-go-sdk/token.newToken
+func newToken(ptr *C.self_token) *token.Token
 
 //go:linkname contentType github.com/joinself/self-go-sdk/message.contentType
 func contentType(ptr *C.self_message_content) message.ContentType
@@ -83,7 +87,7 @@ func (m *Message) ContentHash() []byte {
 	)
 }
 
-// Content returns the sha3 hash of the encoded content
+// Integrity returns an integrity check performed over the contents of the message
 func (m *Message) Integrity() (*platform.Attestation, bool) {
 	integrity := C.self_message_message_integrity(m.ptr)
 	if integrity == nil {
@@ -93,6 +97,25 @@ func (m *Message) Integrity() (*platform.Attestation, bool) {
 	return newPlatformAttestation(
 		integrity,
 	), true
+}
+
+// Tokens returns tokens attached to the message
+func (m *Message) Tokens() []*token.Token {
+	collection := C.self_message_tokens(
+		m.ptr,
+	)
+
+	var tokens []*token.Token
+
+	for i := 0; i < int(C.self_collection_token_len(collection)); i++ {
+		tokens = append(tokens, newToken(
+			C.self_collection_token_at(collection, C.size_t(i)),
+		))
+	}
+
+	C.self_collection_token_destroy(collection)
+
+	return tokens
 }
 
 // MerkleRoot returns a merkle root from an attached merkle proof, if provided
