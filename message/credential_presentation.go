@@ -43,7 +43,10 @@ func verifiableCredentialPtr(ptr *credential.VerifiableCredential) *C.self_verif
 func verifiablePresentationPtr(ptr *credential.VerifiablePresentation) *C.self_verifiable_presentation
 
 //go:linkname newCredentialTerm github.com/joinself/self-go-sdk/credential.newCredentialTerm
-func newCredentialTerm(f *C.self_credential_term) *credential.Term
+func newCredentialTerm(t *C.self_credential_term) *credential.Term
+
+//go:linkname credentialTermPtr github.com/joinself/self-go-sdk/credential.credentialTermPtr
+func credentialTermPtr(ptr *credential.Term) *C.self_credential_term
 
 //go:linkname newCredentialPredicateTree github.com/joinself/self-go-sdk/credential/predicate.newCredentialPredicateTree
 func newCredentialPredicateTree(f *C.self_credential_predicate_tree) *predicate.Tree
@@ -267,6 +270,16 @@ func (b *CredentialPresentationRequestBuilder) BiometricAnchor(biometricAnchor [
 	C.self_message_content_credential_presentation_request_builder_biometric_anchor(
 		b.ptr,
 		(*C.uint8_t)(anchorBuf),
+	)
+
+	return b
+}
+
+// Term sets the term under which the credentials are being requested
+func (b *CredentialPresentationRequestBuilder) Term(term *credential.Term) *CredentialPresentationRequestBuilder {
+	C.self_message_content_credential_presentation_request_builder_term(
+		b.ptr,
+		credentialTermPtr(term),
 	)
 
 	return b

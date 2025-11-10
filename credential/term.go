@@ -26,7 +26,7 @@ type Term struct {
 	ptr *C.self_credential_term
 }
 
-func newTerm(ptr *C.self_credential_term) *Term {
+func newCredentialTerm(ptr *C.self_credential_term) *Term {
 	t := &Term{
 		ptr: ptr,
 	}
@@ -41,14 +41,14 @@ func newTerm(ptr *C.self_credential_term) *Term {
 }
 
 func NewTerm(duration time.Duration) *Term {
-	return newTerm(
+	return newCredentialTerm(
 		C.self_credential_term_create(
 			C.uint64_t(duration.Seconds()),
 		),
 	)
 }
 
-func termPtr(t *Term) *C.self_credential_term {
+func credentialTermPtr(t *Term) *C.self_credential_term {
 	return t.ptr
 }
 
