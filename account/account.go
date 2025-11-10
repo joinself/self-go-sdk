@@ -1659,3 +1659,27 @@ func sdkRegisterAndConnect(a *Account, withAddress *signing.PublicKey, primaryAn
 
 	return nil
 }
+
+// returns the pairwise anchor credential and image object used in a pairwise relationship. mobile specific so not exported
+func connectionPairwiseAnchor(a *Account, withAddress, forAddress *credential.Address) (*credential.VerifiableCredential, *object.Object, error) {
+	var anchorCredential *C.self_verifiable_credential
+	var anchorImage *C.self_object
+
+	result := C.self_account_connection_pairwise_anchor(
+		a.account,
+		credentialAddressPtr(withAddress),
+		credentialAddressPtr(forAddress),
+		&anchorCredential,
+		&anchorImage,
+	)
+
+	if result > 0 {
+		return nil, nil, status.New(result)
+	}
+
+	if anchorCredential == nil || anchorImage == nil {
+		return nil, nil, errors.New("pairwise connection not found")
+	}
+
+	return newVerifiableCredential(anchorCredential), newObject(anchorImage), nil
+}
