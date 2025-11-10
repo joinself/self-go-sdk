@@ -1642,3 +1642,20 @@ func sdkRegister(a *Account, forAddress *signing.PublicKey) (*token.Token, error
 
 	return newToken(token), nil
 }
+
+// registers and pairwise connects with an application address. mobile specific so not exported
+func sdkRegisterAndConnect(a *Account, withAddress *signing.PublicKey, primaryAnchorImage, secondaryAnchorImage *object.Object) error {
+	result := C.self_account_sdk_register_and_connect(
+		a.account,
+		signingPublicKeyPtr(withAddress),
+		objectPtr(primaryAnchorImage),
+		objectPtr(secondaryAnchorImage),
+		nil,
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
