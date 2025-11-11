@@ -1683,3 +1683,66 @@ func connectionPairwiseAnchor(a *Account, withAddress, forAddress *credential.Ad
 
 	return newVerifiableCredential(anchorCredential), newObject(anchorImage), nil
 }
+
+func backupKeyCreate(a *Account, presentation *credential.VerifiablePresentation, encryptionKey []byte) error {
+	keyBuf := (*C.uint8_t)(C.CBytes(encryptionKey))
+	keyLen := C.size_t(len(encryptionKey))
+
+	result := C.self_account_backup_key_create(
+		a.account,
+		verifiablePresentationPtr(presentation),
+		keyBuf,
+		keyLen,
+	)
+
+	C.free(unsafe.Pointer(keyBuf))
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+var pcb atomic.Value
+
+func backupKeyRestore(target *Target, presentation *credential.VerifiablePresentation, backupImage, restoreImage *object.Object, onIntegrity func(requestHash []byte) *platform.Attestation) ([]byte, error) {
+	var credentials *C.self_collection_verifiable_credential
+	var keyBuf *C.self_bytes_buffer
+
+	p := new(runtime.Pinner)
+	p.Pin(onIntegrity)
+	pcb.Store(pcb)
+
+	rpcURLBuf := C.CString(target.Rpc)
+	objectURLBuf := C.CString(target.Object)
+
+	result := C.self_backup_key_restore(
+		rpcURLBuf,
+		objectURLBuf,
+		verifiablePresentationPtr(presentation),
+		objectPtr(backupImage),
+		objectPtr(restoreImage),
+		(*C.self_on_integrity_cb)(integrityCallback()),
+		unsafe.Pointer(&onIntegrity),
+		&keyBuf,
+		&credentials,
+	)
+
+	C.free(unsafe.Pointer(rpcURLBuf))
+	C.free(unsafe.Pointer(objectURLBuf))
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	key := C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(keyBuf)),
+		C.int(C.self_bytes_buffer_len(keyBuf)),
+	)
+
+	C.self_bytes_buffer_destroy(keyBuf)
+	C.self_collection_verifiable_credential_destroy(credentials)
+
+	return key, nil
+}

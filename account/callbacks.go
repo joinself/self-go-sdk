@@ -31,6 +31,7 @@ extern void goOnDropped(void*, cself_dropped_event_t*);
 extern void goOnLog(self_log_entry*);
 extern void goOnResponse(void*, self_status);
 extern struct self_platform_attestation* goOnIntegrity(void*, cself_integrity_request_t*);
+extern struct self_platform_attestation* goOnIntegrityAdhoc(void*, cself_integrity_request_t*);
 
 static void c_on_connect(void* user_data) {
   goOnConnect(user_data);
@@ -78,6 +79,10 @@ static void c_on_log(self_log_entry *entry) {
 
 static struct self_platform_attestation* c_on_integrity(void *user_data, self_integrity_request *integrity) {
 	return goOnIntegrity(user_data, integrity);
+}
+
+static struct self_platform_attestation* c_on_integrity_adhoc(void *user_data, self_integrity_request *integrity) {
+	return goOnIntegrityAdhoc(user_data, integrity);
 }
 
 static self_account_callbacks *account_callbacks(bool integrity) {
@@ -133,7 +138,6 @@ static void c_on_response(void *user_data, self_status response) {
 	goOnResponse(user_data, response);
 }
 
-
 //static void c_self_account_message_send_async(
 //	struct self_account *account,
 //    const struct self_signing_public_key *to_address,
@@ -154,6 +158,7 @@ static void c_on_response(void *user_data, self_status response) {
 import "C"
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -162,6 +167,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -212,6 +218,10 @@ func accountConfig(
 	logLevel C.uint32_t,
 ) *C.self_account_config {
 	return C.account_config(target, rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
+}
+
+func integrityCallback() unsafe.Pointer {
+	return unsafe.Pointer(C.c_on_integrity_adhoc)
 }
 
 //export goOnConnect
@@ -400,6 +410,26 @@ func goOnIntegrity(user_data unsafe.Pointer, integrity *C.cself_integrity_reques
 
 	return platformAttestationPtr(account.callbacks.onIntegrity(
 		account,
+		requestHash,
+	))
+}
+
+//export goOnIntegrityAdhoc
+func goOnIntegrityAdhoc(user_data unsafe.Pointer, integrity *C.cself_integrity_request_t) *C.self_platform_attestation {
+	hashBuf := C.self_integrity_request_hash_buf(integrity)
+	hashLen := C.self_integrity_request_hash_len(integrity)
+	defer C.self_integrity_request_destroy(integrity)
+
+	requestHash := C.GoBytes(
+		unsafe.Pointer(hashBuf),
+		C.int(hashLen),
+	)
+
+	onIntegrity := (*func(requestHash []byte) *platform.Attestation)(user_data)
+
+	(pcb.Load().(*runtime.Pinner)).Unpin()
+
+	return platformAttestationPtr((*onIntegrity)(
 		requestHash,
 	))
 }
