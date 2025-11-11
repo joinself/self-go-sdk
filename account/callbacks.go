@@ -138,6 +138,31 @@ static void c_on_response(void *user_data, self_status response) {
 	goOnResponse(user_data, response);
 }
 
+static self_status c_backup_key_restore(
+	const char *rpc_endpoint,
+	const char *object_endpoint,
+	const struct self_verifiable_presentation *presentation,
+	struct self_object *backup_image,
+	struct self_object *restore_image,
+	void *user_data,
+	struct self_bytes_buffer **encryption_key,
+	struct self_collection_verifiable_credential **credentials
+) {
+	self_on_integrity_cb callback_fn = c_on_integrity_adhoc;
+
+	return self_backup_key_restore(
+		rpc_endpoint,
+		object_endpoint,
+		presentation,
+		backup_image,
+		restore_image,
+		&callback_fn,
+		user_data,
+		encryption_key,
+		credentials
+	);
+};
+
 //static void c_self_account_message_send_async(
 //	struct self_account *account,
 //    const struct self_signing_public_key *to_address,
@@ -165,8 +190,10 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/event"
 	"github.com/joinself/self-go-sdk/message"
+	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/platform"
 	"github.com/joinself/self-go-sdk/status"
 )
@@ -218,10 +245,6 @@ func accountConfig(
 	logLevel C.uint32_t,
 ) *C.self_account_config {
 	return C.account_config(target, rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
-}
-
-func integrityCallback() unsafe.Pointer {
-	return unsafe.Pointer(C.c_on_integrity_adhoc)
 }
 
 //export goOnConnect
@@ -478,3 +501,65 @@ func accountMessageSendAsync(account *Account, toAddress *signing.PublicKey, con
 	)
 }
 */
+
+func backupKeyCreate(a *Account, presentation *credential.VerifiablePresentation, encryptionKey []byte) error {
+	keyBuf := (*C.uint8_t)(C.CBytes(encryptionKey))
+	keyLen := C.size_t(len(encryptionKey))
+
+	result := C.self_account_backup_key_create(
+		a.account,
+		verifiablePresentationPtr(presentation),
+		keyBuf,
+		keyLen,
+	)
+
+	C.free(unsafe.Pointer(keyBuf))
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+var pcb atomic.Value
+
+func backupKeyRestore(target *Target, presentation *credential.VerifiablePresentation, backupImage, restoreImage *object.Object, onIntegrity func(requestHash []byte) *platform.Attestation) ([]byte, error) {
+	var credentials *C.self_collection_verifiable_credential
+	var keyBuf *C.self_bytes_buffer
+
+	p := new(runtime.Pinner)
+	p.Pin(onIntegrity)
+	pcb.Store(pcb)
+
+	rpcURLBuf := C.CString(target.Rpc)
+	objectURLBuf := C.CString(target.Object)
+
+	result := C.c_backup_key_restore(
+		rpcURLBuf,
+		objectURLBuf,
+		verifiablePresentationPtr(presentation),
+		objectPtr(backupImage),
+		objectPtr(restoreImage),
+		unsafe.Pointer(&onIntegrity),
+		&keyBuf,
+		&credentials,
+	)
+
+	C.free(unsafe.Pointer(rpcURLBuf))
+	C.free(unsafe.Pointer(objectURLBuf))
+
+	if result > 0 {
+		return nil, status.New(uint32(result))
+	}
+
+	key := C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(keyBuf)),
+		C.int(C.self_bytes_buffer_len(keyBuf)),
+	)
+
+	C.self_bytes_buffer_destroy(keyBuf)
+	C.self_collection_verifiable_credential_destroy(credentials)
+
+	return key, nil
+}
