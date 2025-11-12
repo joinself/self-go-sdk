@@ -184,6 +184,7 @@ import "C"
 import (
 	"fmt"
 	"runtime"
+	"runtime/cgo"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -448,7 +449,9 @@ func goOnIntegrityAdhoc(user_data unsafe.Pointer, integrity *C.cself_integrity_r
 		C.int(hashLen),
 	)
 
-	onIntegrity := (*func(requestHash []byte) *platform.Attestation)(user_data)
+	handle := *(*cgo.Handle)(user_data)
+
+	onIntegrity := handle.Value().(*func(requestHash []byte) *platform.Attestation)
 
 	(pcb.Load().(*runtime.Pinner)).Unpin()
 
@@ -528,9 +531,7 @@ func backupKeyRestore(target *Target, presentation *credential.VerifiablePresent
 	var credentials *C.self_collection_verifiable_credential
 	var keyBuf *C.self_bytes_buffer
 
-	p := new(runtime.Pinner)
-	p.Pin(onIntegrity)
-	pcb.Store(pcb)
+	handle := cgo.NewHandle(onIntegrity)
 
 	rpcURLBuf := C.CString(target.Rpc)
 	objectURLBuf := C.CString(target.Object)
@@ -541,7 +542,7 @@ func backupKeyRestore(target *Target, presentation *credential.VerifiablePresent
 		verifiablePresentationPtr(presentation),
 		objectPtr(backupImage),
 		objectPtr(restoreImage),
-		unsafe.Pointer(&onIntegrity),
+		unsafe.Pointer(&handle),
 		&keyBuf,
 		&credentials,
 	)
