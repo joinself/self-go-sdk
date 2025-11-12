@@ -549,6 +549,7 @@ func backupKeyRestore(target *Target, presentation *credential.VerifiablePresent
 
 	C.free(unsafe.Pointer(rpcURLBuf))
 	C.free(unsafe.Pointer(objectURLBuf))
+	handle.Delete()
 
 	if result > 0 {
 		return nil, status.New(uint32(result))
