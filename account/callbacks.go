@@ -183,7 +183,6 @@ static self_status c_backup_key_restore(
 import "C"
 import (
 	"fmt"
-	"runtime"
 	"runtime/cgo"
 	"strings"
 	"sync"
@@ -453,8 +452,6 @@ func goOnIntegrityAdhoc(user_data unsafe.Pointer, integrity *C.cself_integrity_r
 
 	onIntegrity := handle.Value().(func(requestHash []byte) *platform.Attestation)
 
-	(pcb.Load().(*runtime.Pinner)).Unpin()
-
 	return platformAttestationPtr(onIntegrity(
 		requestHash,
 	))
@@ -524,8 +521,6 @@ func backupKeyCreate(a *Account, presentation *credential.VerifiablePresentation
 
 	return nil
 }
-
-var pcb atomic.Value
 
 func backupKeyRestore(target *Target, presentation *credential.VerifiablePresentation, backupImage, restoreImage *object.Object, onIntegrity func(requestHash []byte) *platform.Attestation) ([]byte, error) {
 	var credentials *C.self_collection_verifiable_credential
