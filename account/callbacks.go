@@ -451,11 +451,11 @@ func goOnIntegrityAdhoc(user_data unsafe.Pointer, integrity *C.cself_integrity_r
 
 	handle := *(*cgo.Handle)(user_data)
 
-	onIntegrity := handle.Value().(*func(requestHash []byte) *platform.Attestation)
+	onIntegrity := handle.Value().(func(requestHash []byte) *platform.Attestation)
 
 	(pcb.Load().(*runtime.Pinner)).Unpin()
 
-	return platformAttestationPtr((*onIntegrity)(
+	return platformAttestationPtr(onIntegrity(
 		requestHash,
 	))
 }
