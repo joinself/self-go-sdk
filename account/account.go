@@ -97,6 +97,9 @@ func trustedIssuerRegistryPtr(r *credential.TrustedIssuerRegistry) *C.self_trust
 //go:linkname credentialAddressPtr github.com/joinself/self-go-sdk/credential.credentialAddressPtr
 func credentialAddressPtr(a *credential.Address) *C.self_credential_address
 
+//go:linkname newCredentialGraph github.com/joinself/self-go-sdk/credential.newCredentialGraph
+func newCredentialGraph(ptr *C.self_credential_graph) *credential.Graph
+
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
 
@@ -559,7 +562,7 @@ func (a *Account) CredentialGraphCreate(registry *credential.TrustedIssuerRegist
 
 	verifiablePresentations := toVerifiablePresentationCollection(presentations)
 
-	result := C.self_account_credential_graph_valid_create(
+	result := C.self_account_credential_graph_create(
 		a.account,
 		trustedIssuerRegistryPtr(registry),
 		verifiablePresentations,
