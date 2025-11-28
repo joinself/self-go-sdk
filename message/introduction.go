@@ -14,6 +14,7 @@ import (
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/pairwise"
 	"github.com/joinself/self-go-sdk/status"
 	"github.com/joinself/self-go-sdk/token"
 )
@@ -32,6 +33,9 @@ func tokenPtr(ptr *token.Token) *C.self_token
 
 //go:linkname signingPublicKeyPtr github.com/joinself/self-go-sdk/keypair/signing.signingPublicKeyPtr
 func signingPublicKeyPtr(p *signing.PublicKey) *C.self_signing_public_key
+
+//go:linkname newPairwiseIntroduction github.com/joinself/self-go-sdk/pairwise.newPairwiseIntroduction
+func newPairwiseIntroduction(ptr *C.self_pairwise_introduction) *pairwise.Introduction
 
 type Introduction struct {
 	ptr *C.self_message_content_introduction
@@ -85,6 +89,22 @@ func DecodeIntroduction(content *Content) (*Introduction, error) {
 	}
 
 	return newIntroduction(introductionContent), nil
+}
+
+// Introduction returns the pairwise introduction from the sender
+func (c *Introduction) Introduction() (*pairwise.Introduction, error) {
+	var introduction *C.self_pairwise_introduction
+
+	result := C.self_message_content_introduction_introduction(
+		c.ptr,
+		&introduction,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newPairwiseIntroduction(introduction), nil
 }
 
 // DocumentAddress returns the document address of the sender

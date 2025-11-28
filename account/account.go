@@ -145,6 +145,9 @@ func newPairwiseRelationship(ptr *C.self_pairwise_relationship) *pairwise.Relati
 //go:linkname pairwiseIdentityPtr github.com/joinself/self-go-sdk/pairwise.pairwiseIdentityPtr
 func pairwiseIdentityPtr(r *pairwise.Identity) *C.self_pairwise_identity
 
+//go:linkname pairwiseIntroductionPtr github.com/joinself/self-go-sdk/pairwise.pairwiseIntroductionPtr
+func pairwiseIntroductionPtr(r *pairwise.Introduction) *C.self_pairwise_introduction
+
 //go:linkname newPairwiseIdentity github.com/joinself/self-go-sdk/pairwise.newPairwiseIdentity
 func newPairwiseIdentity(ptr *C.self_pairwise_identity) *pairwise.Identity
 
@@ -548,6 +551,30 @@ func (a *Account) CredentialIssue(unverifiedCredential *credential.Credential) (
 	}
 
 	return newVerifiableCredential(verifiableCredential), nil
+}
+
+// CredentialGraphCreate validates and constructs a graph from a collection of verifiable presentations
+func (a *Account) CredentialGraphCreate(registry *credential.TrustedIssuerRegistry, presentations []*credential.VerifiablePresentation) (*credential.Graph, error) {
+	var credentialGraph *C.self_credential_graph
+
+	verifiablePresentations := toVerifiablePresentationCollection(presentations)
+
+	result := C.self_account_credential_graph_valid_create(
+		a.account,
+		trustedIssuerRegistryPtr(registry),
+		verifiablePresentations,
+		&credentialGraph,
+	)
+
+	C.self_collection_verifiable_presentation_destroy(
+		verifiablePresentations,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newCredentialGraph(credentialGraph), nil
 }
 
 // CredentialGraphValidFor validates and filters credentials from a given collection of verifiable presentations, validating credentials, presentations and ensuring that an issuer, subject or holder keys have not been revoked and were valid at the time of use.
@@ -1479,14 +1506,14 @@ func (a *Account) ConnectionAccept(asAddress *signing.PublicKey, welcome *crypto
 	return newSigningPublicKey(groupAddress), nil
 }
 
-// ConnectionPairwiseIntroduction validates an introduction and retunes a pairwise identity record
-func (a *Account) ConnectionPairwiseIntroduction(documentAddress *credential.Address, presentations []*credential.VerifiablePresentation) (*pairwise.Identity, error) {
+// ConnectionPairwiseIntroductionValidate validates an introduction and returns a pairwise identity record
+func (a *Account) ConnectionPairwiseIntroductionValidate(senderAddress *signing.PublicKey, introduction *pairwise.Introduction) (*pairwise.Identity, error) {
 	var identity *C.self_pairwise_identity
 
-	result := C.self_account_connection_pairwise_introduction(
+	result := C.self_account_connection_pairwise_introduction_validate(
 		a.account,
-		credentialAddressPtr(documentAddress),
-		toVerifiablePresentationCollection(presentations),
+		signingPublicKeyPtr(senderAddress),
+		pairwiseIntroductionPtr(introduction),
 		&identity,
 	)
 

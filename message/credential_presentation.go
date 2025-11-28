@@ -15,6 +15,7 @@ import (
 
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/credential/predicate"
+	"github.com/joinself/self-go-sdk/pairwise"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -53,6 +54,9 @@ func newCredentialPredicateTree(f *C.self_credential_predicate_tree) *predicate.
 
 //go:linkname credentialPredicateTreePtr github.com/joinself/self-go-sdk/credential/predicate.credentialPredicateTreePtr
 func credentialPredicateTreePtr(ptr *predicate.Tree) *C.self_credential_predicate_tree
+
+//go:linkname pairwiseIdentityPtr github.com/joinself/self-go-sdk/pairwise.pairwiseIdentityPtr
+func pairwiseIdentityPtr(r *pairwise.Identity) *C.self_pairwise_identity
 
 type CredentialPresentationRequest struct {
 	ptr *C.self_message_content_credential_presentation_request
@@ -247,6 +251,24 @@ func (b *CredentialPresentationRequestBuilder) PresentationType(presentationType
 
 	C.self_collection_presentation_type_destroy(
 		collection,
+	)
+
+	return b
+}
+
+// Authenticate a convenienve function to authenticate a pairwise identity, with optional 32 byte challenge
+func (b *CredentialPresentationRequestBuilder) Authenticate(identity *pairwise.Identity, challenge []byte) *CredentialPresentationRequestBuilder {
+	var challengeBuf *C.uint8_t
+
+	if len(challenge) == 32 {
+		challengeBuf = (*C.uint8_t)(C.CBytes(challenge))
+		defer C.free(unsafe.Pointer(challengeBuf))
+	}
+
+	C.self_message_content_credential_presentation_request_builder_authenticate(
+		b.ptr,
+		pairwiseIdentityPtr(identity),
+		challengeBuf,
 	)
 
 	return b

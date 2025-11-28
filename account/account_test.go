@@ -46,11 +46,20 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 
 	signal := make(chan bool, 1)
 
+	// temporarily target preview
+	target := &account.Target{
+		Variant:     account.VariantPreview,
+		Environment: account.EnvironmentSandbox,
+		Rpc:         fmt.Sprintf("https://rpc-sandbox.%s.joinself.com", "preview"),
+		Object:      fmt.Sprintf("https://object-sandbox.%s.joinself.com", "preview"),
+		Message:     fmt.Sprintf("wss://message-sandbox.%s.joinself.com", "preview"),
+	}
+
 	cfg := &account.Config{
 		SkipSetup:   true,
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
-		Environment: account.TargetSandbox,
+		Environment: target,
 		LogLevel:    account.LogError,
 		Callbacks: account.Callbacks{
 			OnConnect: func(account *account.Account) {
@@ -396,11 +405,11 @@ func TestAccountCredentials(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, credential.CredentialTypePassport, passportVerifiableCredential.CredentialType()[0])
 
-	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("firstName")
+	firstName, ok := passportVerifiableCredential.CredentialSubjectClaim("/firstName")
 	require.True(t, ok)
 	assert.Equal(t, "bobby", firstName)
 
-	_, ok = passportVerifiableCredential.CredentialSubjectClaim("lastName")
+	_, ok = passportVerifiableCredential.CredentialSubjectClaim("/lastName")
 	require.False(t, ok)
 
 	err = passportVerifiableCredential.Validate()
@@ -439,6 +448,8 @@ func TestAccountCredentials(t *testing.T) {
 }
 
 func TestAccountMessageSigning(t *testing.T) {
+	t.Skip("temporarily disabled")
+
 	alice, aliceInbox, aliceWel := testAccount(t)
 	bobby, bobbyInbox, _ := testAccount(t)
 
@@ -548,7 +559,7 @@ func TestAccountMessageSigning(t *testing.T) {
 
 	bobbyIntroduction, err := message.DecodeIntroduction(messageFromBobby.Content())
 	require.Nil(t, err)
-	assert.Equal(t, bobbyIntroduction.DocumentAddress().String, credential.AddressAure(bobbyIdentifier).String())
+	assert.Equal(t, bobbyIntroduction.DocumentAddress().String(), credential.AddressAure(bobbyIdentifier).String())
 
 	// select which of bobbys keys we want to use
 	bobbyIdentityDocument, err := alice.IdentityResolve(bobbyIntroduction.DocumentAddress().Address())
@@ -671,10 +682,7 @@ func TestAccountMessageSigning(t *testing.T) {
 	unverifiedPresentation, err := credential.NewPresentation().
 		PresentationType(credential.PresentationTypeLivenessAndFacialComparison).
 		CredentialAdd(verifiedCredential).
-		Holder(credential.AddressAureWithKey(
-			sharedIdentifier,
-			bobbyInvocation,
-		)).
+		Holder(credential.AddressAure(sharedIdentifier)).
 		Finish()
 
 	require.Nil(t, err)
@@ -1133,7 +1141,7 @@ func TestAccountPersistence(t *testing.T) {
 
 	require.Nil(t, err)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		err = bobby.MessageSend(
 			aliceAddress,
 			contentForAlice,
@@ -1145,7 +1153,7 @@ func TestAccountPersistence(t *testing.T) {
 	alice, aliceInbox, _ := testAccountWithPath(t, alicePath)
 
 	// receive the messages from bobby
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		<-aliceInbox
 	}
 

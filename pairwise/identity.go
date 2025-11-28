@@ -41,6 +41,15 @@ func pairwiseIdentityPtr(r *Identity) *C.self_pairwise_identity {
 	return r.ptr
 }
 
+func pairwiseIdentityInterfacePtr(r interface{}) (*C.self_pairwise_identity, bool) {
+	identity, ok := r.(*Identity)
+	if !ok {
+		return nil, false
+	}
+
+	return identity.ptr, true
+}
+
 func DecodeIdentity(encodedIdentity []byte) (*Identity, error) {
 	var identity *C.self_pairwise_identity
 

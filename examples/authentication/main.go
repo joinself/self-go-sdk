@@ -1,10 +1,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"log"
 	"runtime"
-	"slices"
 	"sync"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 
 var (
 	users    map[int]*user
-	requests map[string]int
+	requests map[string]*request
 	mu       sync.Mutex
 	encode   = base64.RawStdEncoding.EncodeToString
 )
@@ -25,6 +25,11 @@ var (
 type user struct {
 	ID        int
 	Reference *pairwise.Identity
+}
+
+type request struct {
+	UserID    int
+	Challenge []byte
 }
 
 func main() {
@@ -65,9 +70,14 @@ func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
 		log.Fatal("failed to decode introduction response", "error", err)
 	}
 
-	pairwiseIdentity, err := selfAccount.ConnectionPairwiseIntroduction(
-		introduction.DocumentAddress(),
-		introduction.Presentations(),
+	pairwiseIntroduction, err := introduction.Introduction()
+	if err != nil {
+		log.Fatal("invalid pairwise introduction", "error", err)
+	}
+
+	pairwiseIdentity, err := selfAccount.ConnectionPairwiseIntroductionValidate(
+		msg.FromAddress(),
+		pairwiseIntroduction,
 	)
 	if err != nil {
 		log.Fatal("failed to process introduction from new user")
@@ -94,18 +104,17 @@ func handleCredentialPresentationResponse(selfAccount *account.Account, msg *eve
 
 	mu.Lock()
 
-	id, ok := requests[encode(msg.ID())]
+	request, ok := requests[encode(msg.ID())]
 	if !ok {
 		mu.Unlock()
 		return
 	}
 
-	user := users[id]
+	user := users[request.UserID]
 
 	mu.Unlock()
 
-	userCredentials, err := selfAccount.CredentialGraphValidFor(
-		user.Reference.DocumentAddress(),
+	graph, err := selfAccount.CredentialGraphCreate(
 		credential.SandboxTrustedIssuerRegistry(),
 		credentialPresentationResponse.Presentations(),
 	)
@@ -114,21 +123,11 @@ func handleCredentialPresentationResponse(selfAccount *account.Account, msg *eve
 		log.Fatal("failed to validate credential presentation response credentials", "error", err)
 	}
 
-	var authenticated bool
-
-	for _, c := range userCredentials {
-		if slices.Contains(c.CredentialType(), credential.CredentialTypeLivenessAndFacialComparison) {
-			continue
-		}
-
-		// TODO implement challenge and better APIS for checking
-
-		authenticated = true
-	}
-
-	if !authenticated {
+	if !graph.ValidAuthenticationFor(user.Reference, request.Challenge) {
 		log.Fatal("user not authenticated")
 	}
+
+	log.Println("user authenticated successfully")
 }
 
 func requestUserAuthentication(id int) {
@@ -136,10 +135,12 @@ func requestUserAuthentication(id int) {
 	user := users[id]
 	mu.Unlock()
 
+	challenge := make([]byte, 32)
+	rand.Read(challenge)
+
 	content, err := message.NewCredentialPresentationRequest().
 		PresentationType(credential.PresentationTypeLivenessAndFacialComparison).
-		Holder(user.Reference.DocumentAddress()).
-		BiometricAnchor(user.Reference.BiometricAnchor()).
+		Authenticate(user.Reference, challenge).
 		Expires(time.Now().Add(time.Minute * 5)).
 		Finish()
 
@@ -148,6 +149,9 @@ func requestUserAuthentication(id int) {
 	}
 
 	mu.Lock()
-	requests[encode(content.ID())] = user.ID
+	requests[encode(content.ID())] = &request{
+		UserID:    user.ID,
+		Challenge: challenge,
+	}
 	mu.Unlock()
 }
