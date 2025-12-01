@@ -27,7 +27,7 @@ type Graph struct {
 	ptr *C.self_credential_graph
 }
 
-func newGraph(ptr *C.self_credential_graph) *Graph {
+func newCredentialGraph(ptr *C.self_credential_graph) *Graph {
 	g := &Graph{
 		ptr: ptr,
 	}
