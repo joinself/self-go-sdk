@@ -134,6 +134,18 @@ static self_account_config *account_config(
 	return config;
 }
 
+static void account_config_destroy(self_account_config *config) {
+	free(config);
+}
+
+static void account_callbacks_destroy(self_account_callbacks *callbacks) {
+	if (callbacks == NULL) return;
+	if (callbacks->on_integrity) {
+		free(callbacks->on_integrity);
+	}
+	free(callbacks);
+}
+
 static void c_on_response(void *user_data, self_status response) {
 	goOnResponse(user_data, response);
 }
@@ -245,6 +257,14 @@ func accountConfig(
 	logLevel C.uint32_t,
 ) *C.self_account_config {
 	return C.account_config(target, rpcURL, objectURL, messageURL, storagePath, storageKeyBuf, storageKeyLen, logLevel)
+}
+
+func accountCallbacksDestroy(callbacks *C.self_account_callbacks) {
+	C.account_callbacks_destroy(callbacks)
+}
+
+func accountConfigDestroy(config *C.self_account_config) {
+	C.account_config_destroy(config)
 }
 
 //export goOnConnect

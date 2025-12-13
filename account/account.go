@@ -215,6 +215,21 @@ func New(cfg *Config) (*Account, error) {
 	// so we can pass them as user-data to C
 	pinnedAccount := pin(account)
 
+	config := accountConfig(
+		account.config.Environment.toTarget(),
+		rpcURLBuf,
+		objectURLBuf,
+		messagingURLBuf,
+		storagePathBuf,
+		storageKeyBuf,
+		storageKeyLen,
+		C.uint32_t(cfg.LogLevel),
+	)
+
+	callbacks := accountCallbacks(
+		cfg.Callbacks.onIntegrity != nil,
+	)
+
 	runtime.AddCleanup(account, func(ptr *C.self_account) {
 		C.self_account_destroy(
 			ptr,
@@ -223,21 +238,13 @@ func New(cfg *Config) (*Account, error) {
 
 	result := C.self_account_configure(
 		account.account,
-		accountConfig(
-			account.config.Environment.toTarget(),
-			rpcURLBuf,
-			objectURLBuf,
-			messagingURLBuf,
-			storagePathBuf,
-			storageKeyBuf,
-			storageKeyLen,
-			C.uint32_t(cfg.LogLevel),
-		),
-		accountCallbacks(
-			cfg.Callbacks.onIntegrity != nil,
-		),
+		config,
+		callbacks,
 		pinnedAccount,
 	)
+
+	accountConfigDestroy(config)
+	accountCallbacksDestroy(callbacks)
 
 	if result > 0 {
 		return nil, status.New(result)
@@ -297,23 +304,30 @@ func (a *Account) Configure(cfg *Config) error {
 	// so we can pass them as user-data to C
 	pinnedAccount := pin(a)
 
+	config := accountConfig(
+		cfg.Environment.toTarget(),
+		rpcURLBuf,
+		objectURLBuf,
+		messagingURLBuf,
+		storagePathBuf,
+		storageKeyBuf,
+		storageKeyLen,
+		C.uint32_t(cfg.LogLevel),
+	)
+
+	callbacks := accountCallbacks(
+		cfg.Callbacks.onIntegrity != nil,
+	)
+
 	result := C.self_account_configure(
 		a.account,
-		accountConfig(
-			cfg.Environment.toTarget(),
-			rpcURLBuf,
-			objectURLBuf,
-			messagingURLBuf,
-			storagePathBuf,
-			storageKeyBuf,
-			storageKeyLen,
-			C.uint32_t(cfg.LogLevel),
-		),
-		accountCallbacks(
-			cfg.Callbacks.onIntegrity != nil,
-		),
+		config,
+		callbacks,
 		pinnedAccount,
 	)
+
+	accountConfigDestroy(config)
+	accountCallbacksDestroy(callbacks)
 
 	if result > 0 {
 		return status.New(result)

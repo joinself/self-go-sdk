@@ -55,6 +55,7 @@ func DecodeIdentity(encodedIdentity []byte) (*Identity, error) {
 
 	identityBuf := C.CBytes(encodedIdentity)
 	identityLen := len(encodedIdentity)
+	defer C.free(unsafe.Pointer(identityBuf))
 
 	result := C.self_pairwise_identity_decode(
 		(*C.uint8_t)(identityBuf),
