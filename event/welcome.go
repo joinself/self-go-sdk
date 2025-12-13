@@ -28,11 +28,11 @@ func newWelcome(ptr *C.self_welcome) *Welcome {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *Welcome) {
+	runtime.AddCleanup(e, func(ptr *C.self_welcome) {
 		C.self_welcome_destroy(
-			e.ptr,
+			ptr,
 		)
-	})
+	}, e.ptr)
 
 	return e
 }

@@ -33,11 +33,11 @@ func newCredentialVerificationRequest(ptr *C.self_message_content_credential_ver
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationRequest) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_verification_request) {
 		C.self_message_content_credential_verification_request_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -51,11 +51,11 @@ func newCredentialVerificationResponse(ptr *C.self_message_content_credential_ve
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationResponse) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_verification_response) {
 		C.self_message_content_credential_verification_response_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -69,11 +69,11 @@ func newCredentialVerificationRequestBuilder(ptr *C.self_message_content_credent
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationRequestBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_verification_request_builder) {
 		C.self_message_content_credential_verification_request_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -87,11 +87,11 @@ func newCredentialVerificationResponseBuilder(ptr *C.self_message_content_creden
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationResponseBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_verification_response_builder) {
 		C.self_message_content_credential_verification_response_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -511,11 +511,11 @@ func newCredentialVerificationParameter(ptr *C.self_credential_verification_para
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationParameter) {
+	runtime.AddCleanup(c, func(ptr *C.self_credential_verification_parameter) {
 		C.self_credential_verification_parameter_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -688,11 +688,11 @@ func newCredentialVerificationEvidence(ptr *C.self_credential_verification_evide
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CredentialVerificationEvidence) {
+	runtime.AddCleanup(c, func(ptr *C.self_credential_verification_evidence) {
 		C.self_credential_verification_evidence_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }

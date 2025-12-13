@@ -26,11 +26,11 @@ func newPairwiseIntroduction(ptr *C.self_pairwise_introduction) *Introduction {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(i, func(i *Introduction) {
+	runtime.AddCleanup(i, func(ptr *C.self_pairwise_introduction) {
 		C.self_pairwise_introduction_destroy(
-			i.ptr,
+			ptr,
 		)
-	})
+	}, i.ptr)
 
 	return i
 }

@@ -22,11 +22,11 @@ func newReference(ptr *C.self_reference) *Reference {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *Reference) {
+	runtime.AddCleanup(e, func(ptr *C.self_reference) {
 		C.self_reference_destroy(
-			e.ptr,
+			ptr,
 		)
-	})
+	}, e.ptr)
 
 	return e
 }

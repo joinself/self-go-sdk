@@ -32,11 +32,11 @@ func newDiscoveryRequest(ptr *C.self_message_content_discovery_request) *Discove
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *DiscoveryRequest) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_discovery_request) {
 		C.self_message_content_discovery_request_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -50,11 +50,11 @@ func newDiscoveryResponse(ptr *C.self_message_content_discovery_response) *Disco
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *DiscoveryResponse) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_discovery_response) {
 		C.self_message_content_discovery_response_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -68,11 +68,11 @@ func newDiscoveryRequestBuilder(ptr *C.self_message_content_discovery_request_bu
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *DiscoveryRequestBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_discovery_request_builder) {
 		C.self_message_content_discovery_request_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -86,11 +86,11 @@ func newDiscoveryResponseBuilder(ptr *C.self_message_content_discovery_response_
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *DiscoveryResponseBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_discovery_response_builder) {
 		C.self_message_content_discovery_response_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }

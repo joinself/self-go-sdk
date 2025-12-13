@@ -29,11 +29,11 @@ func newCredentialPredicateTree(ptr *C.self_credential_predicate_tree) *Tree {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(p *Tree) {
+	runtime.AddCleanup(p, func(ptr *C.self_credential_predicate_tree) {
 		C.self_credential_predicate_tree_destroy(
-			p.ptr,
+			ptr,
 		)
-	})
+	}, p.ptr)
 
 	return p
 }

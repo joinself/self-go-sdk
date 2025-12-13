@@ -39,11 +39,11 @@ func newAddress(ptr *C.self_credential_address) *Address {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(a, func(a *Address) {
+	runtime.AddCleanup(a, func(ptr *C.self_credential_address) {
 		C.self_credential_address_destroy(
-			a.ptr,
+			ptr,
 		)
-	})
+	}, a.ptr)
 
 	return a
 }

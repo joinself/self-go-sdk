@@ -35,11 +35,11 @@ func newPlatformAttestation(ptr *C.self_platform_attestation) *Attestation {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(a, func(a *Attestation) {
+	runtime.AddCleanup(a, func(ptr *C.self_platform_attestation) {
 		C.self_platform_attestation_destroy(
-			a.ptr,
+			ptr,
 		)
-	})
+	}, a.ptr)
 
 	return a
 }

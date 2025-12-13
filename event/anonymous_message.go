@@ -45,11 +45,11 @@ func newAnonymousMessage(ptr *C.self_anonymous_message) *AnonymousMessage {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *AnonymousMessage) {
+	runtime.AddCleanup(e, func(ptr *C.self_anonymous_message) {
 		C.self_anonymous_message_destroy(
-			e.ptr,
+			ptr,
 		)
-	})
+	}, e.ptr)
 
 	return e
 }

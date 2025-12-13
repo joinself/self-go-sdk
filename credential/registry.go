@@ -26,11 +26,11 @@ func newTrustedIssuerRegistry(ptr *C.self_trusted_issuer_registry) *TrustedIssue
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(r, func(r *TrustedIssuerRegistry) {
+	runtime.AddCleanup(r, func(ptr *C.self_trusted_issuer_registry) {
 		C.self_trusted_issuer_registry_destroy(
-			r.ptr,
+			ptr,
 		)
-	})
+	}, r.ptr)
 
 	return r
 }

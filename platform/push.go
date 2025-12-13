@@ -28,11 +28,11 @@ func newPlatformPush(ptr *C.self_platform_push) *Push {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(p *Push) {
+	runtime.AddCleanup(p, func(ptr *C.self_platform_push) {
 		C.self_platform_push_destroy(
-			p.ptr,
+			ptr,
 		)
-	})
+	}, p.ptr)
 
 	return p
 }

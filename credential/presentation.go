@@ -35,11 +35,11 @@ func newPresentation(ptr *C.self_presentation) *Presentation {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(b *Presentation) {
+	runtime.AddCleanup(p, func(ptr *C.self_presentation) {
 		C.self_presentation_destroy(
-			p.ptr,
+			ptr,
 		)
-	})
+	}, p.ptr)
 
 	return p
 }
@@ -57,11 +57,11 @@ func newPresentationBuilder(ptr *C.self_presentation_builder) *PresentationBuild
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(b, func(b *PresentationBuilder) {
+	runtime.AddCleanup(b, func(ptr *C.self_presentation_builder) {
 		C.self_presentation_builder_destroy(
-			b.ptr,
+			ptr,
 		)
-	})
+	}, b.ptr)
 
 	return b
 }

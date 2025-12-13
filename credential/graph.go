@@ -32,11 +32,11 @@ func newCredentialGraph(ptr *C.self_credential_graph) *Graph {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(g, func(g *Graph) {
+	runtime.AddCleanup(g, func(ptr *C.self_credential_graph) {
 		C.self_credential_graph_destroy(
-			g.ptr,
+			ptr,
 		)
-	})
+	}, g.ptr)
 
 	return g
 }

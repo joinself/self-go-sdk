@@ -22,11 +22,11 @@ func newOperationAction(ptr *C.self_identity_operation_action) *ActionSummary {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(a, func(a *ActionSummary) {
+	runtime.AddCleanup(a, func(ptr *C.self_identity_operation_action) {
 		C.self_identity_operation_action_destroy(
-			a.ptr,
+			ptr,
 		)
-	})
+	}, a.ptr)
 
 	return a
 }

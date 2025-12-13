@@ -33,11 +33,11 @@ func newChat(ptr *C.self_message_content_chat) *Chat {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *Chat) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_chat) {
 		C.self_message_content_chat_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }
@@ -51,11 +51,11 @@ func newChatBuilder(ptr *C.self_message_content_chat_builder) *ChatBuilder {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *ChatBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_chat_builder) {
 		C.self_message_content_chat_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	})
+	}, c.ptr)
 
 	return c
 }

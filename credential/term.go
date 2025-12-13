@@ -31,11 +31,11 @@ func newCredentialTerm(ptr *C.self_credential_term) *Term {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(t, func(t *Term) {
+	runtime.AddCleanup(t, func(ptr *C.self_credential_term) {
 		C.self_credential_term_destroy(
-			t.ptr,
+			ptr,
 		)
-	})
+	}, ptr)
 
 	return t
 }
