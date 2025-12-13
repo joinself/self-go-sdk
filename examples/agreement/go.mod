@@ -1,6 +1,6 @@
 module github.com/joinself/self-go-sdk/examples/agreement
 
-go 1.22.1
+go 1.25
 
 require (
 	github.com/go-pdf/fpdf v0.9.0
