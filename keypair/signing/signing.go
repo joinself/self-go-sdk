@@ -25,11 +25,11 @@ func newSigningPublicKey(ptr *C.self_signing_public_key) *PublicKey {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(p *PublicKey) {
+	runtime.AddCleanup(p, func(p *PublicKey) {
 		C.self_signing_public_key_destroy(
 			p.ptr,
 		)
-	})
+	}, p)
 
 	return p
 }

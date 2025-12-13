@@ -50,11 +50,11 @@ func newIdentityDocument(ptr *C.self_identity_document) *Document {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(d, func(d *Document) {
+	runtime.AddCleanup(d, func(d *Document) {
 		C.self_identity_document_destroy(
 			d.ptr,
 		)
-	})
+	}, d)
 
 	return d
 }

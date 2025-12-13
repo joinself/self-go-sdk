@@ -24,11 +24,11 @@ func newReferenceDescription(ptr *C.self_identity_operation_description_referenc
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(r, func(r *Reference) {
+	runtime.AddCleanup(r, func(r *Reference) {
 		C.self_identity_operation_description_reference_destroy(
 			r.ptr,
 		)
-	})
+	}, r)
 
 	return r
 }

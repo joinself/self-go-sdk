@@ -39,11 +39,11 @@ func newSigningPayload(ptr *C.self_message_content_signing_payload) *SigningPayl
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningPayload) {
+	runtime.AddCleanup(c, func(c *SigningPayload) {
 		C.self_message_content_signing_payload_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -116,11 +116,11 @@ func newSigningIdentityDocumentOperation(ptr *C.self_message_content_signing_pay
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningIdentityDocumentOperation) {
+	runtime.AddCleanup(c, func(c *SigningIdentityDocumentOperation) {
 		C.self_message_content_signing_payload_identity_document_operation_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -148,11 +148,11 @@ func newSigningRequest(ptr *C.self_message_content_signing_request) *SigningRequ
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningRequest) {
+	runtime.AddCleanup(c, func(c *SigningRequest) {
 		C.self_message_content_signing_request_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -166,11 +166,11 @@ func newSigningResponse(ptr *C.self_message_content_signing_response) *SigningRe
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningResponse) {
+	runtime.AddCleanup(c, func(c *SigningResponse) {
 		C.self_message_content_signing_response_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -184,11 +184,11 @@ func newSigningRequestBuilder(ptr *C.self_message_content_signing_request_builde
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningRequestBuilder) {
+	runtime.AddCleanup(c, func(c *SigningRequestBuilder) {
 		C.self_message_content_signing_request_builder_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -202,11 +202,11 @@ func newSigningResponseBuilder(ptr *C.self_message_content_signing_response_buil
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *SigningResponseBuilder) {
+	runtime.AddCleanup(c, func(c *SigningResponseBuilder) {
 		C.self_message_content_signing_response_builder_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }

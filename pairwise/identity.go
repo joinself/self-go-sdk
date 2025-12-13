@@ -28,11 +28,11 @@ func newPairwiseIdentity(ptr *C.self_pairwise_identity) *Identity {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(i, func(i *Identity) {
+	runtime.AddCleanup(i, func(i *Identity) {
 		C.self_pairwise_identity_destroy(
 			i.ptr,
 		)
-	})
+	}, i)
 
 	return i
 }

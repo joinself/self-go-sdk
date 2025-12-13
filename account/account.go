@@ -215,13 +215,13 @@ func New(cfg *Config) (*Account, error) {
 	// so we can pass them as user-data to C
 	pinnedAccount := pin(account)
 
-	runtime.SetFinalizer(account, func(account *Account) {
+	runtime.AddCleanup(account, func(account *Account) {
 		unpin(account)
 
 		C.self_account_destroy(
 			account.account,
 		)
-	})
+	}, account)
 
 	result := C.self_account_configure(
 		account.account,
@@ -260,13 +260,13 @@ func Init() *Account {
 		account: C.self_account_init(),
 	}
 
-	runtime.SetFinalizer(account, func(account *Account) {
+	runtime.AddCleanup(account, func(account *Account) {
 		unpin(account)
 
 		C.self_account_destroy(
 			account.account,
 		)
-	})
+	}, account)
 
 	return account
 }

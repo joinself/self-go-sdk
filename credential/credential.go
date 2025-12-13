@@ -76,11 +76,11 @@ func newCredential(ptr *C.self_credential) *Credential {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *Credential) {
+	runtime.AddCleanup(c, func(c *Credential) {
 		C.self_credential_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -98,11 +98,11 @@ func newCredentialBuilder(ptr *C.self_credential_builder) *CredentialBuilder {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(b, func(b *CredentialBuilder) {
+	runtime.AddCleanup(b, func(b *CredentialBuilder) {
 		C.self_credential_builder_destroy(
 			b.ptr,
 		)
-	})
+	}, b)
 
 	return b
 }
@@ -116,11 +116,11 @@ func newVerifiableCredential(ptr *C.self_verifiable_credential) *VerifiableCrede
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *VerifiableCredential) {
+	runtime.AddCleanup(c, func(c *VerifiableCredential) {
 		C.self_verifiable_credential_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }

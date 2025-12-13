@@ -19,11 +19,11 @@ func newCredentialPredicateSolution(ptr *C.self_credential_predicate_solution) *
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(s, func(s *Solution) {
+	runtime.AddCleanup(s, func(s *Solution) {
 		C.self_credential_predicate_solution_destroy(
 			s.ptr,
 		)
-	})
+	}, s)
 
 	return s
 }

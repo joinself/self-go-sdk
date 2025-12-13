@@ -24,11 +24,11 @@ func newEmbeddedDescription(ptr *C.self_identity_operation_description_embedded)
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(e, func(e *Embedded) {
+	runtime.AddCleanup(e, func(e *Embedded) {
 		C.self_identity_operation_description_embedded_destroy(
 			e.ptr,
 		)
-	})
+	}, e)
 
 	return e
 }

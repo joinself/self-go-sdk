@@ -46,11 +46,11 @@ func newIntroduction(ptr *C.self_message_content_introduction) *Introduction {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *Introduction) {
+	runtime.AddCleanup(c, func(c *Introduction) {
 		C.self_message_content_introduction_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -64,11 +64,11 @@ func newIntroductionBuilder(ptr *C.self_message_content_introduction_builder) *I
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *IntroductionBuilder) {
+	runtime.AddCleanup(c, func(c *IntroductionBuilder) {
 		C.self_message_content_introduction_builder_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }

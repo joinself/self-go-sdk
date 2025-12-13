@@ -24,11 +24,11 @@ func newCustom(ptr *C.self_message_content_custom) *Custom {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *Custom) {
+	runtime.AddCleanup(c, func(c *Custom) {
 		C.self_message_content_custom_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -42,11 +42,11 @@ func newCustomBuilder(ptr *C.self_message_content_custom_builder) *CustomBuilder
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *CustomBuilder) {
+	runtime.AddCleanup(c, func(c *CustomBuilder) {
 		C.self_message_content_custom_builder_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }

@@ -22,11 +22,11 @@ func newCredentialPredicate(ptr *C.self_credential_predicate) *Predicate {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(p *Predicate) {
+	runtime.AddCleanup(p, func(p *Predicate) {
 		C.self_credential_predicate_destroy(
 			p.ptr,
 		)
-	})
+	}, p)
 
 	return p
 }

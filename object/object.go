@@ -24,11 +24,11 @@ func newObject(ptr *C.self_object) *Object {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(o, func(o *Object) {
+	runtime.AddCleanup(o, func(o *Object) {
 		C.self_object_destroy(
 			o.ptr,
 		)
-	})
+	}, o)
 
 	return o
 }

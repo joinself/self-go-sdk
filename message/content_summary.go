@@ -37,11 +37,11 @@ func newContentSummary(ptr *C.self_message_content_summary) *ContentSummary {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *ContentSummary) {
+	runtime.AddCleanup(c, func(c *ContentSummary) {
 		C.self_message_content_summary_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }
@@ -128,11 +128,11 @@ func newContentSummaryDescription(ptr *C.self_message_content_summary_descriptio
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(c, func(c *ContentSummaryDescription) {
+	runtime.AddCleanup(c, func(c *ContentSummaryDescription) {
 		C.self_message_content_summary_description_destroy(
 			c.ptr,
 		)
-	})
+	}, c)
 
 	return c
 }

@@ -68,11 +68,11 @@ func newCredentialPredicator(ptr *C.self_credential_predicator) *Predicator {
 		ptr: ptr,
 	}
 
-	runtime.SetFinalizer(p, func(p *Predicator) {
+	runtime.AddCleanup(p, func(p *Predicator) {
 		C.self_credential_predicator_destroy(
 			p.ptr,
 		)
-	})
+	}, p)
 
 	return p
 }
