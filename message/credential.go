@@ -25,11 +25,11 @@ func newCredential(ptr *C.self_message_content_credential) *Credential {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *Credential) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential) {
 		C.self_message_content_credential_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -43,11 +43,11 @@ func newCredentialBuilder(ptr *C.self_message_content_credential_builder) *Crede
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *CredentialBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_builder) {
 		C.self_message_content_credential_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }

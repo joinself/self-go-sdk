@@ -28,11 +28,11 @@ func newKeyPackage(ptr *C.self_key_package) *KeyPackage {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *KeyPackage) {
+	runtime.AddCleanup(e, func(ptr *C.self_key_package) {
 		C.self_key_package_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

@@ -36,11 +36,11 @@ func newMessage(ptr *C.self_message) *Message {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *Message) {
+	runtime.AddCleanup(e, func(ptr *C.self_message) {
 		C.self_message_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

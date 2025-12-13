@@ -82,11 +82,11 @@ func newContent(ptr *C.self_message_content) *Content {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *Content) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content) {
 		C.self_message_content_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }

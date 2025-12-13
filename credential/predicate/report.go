@@ -19,11 +19,11 @@ func newCredentialPredicateReport(ptr *C.self_credential_predicate_report) *Repo
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(r, func(r *Report) {
+	runtime.AddCleanup(r, func(ptr *C.self_credential_predicate_report) {
 		C.self_credential_predicate_report_destroy(
-			r.ptr,
+			ptr,
 		)
-	}, r)
+	}, r.ptr)
 
 	return r
 }

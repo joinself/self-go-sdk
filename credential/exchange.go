@@ -25,11 +25,11 @@ func newExchange(ptr *C.self_credential_exchange) *Exchange {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(b, func(b *Exchange) {
+	runtime.AddCleanup(b, func(ptr *C.self_credential_exchange) {
 		C.self_credential_exchange_destroy(
-			b.ptr,
+			ptr,
 		)
-	}, b)
+	}, b.ptr)
 
 	return b
 }

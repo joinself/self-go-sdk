@@ -24,11 +24,11 @@ func newDropped(ptr *C.self_dropped_event) *Dropped {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *Dropped) {
+	runtime.AddCleanup(e, func(ptr *C.self_dropped_event) {
 		C.self_dropped_event_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

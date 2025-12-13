@@ -67,11 +67,11 @@ func newCredentialPresentationRequest(ptr *C.self_message_content_credential_pre
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *CredentialPresentationRequest) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_presentation_request) {
 		C.self_message_content_credential_presentation_request_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -85,11 +85,11 @@ func newCredentialPresentationResponse(ptr *C.self_message_content_credential_pr
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *CredentialPresentationResponse) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_presentation_response) {
 		C.self_message_content_credential_presentation_response_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -103,11 +103,11 @@ func newCredentialPresentationRequestBuilder(ptr *C.self_message_content_credent
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *CredentialPresentationRequestBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_presentation_request_builder) {
 		C.self_message_content_credential_presentation_request_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -121,11 +121,11 @@ func newCredentialPresentationResponseBuilder(ptr *C.self_message_content_creden
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *CredentialPresentationResponseBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_credential_presentation_response_builder) {
 		C.self_message_content_credential_presentation_response_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }

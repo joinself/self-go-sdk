@@ -24,11 +24,11 @@ func newObject(ptr *C.self_object) *Object {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(o, func(o *Object) {
+	runtime.AddCleanup(o, func(ptr *C.self_object) {
 		C.self_object_destroy(
-			o.ptr,
+			ptr,
 		)
-	}, o)
+	}, o.ptr)
 
 	return o
 }

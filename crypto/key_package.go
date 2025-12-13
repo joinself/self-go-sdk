@@ -29,11 +29,11 @@ func newCryptoKeyPackage(ptr *C.self_crypto_key_package, owned bool) *KeyPackage
 	}
 
 	if owned {
-		runtime.AddCleanup(e, func(e *KeyPackage) {
+		runtime.AddCleanup(e, func(ptr *C.self_crypto_key_package) {
 			C.self_crypto_key_package_destroy(
-				e.ptr,
+				ptr,
 			)
-		}, e)
+		}, e.ptr)
 	}
 
 	return e

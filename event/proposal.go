@@ -24,11 +24,11 @@ func newProposal(ptr *C.self_proposal) *Proposal {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *Proposal) {
+	runtime.AddCleanup(e, func(ptr *C.self_proposal) {
 		C.self_proposal_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

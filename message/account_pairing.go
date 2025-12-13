@@ -38,11 +38,11 @@ func newAccountPairingRequest(ptr *C.self_message_content_account_pairing_reques
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *AccountPairingRequest) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_account_pairing_request) {
 		C.self_message_content_account_pairing_request_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -56,11 +56,11 @@ func newAccountPairingResponse(ptr *C.self_message_content_account_pairing_respo
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *AccountPairingResponse) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_account_pairing_response) {
 		C.self_message_content_account_pairing_response_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -74,11 +74,11 @@ func newAccountPairingRequestBuilder(ptr *C.self_message_content_account_pairing
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *AccountPairingRequestBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_account_pairing_request_builder) {
 		C.self_message_content_account_pairing_request_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }
@@ -92,11 +92,11 @@ func newAccountPairingResponseBuilder(ptr *C.self_message_content_account_pairin
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(c, func(c *AccountPairingResponseBuilder) {
+	runtime.AddCleanup(c, func(ptr *C.self_message_content_account_pairing_response_builder) {
 		C.self_message_content_account_pairing_response_builder_destroy(
-			c.ptr,
+			ptr,
 		)
-	}, c)
+	}, c.ptr)
 
 	return c
 }

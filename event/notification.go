@@ -33,11 +33,11 @@ func newNotifiation(ptr *C.self_notification) *notification {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *notification) {
+	runtime.AddCleanup(e, func(ptr *C.self_notification) {
 		C.self_notification_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

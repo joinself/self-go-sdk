@@ -24,11 +24,11 @@ func newCryptoWelcome(ptr *C.self_crypto_welcome, owned bool) *Welcome {
 	}
 
 	if owned {
-		runtime.AddCleanup(e, func(e *Welcome) {
+		runtime.AddCleanup(e, func(ptr *C.self_crypto_welcome) {
 			C.self_crypto_welcome_destroy(
-				e.ptr,
+				ptr,
 			)
-		}, e)
+		}, e.ptr)
 	}
 
 	return e

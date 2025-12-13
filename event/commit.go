@@ -24,11 +24,11 @@ func newCommit(ptr *C.self_commit) *Commit {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(e, func(e *Commit) {
+	runtime.AddCleanup(e, func(ptr *C.self_commit) {
 		C.self_commit_destroy(
-			e.ptr,
+			ptr,
 		)
-	}, e)
+	}, e.ptr)
 
 	return e
 }

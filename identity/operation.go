@@ -52,11 +52,11 @@ func newOperation(ptr *C.self_identity_operation) *Operation {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(o, func(o *Operation) {
+	runtime.AddCleanup(o, func(ptr *C.self_identity_operation) {
 		C.self_identity_operation_destroy(
-			o.ptr,
+			ptr,
 		)
-	}, o)
+	}, o.ptr)
 
 	return o
 }
@@ -167,11 +167,11 @@ func newOperationBuilder(ptr *C.self_identity_operation_builder) *OperationBuild
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(b, func(b *OperationBuilder) {
+	runtime.AddCleanup(b, func(ptr *C.self_identity_operation_builder) {
 		C.self_identity_operation_builder_destroy(
-			b.ptr,
+			ptr,
 		)
-	}, b)
+	}, b.ptr)
 
 	return b
 }

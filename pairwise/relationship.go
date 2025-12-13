@@ -21,11 +21,11 @@ func newPairwiseRelationship(ptr *C.self_pairwise_relationship) *Relationship {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(r, func(r *Relationship) {
+	runtime.AddCleanup(r, func(ptr *C.self_pairwise_relationship) {
 		C.self_pairwise_relationship_destroy(
-			r.ptr,
+			ptr,
 		)
-	}, r)
+	}, r.ptr)
 
 	return r
 }

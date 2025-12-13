@@ -24,11 +24,11 @@ func newToken(ptr *C.self_token) *Token {
 		ptr: ptr,
 	}
 
-	runtime.AddCleanup(t, func(t *Token) {
+	runtime.AddCleanup(t, func(ptr *C.self_token) {
 		C.self_token_destroy(
-			t.ptr,
+			ptr,
 		)
-	}, t)
+	}, t.ptr)
 
 	return t
 }
