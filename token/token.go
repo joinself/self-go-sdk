@@ -58,3 +58,24 @@ func encodeToken(t *Token) ([]byte, error) {
 
 	return encodedToken, nil
 }
+
+func decodeToken(encoded []byte) (*Token, error) {
+	var t *C.self_token
+
+	tokenBuf := (*C.uint8_t)(C.CBytes(encoded))
+	tokenLen := C.size_t(len(encoded))
+
+	result := C.self_token_decode(
+		tokenBuf,
+		tokenLen,
+		&t,
+	)
+
+	C.free(unsafe.Pointer(tokenBuf))
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	return newToken(t), nil
+}
