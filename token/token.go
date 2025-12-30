@@ -37,7 +37,8 @@ func tokenPtr(t *Token) *C.self_token {
 	return t.ptr
 }
 
-func encodeToken(t *Token) ([]byte, error) {
+// Encode encodes a token to bytes
+func (t *Token) Encode() ([]byte, error) {
 	var buf *C.self_bytes_buffer
 
 	result := C.self_token_encode(
@@ -59,7 +60,8 @@ func encodeToken(t *Token) ([]byte, error) {
 	return encodedToken, nil
 }
 
-func decodeToken(encoded []byte) (*Token, error) {
+// Decode decodes a token
+func Decode(encoded []byte) (*Token, error) {
 	var t *C.self_token
 
 	tokenBuf := (*C.uint8_t)(C.CBytes(encoded))
