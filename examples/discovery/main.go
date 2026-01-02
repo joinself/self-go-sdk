@@ -40,12 +40,7 @@ func main() {
 
 	expires := time.Now().Add(time.Minute * 5)
 
-	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expires)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expires).Finish()
+	content, err := message.NewDiscoveryRequest().InboxAddress(selfAccount.InboxDefault()).Expires(expires).Finish()
 	if err != nil {
 		log.Fatal(err)
 	}

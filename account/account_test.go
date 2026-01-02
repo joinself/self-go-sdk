@@ -115,9 +115,6 @@ func testRegisterIdentity(t testing.TB, account *account.Account) {
 	multiroleKey, err := account.KeychainSigningCreate()
 	require.Nil(t, err)
 
-	//exchangeKey, err := account.KeychainExchangeCreate()
-	//require.Nil(t, err)
-
 	operation := identity.NewOperation().
 		Identifier(identityKey).
 		Sequence(0).
@@ -152,9 +149,6 @@ func TestAccountMessaging(t *testing.T) {
 
 	bobbyAddress, err := bobby.InboxOpen()
 	require.Nil(t, err)
-
-	// fmt.Println("alice:", aliceAddress)
-	// fmt.Println("bobby:", bobbyAddress)
 
 	err = alice.ConnectionNegotiate(
 		aliceAddress,

@@ -19,21 +19,21 @@ _support/sources
 vendor/
 _examples/.env
 
-
 self.db
 self.db-shm
 self.db-wal
 
-examples/agreement/agreement
-examples/agreement/storage
 examples/chat/chat
 examples/chat/storage
-examples/connection/connection
-examples/connection/storage
-examples/credentials/issue/issue
-examples/credentials/issue/storage
-examples/credentials/request/request
-examples/credentials/request/storage
-examples/credential-request/storage
+examples/credentials/agreement/agreement
+examples/credentials/agreement/storage
+examples/credentials/authentication/authentication
+examples/credentials/authentication/storage
+examples/credentials/issuance/issuance
+examples/credentials/issuance/storage
+examples/credentials/sharing/sharing
+examples/credentials/sharing/storage
+examples/credentials/term/sharing
+examples/credentials/term/storage
 examples/discovery/discovery
 examples/discovery/storage

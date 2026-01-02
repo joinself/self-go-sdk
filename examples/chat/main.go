@@ -36,14 +36,8 @@ func main() {
 
 	expires := time.Now().Add(time.Minute * 5)
 
-	// generate a one-time key for encrypted communication between app and user
-	keyPackage, err := selfAccount.ConnectionNegotiateOutOfBand(selfAccount.InboxDefault(), expires)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// create a new discovery request containing the one-time key
-	content, err := message.NewDiscoveryRequest().KeyPackage(keyPackage).Expires(expires).Finish()
+	// create a new discovery request that we can encode as a QR code
+	content, err := message.NewDiscoveryRequest().InboxAddress(selfAccount.InboxDefault()).Expires(expires).Finish()
 	if err != nil {
 		log.Fatal(err)
 	}

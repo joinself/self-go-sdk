@@ -43,8 +43,8 @@ func main() {
 			OnMessage: func(selfAccount *account.Account, msg *event.Message) {
 				switch event.ContentTypeOf(msg) {
 				case message.ContentTypeIntroduction:
-					handleIntroduction(selfAccount, msg)
-					requestUserAuthentication(0)
+					userID := handleIntroduction(selfAccount, msg)
+					requestUserAuthentication(userID)
 				case message.ContentTypeCredentialPresentationResponse:
 					handleCredentialPresentationResponse(selfAccount, msg)
 				default:
@@ -64,7 +64,7 @@ func main() {
 	runtime.Goexit()
 }
 
-func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
+func handleIntroduction(selfAccount *account.Account, msg *event.Message) int {
 	introduction, err := message.DecodeIntroduction(msg.Content())
 	if err != nil {
 		log.Fatal("failed to decode introduction response", "error", err)
@@ -94,6 +94,8 @@ func handleIntroduction(selfAccount *account.Account, msg *event.Message) {
 	mu.Unlock()
 
 	log.Println("registered new user")
+
+	return id
 }
 
 func handleCredentialPresentationResponse(selfAccount *account.Account, msg *event.Message) {
