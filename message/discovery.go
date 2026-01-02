@@ -127,8 +127,8 @@ func (c *DiscoveryRequest) DocumentAddress() *signing.PublicKey {
 	return newSigningPublicKey(documentAddress)
 }
 
-// FromAddress returns the messaging address of the requester
-func (c *DiscoveryRequest) FromAddress() *signing.PublicKey {
+// InboxAddress returns the inbox address of the requester
+func (c *DiscoveryRequest) InboxAddress() *signing.PublicKey {
 	return newSigningPublicKey(C.self_message_content_discovery_request_from_address(
 		c.ptr,
 	))
@@ -170,11 +170,11 @@ func (b *DiscoveryRequestBuilder) DocumentAddress(documentAddress *signing.Publi
 	return b
 }
 
-// FromAddress sets the inbox address of the requester. This can be omitted if a key package is provided
-func (b *DiscoveryRequestBuilder) FromAddress(fromAddress *signing.PublicKey) *DiscoveryRequestBuilder {
+// InboxAddress sets the inbox address of the requester. This can be omitted if a key package is provided
+func (b *DiscoveryRequestBuilder) InboxAddress(inboxAddress *signing.PublicKey) *DiscoveryRequestBuilder {
 	C.self_message_content_discovery_request_builder_from_address(
 		b.ptr,
-		signingPublicKeyPtr(fromAddress),
+		signingPublicKeyPtr(inboxAddress),
 	)
 	return b
 }
