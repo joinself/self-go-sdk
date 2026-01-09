@@ -1,4 +1,4 @@
-module github.com/joinself/self-go-sdk/examples/credentials/issue
+module github.com/joinself/self-go-sdk/examples/credentials/sharing
 
 go 1.25
 

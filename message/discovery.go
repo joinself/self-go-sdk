@@ -14,6 +14,7 @@ import (
 	"unsafe"
 
 	"github.com/joinself/self-go-sdk/crypto"
+	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/status"
 )
 
@@ -113,11 +114,37 @@ func DecodeDiscoveryRequest(content *Content) (*DiscoveryRequest, error) {
 	return newDiscoveryRequest(discoveryRequestContent), nil
 }
 
-// KeyPackage returns the embedded key package conntained in the discovery request
-func (c *DiscoveryRequest) KeyPackage() *crypto.KeyPackage {
-	return newCryptoKeyPackage(C.self_message_content_discovery_request_key_package(
+// DocumentAddress returns the document address of the requester, or nil if not provided
+func (c *DiscoveryRequest) DocumentAddress() *signing.PublicKey {
+	documentAddress := C.self_message_content_discovery_request_document_address(
+		c.ptr,
+	)
+
+	if documentAddress == nil {
+		return nil
+	}
+
+	return newSigningPublicKey(documentAddress)
+}
+
+// InboxAddress returns the inbox address of the requester
+func (c *DiscoveryRequest) InboxAddress() *signing.PublicKey {
+	return newSigningPublicKey(C.self_message_content_discovery_request_from_address(
 		c.ptr,
 	))
+}
+
+// KeyPackage returns the embedded key package contained in the discovery request, or nil if not provided
+func (c *DiscoveryRequest) KeyPackage() *crypto.KeyPackage {
+	keyPackage := C.self_message_content_discovery_request_key_package(
+		c.ptr,
+	)
+
+	if keyPackage == nil {
+		return nil
+	}
+
+	return newCryptoKeyPackage(keyPackage)
 }
 
 // Type returns the time the request expires at
@@ -134,7 +161,25 @@ func NewDiscoveryRequest() *DiscoveryRequestBuilder {
 	)
 }
 
-// KeyPackage sets the key package that will be embedded in the request
+// DocumentAddress sets an optional document address
+func (b *DiscoveryRequestBuilder) DocumentAddress(documentAddress *signing.PublicKey) *DiscoveryRequestBuilder {
+	C.self_message_content_discovery_request_builder_document_address(
+		b.ptr,
+		signingPublicKeyPtr(documentAddress),
+	)
+	return b
+}
+
+// InboxAddress sets the inbox address of the requester. This can be omitted if a key package is provided
+func (b *DiscoveryRequestBuilder) InboxAddress(inboxAddress *signing.PublicKey) *DiscoveryRequestBuilder {
+	C.self_message_content_discovery_request_builder_from_address(
+		b.ptr,
+		signingPublicKeyPtr(inboxAddress),
+	)
+	return b
+}
+
+// KeyPackage sets an optional key package that will be embedded in the request
 func (b *DiscoveryRequestBuilder) KeyPackage(keyPackage *crypto.KeyPackage) *DiscoveryRequestBuilder {
 	C.self_message_content_discovery_request_builder_key_package(
 		b.ptr,
