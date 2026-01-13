@@ -94,5 +94,16 @@ func (i *Identity) BiometricAnchor() []byte {
 }
 
 func (i *Identity) Bytes() []byte {
-	return nil
+	buf := C.self_pairwise_identity_encode(
+		i.ptr,
+	)
+
+	encoded := C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(buf)),
+		C.int(C.self_bytes_buffer_len(buf)),
+	)
+
+	C.self_bytes_buffer_destroy(buf)
+
+	return encoded
 }
