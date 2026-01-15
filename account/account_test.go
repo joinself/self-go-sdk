@@ -1327,3 +1327,20 @@ func TestStoragePerformance(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, "hello again!", chatMessage.Message())
 }
+
+func TestQREncoing(t *testing.T) {
+	a, _, _ := testAccount(t)
+
+	address, err := a.KeychainSigningCreate()
+	require.Nil(t, err)
+
+	discoveryRequest, err := message.NewDiscoveryRequest().InboxAddress(address).Finish()
+	require.Nil(t, err)
+
+	encoded, err := event.NewAnonymousMessage(discoveryRequest).EncodeToQR(event.QREncodingSVG)
+	require.Nil(t, err)
+
+	os.WriteFile("/tmp/qr.svg", encoded, 0755)
+
+	fmt.Println(string(encoded))
+}
