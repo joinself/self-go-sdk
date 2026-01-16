@@ -90,7 +90,7 @@ func DecodeOperation(documentAddress *signing.PublicKey, encodedOperation []byte
 // Sequence the sequence number of the operation
 func (o *Operation) Sequence(address *signing.PublicKey) uint32 {
 	return uint32(C.self_identity_operation_sequence(
-		operationPtr(o),
+		o.ptr,
 	))
 }
 
@@ -98,7 +98,7 @@ func (o *Operation) Sequence(address *signing.PublicKey) uint32 {
 func (o *Operation) Hash() []byte {
 	return C.GoBytes(
 		unsafe.Pointer(C.self_identity_operation_hash(
-			operationPtr(o),
+			o.ptr,
 		)),
 		32,
 	)
@@ -107,15 +107,29 @@ func (o *Operation) Hash() []byte {
 // SignedBy checks if the operation has been signed with a given key
 func (o *Operation) SignedBy(address *signing.PublicKey) bool {
 	return bool(C.self_identity_operation_signed_by(
-		operationPtr(o),
+		o.ptr,
 		signingPublicKeyPtr(address),
 	))
+}
+
+// Merge merges signatures from another operation
+func (o *Operation) Merge(other *Operation) error {
+	result := C.self_identity_operation_merge(
+		o.ptr,
+		other.ptr,
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
 }
 
 // Actions returns a summary of the operations actions
 func (o *Operation) Actions() []*ActionSummary {
 	collection := C.self_identity_operation_actions(
-		operationPtr(o),
+		o.ptr,
 	)
 
 	collectionLen := int(C.self_collection_identity_operation_action_len(
