@@ -14,3 +14,5 @@ jobs:
     secrets: inherit
     with:
       version: ${{ inputs.version }}
+    permissions:
+      contents: write
