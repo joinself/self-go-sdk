@@ -488,6 +488,9 @@ func TestAccountMessageSigning(t *testing.T) {
 	err = alice.IdentityExecute(aliceIdentityOperation)
 	require.Nil(t, err)
 
+	aliceIdentityDocument, err := alice.IdentityResolve(aliceIdentifier)
+	require.Nil(t, err)
+
 	// create an identity document for bobby
 	bobbyIdentifier, err := bobby.KeychainSigningCreate()
 	require.Nil(t, err)
@@ -575,12 +578,14 @@ func TestAccountMessageSigning(t *testing.T) {
 			identity.MethodAure,
 			aliceIdentifier,
 			aliceInvocation,
+			aliceIdentityDocument.Commitment(),
 			identity.RoleInvocation,
 		).
 		GrantReferenced(
 			identity.MethodAure,
 			bobbyIdentifier,
 			bobbyInvocation,
+			bobbyIdentityDocument.Commitment(),
 			identity.RoleInvocation,
 		).
 		SignWith(sharedIdentifier).
