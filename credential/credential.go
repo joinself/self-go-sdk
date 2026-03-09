@@ -366,6 +366,27 @@ func (c *VerifiableCredential) CredentialHash() ([]byte, error) {
 	), nil
 }
 
+// RevocationHash returns a hash of the credential's signature used for revocation purposes
+func (c *VerifiableCredential) RevocationHash() ([]byte, error) {
+	var buf *C.self_bytes_buffer
+
+	result := C.self_verifiable_credential_revocation_hash(
+		c.ptr,
+		&buf,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	defer C.self_bytes_buffer_destroy(buf)
+
+	return C.GoBytes(
+		unsafe.Pointer(C.self_bytes_buffer_buf(buf)),
+		C.int(C.self_bytes_buffer_len(buf)),
+	), nil
+}
+
 // Issuer returns the address of the credential's issuer
 func (c *VerifiableCredential) Issuer() *Address {
 	return newAddress(C.self_verifiable_credential_issuer(

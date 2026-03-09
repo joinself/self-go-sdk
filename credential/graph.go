@@ -12,11 +12,15 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/joinself/self-go-sdk/revocation"
 	"github.com/joinself/self-go-sdk/status"
 )
 
 //go:linkname pairwiseIdentityInterfacePtr github.com/joinself/self-go-sdk/pairwise.pairwiseIdentityInterfacePtr
 func pairwiseIdentityInterfacePtr(r interface{}) (*C.self_pairwise_identity, bool)
+
+//go:linkname newProof github.com/joinself/self-go-sdk/revocation.newProof
+func newProof(ptr *C.self_revocation_proof) *revocation.Proof
 
 type IdentityRecord interface {
 	DocumentAddress() *Address
@@ -94,6 +98,41 @@ func (g *Graph) ValidAuthenticationFor(identity IdentityRecord, challenge []byte
 		pairwiseIdentityPtr,
 		challengeBuf,
 	))
+}
+
+// RevokedCredentialsFor collects all revoked credentials in the graph for a given holder
+func (g *Graph) RevokedCredentialsFor(holder *Address) ([]*VerifiableCredential, error) {
+	var collection *C.self_collection_verifiable_credential
+
+	result := C.self_credential_graph_revoked_credentials_for(
+		g.ptr,
+		credentialAddressPtr(holder),
+		&collection,
+	)
+
+	if result > 0 {
+		return nil, status.New(result)
+	}
+
+	credentials := fromVerifiableCredentialCollection(collection)
+
+	C.self_collection_verifiable_credential_destroy(collection)
+
+	return credentials, nil
+}
+
+// RevocationProofFor returns a revocation proof for a given revoked credential
+func (g *Graph) RevocationProofFor(credential *VerifiableCredential) (*revocation.Proof, bool) {
+	ptr := C.self_credential_graph_revocation_proof_for(
+		g.ptr,
+		verifiableCredentialPtr(credential),
+	)
+
+	if ptr == nil {
+		return nil, false
+	}
+
+	return newProof(ptr), true
 }
 
 // BiometricAnchorHashFor retireves the biometric anchor hash for a given holder, if it exists

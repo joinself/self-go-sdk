@@ -26,6 +26,7 @@ import (
 	"github.com/joinself/self-go-sdk/object"
 	"github.com/joinself/self-go-sdk/pairwise"
 	"github.com/joinself/self-go-sdk/platform"
+	"github.com/joinself/self-go-sdk/revocation"
 	"github.com/joinself/self-go-sdk/status"
 	"github.com/joinself/self-go-sdk/token"
 )
@@ -98,6 +99,9 @@ func credentialAddressPtr(a *credential.Address) *C.self_credential_address
 
 //go:linkname newCredentialGraph github.com/joinself/self-go-sdk/credential.newCredentialGraph
 func newCredentialGraph(ptr *C.self_credential_graph) *credential.Graph
+
+//go:linkname revocationStatementPtr github.com/joinself/self-go-sdk/revocation.statementPtr
+func revocationStatementPtr(s *revocation.Statement) *C.self_revocation_statement
 
 //go:linkname newObject github.com/joinself/self-go-sdk/object.newObject
 func newObject(ptr *C.self_object) *object.Object
@@ -1018,6 +1022,34 @@ func (a *Account) PresentationLookupByPresentationType(presentationType ...strin
 	)
 
 	return presentations, nil
+}
+
+// RevocationRevoke publishes a revocation statement
+func (a *Account) RevocationRevoke(statement *revocation.Statement) error {
+	result := C.self_account_revocation_revoke(
+		a.account,
+		revocationStatementPtr(statement),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
+}
+
+// RevocationSign signs a revocation statement
+func (a *Account) RevocationSign(statement *revocation.Statement) error {
+	result := C.self_account_revocation_sign(
+		a.account,
+		revocationStatementPtr(statement),
+	)
+
+	if result > 0 {
+		return status.New(result)
+	}
+
+	return nil
 }
 
 // TokenStore stores a token
