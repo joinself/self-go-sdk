@@ -1,4 +1,4 @@
-package account_test
+package account
 
 import (
 	"crypto/rand"
@@ -10,8 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+	_ "unsafe"
 
-	"github.com/joinself/self-go-sdk/account"
 	"github.com/joinself/self-go-sdk/credential"
 	"github.com/joinself/self-go-sdk/credential/predicate"
 	"github.com/joinself/self-go-sdk/event"
@@ -20,23 +20,28 @@ import (
 	"github.com/joinself/self-go-sdk/keypair/signing"
 	"github.com/joinself/self-go-sdk/message"
 	"github.com/joinself/self-go-sdk/object"
+	"github.com/joinself/self-go-sdk/pairwise"
+	"github.com/joinself/self-go-sdk/platform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+//go:linkname playIntegrity github.com/joinself/self-go-sdk/platform.playIntegrity
+func playIntegrity(application *signing.PublicKey, token []byte) *platform.Attestation
+
 func init() {
 	/*
-		account.SetLogFunc(func(level account.LogLevel, message string) {
+		SetLogFunc(func(level LogLevel, message string) {
 			// disable logging
 		})
 	*/
 }
 
-func testAccount(t testing.TB) (*account.Account, chan *event.Message, chan *event.Welcome) {
+func testAccount(t testing.TB) (*Account, chan *event.Message, chan *event.Welcome) {
 	return testAccountWithPath(t, ":memory:")
 }
 
-func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *event.Message, chan *event.Welcome) {
+func testAccountWithPath(t testing.TB, path string) (*Account, chan *event.Message, chan *event.Welcome) {
 	incomingMsg := make(chan *event.Message, 1024)
 	incomingWel := make(chan *event.Welcome, 1024)
 
@@ -47,67 +52,146 @@ func testAccountWithPath(t testing.TB, path string) (*account.Account, chan *eve
 	signal := make(chan bool, 1)
 
 	// temporarily target preview
-	target := &account.Target{
-		Variant:     account.VariantPreview,
-		Environment: account.EnvironmentSandbox,
-		Rpc:         fmt.Sprintf("https://rpc-sandbox.%s.joinself.com", "preview"),
-		Object:      fmt.Sprintf("https://object-sandbox.%s.joinself.com", "preview"),
-		Message:     fmt.Sprintf("wss://message-sandbox.%s.joinself.com", "preview"),
+	target := &Target{
+		Variant:     VariantDevelopment,
+		Environment: EnvironmentProduction,
+		Rpc:         "http://localhost:8080", //fmt.Sprintf("https://rpc-sandbox.%s.joinself.com", "preview"),
+		Object:      "http://localhost:8090", //fmt.Sprintf("https://object-sandbox.%s.joinself.com", "preview"),
+		Message:     "ws://localhost:9000",   //fmt.Sprintf("wss://message-sandbox.%s.joinself.com", "preview"),
 	}
 
-	cfg := &account.Config{
+	callbacks := Callbacks{
+		OnConnect: func(account *Account) {
+			signal <- true
+		},
+		OnDisconnect: func(account *Account, err error) {
+			// require.Nil(t, err)
+		},
+		OnAcknowledgement: func(account *Account, reference *event.Reference) {
+			// fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
+		},
+		OnError: func(account *Account, reference *event.Reference, err error) {
+			// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
+		},
+		OnMessage: func(account *Account, msg *event.Message) {
+			incomingMsg <- msg
+		},
+		OnKeyPackage: func(account *Account, keyPackage *event.KeyPackage) {
+			_, err := account.ConnectionEstablish(
+				keyPackage.ToAddress(),
+				keyPackage.KeyPackage(),
+			)
+			if err != nil {
+				panic(err)
+			}
+		},
+		OnWelcome: func(account *Account, welcome *event.Welcome) {
+			_, err := account.ConnectionAccept(
+				welcome.ToAddress(),
+				welcome.Welcome(),
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			incomingWel <- welcome
+		},
+	}
+
+	cfg := &Config{
 		SkipSetup:   true,
 		StorageKey:  make([]byte, 32),
 		StoragePath: path,
 		Environment: target,
-		LogLevel:    account.LogError,
-		Callbacks: account.Callbacks{
-			OnConnect: func(account *account.Account) {
-				signal <- true
-			},
-			OnDisconnect: func(account *account.Account, err error) {
-				// require.Nil(t, err)
-			},
-			OnAcknowledgement: func(account *account.Account, reference *event.Reference) {
-				// fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
-			},
-			OnError: func(account *account.Account, reference *event.Reference, err error) {
-				// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
-			},
-			OnMessage: func(account *account.Account, msg *event.Message) {
-				incomingMsg <- msg
-			},
-			OnKeyPackage: func(account *account.Account, keyPackage *event.KeyPackage) {
-				_, err := account.ConnectionEstablish(
-					keyPackage.ToAddress(),
-					keyPackage.KeyPackage(),
-				)
-				if err != nil {
-					panic(err)
-				}
-			},
-			OnWelcome: func(account *account.Account, welcome *event.Welcome) {
-				_, err := account.ConnectionAccept(
-					welcome.ToAddress(),
-					welcome.Welcome(),
-				)
-				if err != nil {
-					panic(err)
-				}
-
-				incomingWel <- welcome
-			},
-		},
+		LogLevel:    LogDebug,
+		Callbacks:   callbacks,
 	}
 
-	acc, err := account.New(cfg)
+	acc, err := New(cfg)
 	require.Nil(t, err)
 	<-signal
 
 	return acc, incomingMsg, incomingWel
 }
 
-func testRegisterIdentity(t testing.TB, account *account.Account) {
+func testAccountWithPathAndIntegirty(t testing.TB, path string, application *signing.PublicKey) (*Account, chan *event.Message, chan *event.Welcome) {
+	incomingMsg := make(chan *event.Message, 1024)
+	incomingWel := make(chan *event.Welcome, 1024)
+
+	if path != ":memory:" {
+		path = path + "/self.db"
+	}
+
+	signal := make(chan bool, 1)
+
+	// temporarily target preview
+	target := &Target{
+		Variant:     VariantDevelopment,
+		Environment: EnvironmentProduction,
+		Rpc:         "http://localhost:8080", //fmt.Sprintf("https://rpc-sandbox.%s.joinself.com", "preview"),
+		Object:      "http://localhost:8090", //fmt.Sprintf("https://object-sandbox.%s.joinself.com", "preview"),
+		Message:     "ws://localhost:9000",   //fmt.Sprintf("wss://message-sandbox.%s.joinself.com", "preview"),
+	}
+
+	callbacks := Callbacks{
+		OnConnect: func(account *Account) {
+			signal <- true
+		},
+		OnDisconnect: func(account *Account, err error) {
+			// require.Nil(t, err)
+		},
+		OnAcknowledgement: func(account *Account, reference *event.Reference) {
+			// fmt.Println("acknowledged", hex.EncodeToString(reference.ID()))
+		},
+		OnError: func(account *Account, reference *event.Reference, err error) {
+			// fmt.Println("errored", hex.EncodeToString(reference.ID()), err)
+		},
+		OnMessage: func(account *Account, msg *event.Message) {
+			incomingMsg <- msg
+		},
+		OnKeyPackage: func(account *Account, keyPackage *event.KeyPackage) {
+			_, err := account.ConnectionEstablish(
+				keyPackage.ToAddress(),
+				keyPackage.KeyPackage(),
+			)
+			if err != nil {
+				panic(err)
+			}
+		},
+		OnWelcome: func(account *Account, welcome *event.Welcome) {
+			_, err := account.ConnectionAccept(
+				welcome.ToAddress(),
+				welcome.Welcome(),
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			incomingWel <- welcome
+		},
+	}
+
+	setOnIntegrity(&callbacks, func(account *Account, requestHash []byte) *platform.Attestation {
+		return playIntegrity(application, []byte("test token"))
+	})
+
+	cfg := &Config{
+		SkipSetup:   true,
+		StorageKey:  make([]byte, 32),
+		StoragePath: path,
+		Environment: target,
+		LogLevel:    LogError,
+		Callbacks:   callbacks,
+	}
+
+	acc, err := New(cfg)
+	require.Nil(t, err)
+	<-signal
+
+	return acc, incomingMsg, incomingWel
+}
+
+func testRegisterIdentity(t testing.TB, account *Account) {
 	identityKey, err := account.KeychainSigningCreate()
 	require.Nil(t, err)
 	invocationKey, err := account.KeychainSigningCreate()
@@ -1184,6 +1268,91 @@ func TestAccountDiscovery(t *testing.T) {
 	require.Nil(t, err)
 
 	os.WriteFile("/tmp/qr.svg", qrCode, 0644)
+}
+
+func TestAccountRegistration(t *testing.T) {
+	server, _, _ := testAccount(t)
+	pairingCode, unpaired, err := server.SDKPairingCode()
+	require.Nil(t, err)
+
+	fmt.Println("SERVER PAIRING CODE", pairingCode)
+	fmt.Println("waiting for pairing to complete")
+
+	for unpaired {
+		_, unpaired, err = server.SDKPairingCode()
+		require.Nil(t, err)
+		time.Sleep(time.Second)
+	}
+
+	fmt.Println("pairing completed")
+	fmt.Println("waiting for config to sync")
+	time.Sleep(time.Second * 5)
+
+	identities, err := server.IdentityList()
+	require.Nil(t, err)
+	require.Len(t, identities, 1)
+	fmt.Println("application identity", identities[0].String())
+	withAddress := identities[0]
+
+	fmt.Println("registering alice's account")
+	alice, _, aliceOnWelcome := testAccountWithPathAndIntegirty(t, ":memory:", identities[0])
+
+	primaryImage := make([]byte, 128)
+	secondaryImage := make([]byte, 128)
+	rand.Read(primaryImage)
+	rand.Read(secondaryImage)
+
+	primaryPairwiseImage, err := object.New(
+		"application/jpeg",
+		primaryImage,
+	)
+
+	require.Nil(t, err)
+
+	secondaryPairwiseImage, err := object.New(
+		"application/jpeg",
+		secondaryImage,
+	)
+
+	require.Nil(t, err)
+
+	err = sdkRegisterAndConnect(
+		alice,
+		withAddress,
+		primaryPairwiseImage,
+		secondaryPairwiseImage,
+	)
+
+	require.Nil(t, err)
+
+	// wait for welcomes from issuer and application
+	fmt.Println("waiting for welcomes...")
+	<-aliceOnWelcome
+
+	relationship, err := alice.ConnectionPairwiseWith(credential.AddressAure(withAddress))
+	require.Nil(t, err)
+
+	for relationship.Status() != pairwise.StatusEstablished {
+		time.Sleep(time.Millisecond * 50)
+		relationship, err = alice.ConnectionPairwiseWith(credential.AddressAure(withAddress))
+		require.Nil(t, err)
+	}
+
+	_, _, err = connectionPairwiseAnchor(
+		alice,
+		credential.AddressAure(withAddress),
+		credential.AddressAure(withAddress),
+	)
+
+	for err != nil {
+		time.Sleep(time.Millisecond * 50)
+		_, _, err = connectionPairwiseAnchor(
+			alice,
+			credential.AddressAure(withAddress),
+			credential.AddressAure(withAddress),
+		)
+	}
+	fmt.Println("registered successfully")
 }
 
 func TestAccountSocketReconnect(t *testing.T) {
