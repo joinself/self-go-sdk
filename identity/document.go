@@ -11,6 +11,7 @@ import "C"
 import (
 	"runtime"
 	"time"
+	"unsafe"
 
 	"github.com/joinself/self-go-sdk/keypair"
 	"github.com/joinself/self-go-sdk/keypair/exchange"
@@ -66,6 +67,22 @@ func identityDocumentPtr(d *Document) *C.self_identity_document {
 // NewDocument creates a new identity document
 func NewDocument() *Document {
 	return newIdentityDocument(C.self_identity_document_init())
+}
+
+// Commitment returns the commitment hash the document is bound to
+func (d *Document) Commitment() []byte {
+	commitment := C.self_identity_document_commitment(
+		d.ptr,
+	)
+
+	if commitment == nil {
+		return nil
+	}
+
+	return C.GoBytes(
+		unsafe.Pointer(commitment),
+		32,
+	)
 }
 
 // HasRolesAt returns true if a key had a given set of roles at a time

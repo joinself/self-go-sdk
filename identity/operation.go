@@ -262,14 +262,19 @@ func (b *OperationBuilder) GrantEmbedded(key keypair.PublicKey, roles Role) *Ope
 }
 
 // GrantReferenced grants roles to a key controlled by another identity
-func (b *OperationBuilder) GrantReferenced(method Method, controller *signing.PublicKey, key *signing.PublicKey, roles Role) *OperationBuilder {
+func (b *OperationBuilder) GrantReferenced(method Method, controller, key *signing.PublicKey, commitment []byte, roles Role) *OperationBuilder {
+	commitmentBuf := C.CBytes(commitment)
+
 	C.self_identity_operation_builder_signing_grant_referenced(
 		b.ptr,
 		C.uint16_t(method),
 		signingPublicKeyPtr(controller),
 		signingPublicKeyPtr(key),
+		(*C.uint8_t)(commitmentBuf),
 		C.uint64_t(roles),
 	)
+
+	C.free(commitmentBuf)
 
 	return b
 }
@@ -315,23 +320,23 @@ func (b *OperationBuilder) Revoke(key keypair.PublicKey, effectiveFrom time.Time
 }
 
 // Threshold sets a threshold that must be met by keys that are performing an operation related to a specific role
-func (b *OperationBuilder) Threshold(role Role, threshold uint8) *OperationBuilder {
+func (b *OperationBuilder) Threshold(role Role, threshold uint64) *OperationBuilder {
 	C.self_identity_operation_builder_threshold(
 		b.ptr,
 		C.self_identity_key_role(role),
-		C.uint8_t(threshold),
+		C.uint64_t(threshold),
 	)
 
 	return b
 }
 
 // Weight sets a weight for a key and a given role
-func (b *OperationBuilder) Weight(key *signing.PublicKey, role Role, weight uint8) *OperationBuilder {
+func (b *OperationBuilder) Weight(key *signing.PublicKey, role Role, weight uint64) *OperationBuilder {
 	C.self_identity_operation_builder_weight(
 		b.ptr,
 		signingPublicKeyPtr(key),
 		C.self_identity_key_role(role),
-		C.uint8_t(weight),
+		C.uint64_t(weight),
 	)
 
 	return b
