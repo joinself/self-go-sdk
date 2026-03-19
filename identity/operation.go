@@ -225,6 +225,37 @@ func (b *OperationBuilder) Timestamp(timestamp time.Time) *OperationBuilder {
 	return b
 }
 
+// Commitment binds the document to a commitment
+func (b *OperationBuilder) Commitment(commitment []byte) *OperationBuilder {
+	commitmentBuf := C.CBytes(commitment)
+
+	C.self_identity_operation_builder_commitment(
+		b.ptr,
+		(*C.uint8_t)(commitmentBuf),
+	)
+
+	C.free(commitmentBuf)
+
+	return b
+}
+
+// Anchor contructs a commitment hash over a biometric anchor hash and nonce
+func (b *OperationBuilder) Anchor(biometricAnchor, nonce []byte) *OperationBuilder {
+	anchorBuf := C.CBytes(biometricAnchor)
+	nonceBuf := C.CBytes(nonce)
+
+	C.self_identity_operation_builder_anchor(
+		b.ptr,
+		(*C.uint8_t)(anchorBuf),
+		(*C.uint8_t)(nonceBuf),
+	)
+
+	C.free(anchorBuf)
+	C.free(nonceBuf)
+
+	return b
+}
+
 // Previous sets the hash of the previous operation
 func (b *OperationBuilder) Previous(previousHash []byte) *OperationBuilder {
 	previousBuf := C.CBytes(previousHash)
