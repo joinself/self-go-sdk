@@ -30,7 +30,7 @@ jobs:
 
           echo "testing examples..."
 
-          examples=(agreement chat connection credentials/issue credentials/request discovery)
+          examples=(chat credentials/sharing credentials/authentication discovery)
           for e in ${examples[@]}; do
             cd ${CI_WORKDIR}/examples/${e} && go build -buildvcs=false .
           done
