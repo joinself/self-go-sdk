@@ -10,9 +10,9 @@ on:
 
 jobs:
   release:
-    uses: joinself/workflows-public/.github/workflows/release.yml@main
-    secrets: inherit
-    with:
-      version: ${{ inputs.version }}
     permissions:
       contents: write
+    uses: joinself/workflows-public/.github/workflows/release.yml@main
+    with:
+      version: ${{ inputs.version }}
+    secrets: inherit
